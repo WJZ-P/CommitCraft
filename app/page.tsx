@@ -236,7 +236,7 @@ export default function Home() {
                         src={TEXTURES.emerald}
                         alt="Mining..."
                         className="w-8 h-8 mc-pixel-icon animate-bounce"
-                        style={{ animationDelay: `${i * 0.15}s` }}
+                        style={{ animationDelay: `${i * 0.15}s`,animationFillMode: "both" }}
                       />
                     ))}
                   </div>
