@@ -1,6 +1,23 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
+import WeatherCanvas from "./components/WeatherCanvas";
+
+// 原版 MC 材质 CDN 链接
+const TEXTURES = {
+  stone: "https://cdn.jsdelivr.net/gh/InventivetalentDev/minecraft-assets@1.20.4/assets/minecraft/textures/block/stone.png",
+  dirt: "https://cdn.jsdelivr.net/gh/InventivetalentDev/minecraft-assets@1.20.4/assets/minecraft/textures/block/dirt.png",
+  grassTop: "https://cdn.jsdelivr.net/gh/InventivetalentDev/minecraft-assets@1.20.4/assets/minecraft/textures/block/grass_block_top.png",
+  emerald: "https://cdn.jsdelivr.net/gh/InventivetalentDev/minecraft-assets@1.20.4/assets/minecraft/textures/item/emerald.png",
+  diamond_ore: "https://cdn.jsdelivr.net/gh/InventivetalentDev/minecraft-assets@1.20.4/assets/minecraft/textures/block/diamond_ore.png",
+  gold_ore: "https://cdn.jsdelivr.net/gh/InventivetalentDev/minecraft-assets@1.20.4/assets/minecraft/textures/block/gold_ore.png",
+  iron_ore: "https://cdn.jsdelivr.net/gh/InventivetalentDev/minecraft-assets@1.20.4/assets/minecraft/textures/block/iron_ore.png",
+  copper_ore: "https://cdn.jsdelivr.net/gh/InventivetalentDev/minecraft-assets@1.20.4/assets/minecraft/textures/block/copper_ore.png",
+  coal_ore: "https://cdn.jsdelivr.net/gh/InventivetalentDev/minecraft-assets@1.20.4/assets/minecraft/textures/block/coal_ore.png",
+  redstone_ore: "https://cdn.jsdelivr.net/gh/InventivetalentDev/minecraft-assets@1.20.4/assets/minecraft/textures/block/redstone_ore.png",
+  emerald_ore: "https://cdn.jsdelivr.net/gh/InventivetalentDev/minecraft-assets@1.20.4/assets/minecraft/textures/block/emerald_ore.png",
+  lapis_ore: "https://cdn.jsdelivr.net/gh/InventivetalentDev/minecraft-assets@1.20.4/assets/minecraft/textures/block/lapis_ore.png",
+};
 
 export default function Home() {
   const [username, setUsername] = useState("");
@@ -8,12 +25,52 @@ export default function Home() {
   const [svgPreview, setSvgPreview] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [totalContributions, setTotalContributions] = useState<number | null>(null);
+  const [ores, setOres] = useState<{ id: number; x: number; y: number; type: string }[]>([]);
+  const [weather, setWeather] = useState<"clear" | "rain" | "snow">("rain");
+  const [mouse, setMouse] = useState({ x: 0, y: 0 });
+
+  // 监听鼠标位置，注入 CSS 变量用于背景视差 + 传递给天气粒子
+  const handleMouseMove = useCallback((e: MouseEvent) => {
+    const x = (e.clientX / window.innerWidth - 0.5) * 2;
+    const y = (e.clientY / window.innerHeight - 0.5) * 2;
+    document.documentElement.style.setProperty("--mouse-x", x.toString());
+    document.documentElement.style.setProperty("--mouse-y", y.toString());
+    setMouse({ x, y });
+  }, []);
+
+  useEffect(() => {
+    window.addEventListener("mousemove", handleMouseMove);
+    return () => window.removeEventListener("mousemove", handleMouseMove);
+  }, [handleMouseMove]);
+
+  // 挂载时生成随机矿石分布
+  useEffect(() => {
+    const generatedOres: typeof ores = [];
+    const types = [
+      "diamond_ore", "gold_ore", "iron_ore", "copper_ore",
+      "coal_ore", "redstone_ore", "emerald_ore", "lapis_ore",
+    ];
+    for (let i = 0; i < 40; i++) {
+      for (let j = 0; j < 40; j++) {
+        if (Math.random() < 0.04) {
+          generatedOres.push({
+            id: i * 100 + j,
+            x: i * 64,
+            y: j * 64,
+            type: types[Math.floor(Math.random() * types.length)],
+          });
+        }
+      }
+    }
+    setOres(generatedOres);
+  }, []);
 
   async function handleGenerate() {
     if (!username.trim()) return;
     setLoading(true);
     setError(null);
     setSvgPreview(null);
+    setTotalContributions(null);
 
     try {
       const res = await fetch(`/api/contributions/${encodeURIComponent(username.trim())}`);
@@ -35,172 +92,203 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen relative flex flex-col selection:bg-[#5ec462] selection:text-black">
+
+      {/* ===== 背景层 1：石头材质 + 动态矿石 ===== */}
+      <div
+        className="fixed inset-0 z-[0] mc-bg-stone mc-texture"
+        style={{ backgroundImage: `url('${TEXTURES.stone}')` }}
+      >
+        {ores.map((ore) => (
+          <div
+            key={ore.id}
+            className="absolute mc-texture"
+            style={{
+              left: ore.x,
+              top: ore.y,
+              width: 64,
+              height: 64,
+              backgroundImage: `url('${TEXTURES[ore.type as keyof typeof TEXTURES]}')`,
+              backgroundSize: "cover",
+            }}
+          />
+        ))}
+      </div>
+
+      {/* ===== 背景层 2：暗调遮罩 ===== */}
+      <div className="fixed inset-0 z-[1] bg-black/20 pointer-events-none" />
+
+      {/* ===== 背景层 3：中心聚焦打光 (Vignette) ===== */}
+      <div className="fixed inset-0 z-[2] mc-vignette" />
+
+      {/* ===== 背景层 4：Canvas 粒子天气系统 ===== */}
+      <WeatherCanvas weather={weather} mouseX={mouse.x} mouseY={mouse.y} />
+
       {/* ===== 顶部导航栏 ===== */}
-      <nav className="dirt-strip px-6 py-3 flex items-center justify-between border-black">
-        <div className="flex items-center gap-3">
-          {/* 像素方块 Logo */}
-          <div className="relative w-10 h-10">
-            <div className="absolute inset-0 bg-[#3cb043] border-2 border-black" />
-            <div className="absolute top-1 left-1 w-3 h-3 bg-[#2d8632]" />
-            <div className="absolute bottom-1 right-1 w-2 h-2 bg-[#5ec462]" />
-            <div className="absolute top-1 right-2 w-1.5 h-1.5 bg-[#1a5c12]" />
-          </div>
-          <h1 className="text-xl font-bold text-white tracking-wider"
-              style={{ textShadow: "2px 2px 0 #2a2a2a" }}>
+      <nav
+        className="relative z-[20] px-6 py-4 border-black mc-navbar mc-texture flex items-center justify-between"
+        style={{ backgroundImage: `url('${TEXTURES.dirt}')` }}
+      >
+        <div className="absolute inset-0 mc-navbar-overlay" />
+
+        <div className="relative z-10 flex items-center gap-4">
+          <img
+            src={TEXTURES.emerald}
+            alt="CommitCraft"
+            className="w-10 h-10 mc-pixel-icon hover:scale-110 transition-transform cursor-pointer"
+          />
+          <h1 className="text-2xl font-bold text-white tracking-wider mc-text-shadow-heavy">
             CommitCraft
           </h1>
         </div>
-        <a
-          href="https://github.com/WJZ-P/CommitCraft"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="mc-btn mc-btn-secondary"
-        >
-          GitHub
-        </a>
+
+        <div className="relative z-10 flex gap-3 items-center">
+          <button
+            onClick={() => setWeather((w) => (w === "clear" ? "rain" : w === "rain" ? "snow" : "clear"))}
+            className="mc-btn-secondary text-xs flex items-center gap-2"
+          >
+            WEATHER: {weather.toUpperCase()}
+          </button>
+
+          <a
+            href="https://github.com/WJZ-P/CommitCraft"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mc-nav-link text-sm"
+          >
+            GitHub
+          </a>
+        </div>
       </nav>
 
-      <div className="grass-top" />
+      {/* 顶部草皮边缘 */}
+      <div
+        className="relative z-[20] h-4 w-full mc-texture"
+        style={{ backgroundImage: `url('${TEXTURES.grassTop}')` }}
+      />
 
-      {/* ===== Hero 区域 ===== */}
-      <section className="flex flex-col items-center pt-16 pb-12 px-4">
-        {/* 像素艺术标题装饰 */}
-        <div className="flex gap-2 mb-6">
-          {["#3cb043", "#5ec462", "#2d8632", "#8b6b47", "#3cb043"].map((color, i) => (
-            <div
-              key={i}
-              className="w-4 h-4 border border-black"
-              style={{ background: color }}
-            />
-          ))}
-        </div>
+      {/* ===== 主体内容区 ===== */}
+      <main className="relative z-[20] flex-1 w-full max-w-3xl mx-auto px-4 py-12 flex flex-col items-center justify-center">
 
-        <h2
-          className="text-3xl md:text-4xl font-bold text-center text-white mb-4 tracking-wide"
-          style={{ textShadow: "3px 3px 0 #000" }}
-        >
-          Craft Your Commits
-        </h2>
-        <p
-          className="text-sm text-[#a0a0a0] text-center max-w-md mb-10"
-          style={{ textShadow: "1px 1px 0 #000" }}
-        >
-          Turn your GitHub contribution graph into a
-          <br />
-          Minecraft-style isometric masterpiece
-        </p>
-
-        {/* ===== 输入表单 ===== */}
-        <div className="mc-panel w-full max-w-lg">
-          <label
-            className="block text-xs text-[#a0a0a0] mb-2 tracking-widest uppercase"
-            style={{ textShadow: "1px 1px 0 #000" }}
-          >
-            GitHub Username
-          </label>
-          <div className="flex gap-3">
-            <input
-              type="text"
-              className="mc-input flex-1"
-              placeholder="e.g. octocat"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && handleGenerate()}
-            />
-            <button
-              className="mc-btn whitespace-nowrap"
-              onClick={handleGenerate}
-              disabled={loading || !username.trim()}
-            >
-              {loading ? "Mining..." : "Generate"}
-            </button>
-          </div>
-        </div>
-      </section>
-
-      <div className="pixel-divider" />
-
-      {/* ===== 预览区域 ===== */}
-      <section className="flex-1 flex flex-col items-center py-12 px-4">
-        {error && (
-          <div className="mc-panel w-full max-w-lg border-red-900 mb-6">
-            <p className="text-red-400 text-sm" style={{ textShadow: "1px 1px 0 #000" }}>
-              ⚠ {error}
+        {/* Hero 标题 */}
+        <div className="mb-10 flex flex-col items-center animate-[bounce_4s_infinite]">
+          <h2 className="text-4xl md:text-5xl font-bold text-white mb-4 tracking-widest text-center mc-text-shadow-3d">
+            Craft Your Commits
+          </h2>
+          <div className="flex items-center gap-3">
+            <span className="h-1 w-12 bg-[#5ec462] shadow-[2px_2px_0_0_#000]" />
+            <p className="text-[#c6c6c6] text-sm tracking-widest text-center mc-text-shadow">
+              MINING YOUR GITHUB HISTORY
             </p>
+            <span className="h-1 w-12 bg-[#5ec462] shadow-[2px_2px_0_0_#000]" />
           </div>
-        )}
+        </div>
 
-        {loading && (
-          <div className="flex flex-col items-center gap-4">
-            <div className="flex gap-1">
-              {[0, 1, 2].map((i) => (
-                <div
-                  key={i}
-                  className="w-4 h-4 bg-[#3cb043] border border-black animate-bounce"
-                  style={{ animationDelay: `${i * 0.15}s` }}
+        {/* ===== 箱子 GUI 面板 ===== */}
+        <div className="mc-gui w-full">
+          <div className="mc-gui-inner">
+
+            <label className="block text-[#3f3f3f] font-bold text-lg mb-4 mc-text-shadow-white">
+              Enter GitHub Username:
+            </label>
+
+            <div className="flex flex-col md:flex-row gap-4">
+              {/* 下凹输入框 */}
+              <div className="mc-input-sunken flex-1">
+                <input
+                  type="text"
+                  placeholder="e.g. octocat"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && handleGenerate()}
+                  spellCheck={false}
                 />
-              ))}
-            </div>
-            <p className="text-xs text-[#a0a0a0]" style={{ textShadow: "1px 1px 0 #000" }}>
-              Mining contribution data...
-            </p>
-          </div>
-        )}
+              </div>
 
-        {svgPreview && !loading && (
-          <div className="w-full max-w-4xl">
-            <div className="flex items-center justify-between mb-4">
-              <h3
-                className="text-lg text-white"
-                style={{ textShadow: "2px 2px 0 #000" }}
+              {/* CRAFT 按钮 */}
+              <button
+                onClick={handleGenerate}
+                disabled={loading || !username.trim()}
+                className="mc-btn h-14 px-8 text-xl"
               >
-                {username}&apos;s World
-              </h3>
-              {totalContributions !== null && (
-                <span className="text-xs text-[#5ec462]" style={{ textShadow: "1px 1px 0 #000" }}>
-                  {totalContributions.toLocaleString()} contributions
-                </span>
+                <span>{loading ? "MINING..." : "CRAFT"}</span>
+              </button>
+            </div>
+
+            {/* ===== 状态展示区 ===== */}
+            <div className="mc-display mt-8 relative">
+
+              {/* 空状态 */}
+              {!loading && !error && !svgPreview && (
+                <div className="text-[#888] text-center mc-text-shadow-light">
+                  <p className="mb-2">Awaiting target...</p>
+                  <p className="text-sm">The 3D SVG blueprint will appear here.</p>
+                </div>
+              )}
+
+              {/* 加载中 */}
+              {loading && (
+                <div className="flex flex-col items-center">
+                  <div className="flex gap-2 mb-4">
+                    {[0, 1, 2].map((i) => (
+                      <img
+                        key={i}
+                        src={TEXTURES.emerald}
+                        alt="Mining..."
+                        className="w-8 h-8 mc-pixel-icon animate-bounce"
+                        style={{ animationDelay: `${i * 0.15}s` }}
+                      />
+                    ))}
+                  </div>
+                  <p className="text-[#5ec462] animate-pulse mc-text-shadow">
+                    Forging Isometric World...
+                  </p>
+                </div>
+              )}
+
+              {/* 错误 */}
+              {error && (
+                <div className="text-[#ff5555] text-center mc-text-shadow-error">
+                  <p className="text-xl mb-1">⚠ ERROR</p>
+                  <p className="text-sm">{error}</p>
+                </div>
+              )}
+
+              {/* 预览 */}
+              {svgPreview && !loading && (
+                <div className="w-full text-left overflow-auto max-h-[300px] p-2">
+                  <div className="flex items-center justify-between mb-2">
+                    <p className="text-[#ffff55] text-sm mc-text-shadow-gold">
+                      &gt; {username}&apos;s World:
+                    </p>
+                    {totalContributions !== null && (
+                      <span className="text-xs text-[#5ec462] mc-text-shadow-light">
+                        {totalContributions.toLocaleString()} contributions
+                      </span>
+                    )}
+                  </div>
+                  <pre className="text-white text-xs whitespace-pre-wrap break-all leading-relaxed mc-text-shadow-light">
+                    {svgPreview}
+                  </pre>
+                </div>
               )}
             </div>
-
-            {/* SVG 预览区 - 暂时显示 JSON 数据 */}
-            <div className="mc-panel overflow-auto max-h-96">
-              <pre className="text-xs text-[#5ec462] whitespace-pre-wrap break-all leading-relaxed">
-                {svgPreview}
-              </pre>
-            </div>
-
-            <p className="text-xs text-[#666] mt-4 text-center" style={{ textShadow: "1px 1px 0 #000" }}>
-              SVG rendering engine coming soon...
-            </p>
           </div>
-        )}
+        </div>
+      </main>
 
-        {!svgPreview && !loading && !error && (
-          <div className="flex flex-col items-center gap-4 text-[#555]">
-            {/* 空状态：像素方块堆 */}
-            <div className="relative w-24 h-24">
-              <div className="absolute bottom-0 left-2 w-8 h-8 bg-[#7f7f7f] border-2 border-[#3a3a3a]" />
-              <div className="absolute bottom-0 right-2 w-8 h-8 bg-[#8b6b47] border-2 border-[#3a3a3a]" />
-              <div className="absolute bottom-6 left-5 w-8 h-8 bg-[#3cb043] border-2 border-[#3a3a3a]" />
-              <div className="absolute bottom-4 right-5 w-6 h-6 bg-[#5ec462] border-2 border-[#3a3a3a]" />
-            </div>
-            <p className="text-xs" style={{ textShadow: "1px 1px 0 #000" }}>
-              Enter a username to start crafting
-            </p>
-          </div>
-        )}
-      </section>
-
-      {/* ===== 底部 ===== */}
-      <footer className="dirt-strip px-6 py-4 border-t-4 border-black">
-        <div className="grass-top mb-3" />
-        <p
-          className="text-xs text-center text-[#a0a0a0]"
-          style={{ textShadow: "1px 1px 0 #000" }}
-        >
-          CommitCraft &mdash; Not affiliated with Mojang or Microsoft
+      {/* ===== 底部页脚 ===== */}
+      <div
+        className="relative z-[20] h-4 w-full mc-texture"
+        style={{ backgroundImage: `url('${TEXTURES.grassTop}')` }}
+      />
+      <footer
+        className="relative z-[20] px-6 py-6 border-black text-center mc-texture"
+        style={{ backgroundImage: `url('${TEXTURES.dirt}')` }}
+      >
+        <div className="absolute inset-0 mc-footer-overlay" />
+        <p className="relative z-10 text-[#a0a0a0] text-sm hover:text-white transition-colors mc-text-shadow">
+          Crafted with ❤️ by WJZ | Not an official Minecraft product
         </p>
       </footer>
     </div>

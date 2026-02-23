@@ -1,175 +1,239 @@
 @import "tailwindcss";
-/*下面的字体在  https://fonts.cdnfonts.com/css/minecraft-3*/
-/* 1. 常规体 (Regular) */
+
+/* ===== MC 字体 (https://fonts.cdnfonts.com/css/minecraft-3) ===== */
 @font-face {
-    font-family: 'Minecraft';
-    font-style: normal;
-    font-weight: 400;
-    src: local('Minecraft'), url('https://fonts.cdnfonts.com/s/25041/1_MinecraftRegular1.woff') format('woff');
+  font-family: 'Minecraft';
+  font-style: normal;
+  font-weight: 400;
+  src: local('Minecraft'), url('https://fonts.cdnfonts.com/s/25041/1_MinecraftRegular1.woff') format('woff');
 }
 
-/* 2. 斜体 (Italic) - 修复了 font-style: italic */
 @font-face {
-    font-family: 'Minecraft';
-    font-style: italic;
-    font-weight: 400;
-    src: local('Minecraft'), url('https://fonts.cdnfonts.com/s/25041/2_MinecraftItalic1.woff') format('woff');
+  font-family: 'Minecraft';
+  font-style: italic;
+  font-weight: 400;
+  src: local('Minecraft'), url('https://fonts.cdnfonts.com/s/25041/2_MinecraftItalic1.woff') format('woff');
 }
 
-/* 3. 粗体 (Bold) */
 @font-face {
-    font-family: 'Minecraft';
-    font-style: normal;
-    font-weight: 700;
-    src: local('Minecraft'), url('https://fonts.cdnfonts.com/s/25041/3_MinecraftBold1.woff') format('woff');
+  font-family: 'Minecraft';
+  font-style: normal;
+  font-weight: 700;
+  src: local('Minecraft'), url('https://fonts.cdnfonts.com/s/25041/3_MinecraftBold1.woff') format('woff');
 }
 
-/* 4. 粗斜体 (Bold Italic) - 修复了 font-style: italic */
 @font-face {
-    font-family: 'Minecraft';
-    font-style: italic;
-    font-weight: 700;
-    src: local('Minecraft'), url('https://fonts.cdnfonts.com/s/25041/4_MinecraftBoldItalic1.woff') format('woff');
+  font-family: 'Minecraft';
+  font-style: italic;
+  font-weight: 700;
+  src: local('Minecraft'), url('https://fonts.cdnfonts.com/s/25041/4_MinecraftBoldItalic1.woff') format('woff');
 }
 
-:root {
-  --mc-dark: #1a1a1a;
-  --mc-darker: #131313;
-  --mc-green: #3cb043;
-  --mc-green-light: #5ec462;
-  --mc-green-dark: #2d8632;
-  --mc-dirt: #8b6b47;
-  --mc-stone: #7f7f7f;
-  --mc-text: #e8e8e8;
-  --mc-text-muted: #a0a0a0;
-  --mc-border: #3a3a3a;
-  --mc-input-bg: #2a2a2a;
-}
-
+/* ===== Tailwind 主题覆盖 ===== */
 @theme inline {
-  --color-background: var(--mc-dark);
-  --color-foreground: var(--mc-text);
   --default-font-family: 'Minecraft', monospace;
   --font-sans: 'Minecraft', monospace;
   --font-mono: 'Minecraft', monospace;
 }
 
+/* ===== 基础 ===== */
 body {
-  background: var(--mc-darker);
-  color: var(--mc-text);
+  background: #131313;
+  color: #e8e8e8;
   image-rendering: pixelated;
   font-family: 'Minecraft', monospace;
 }
 
-/* ===== MC 风格按钮 ===== */
+/* ===== 像素化材质通用 ===== */
+.mc-texture {
+  background-size: 64px 64px;
+  image-rendering: pixelated;
+}
+
+/* ===== 背景层：石头材质 + 鼠标视差 ===== */
+.mc-bg-stone {
+  transform: translate(calc(var(--mouse-x, 0) * -15px), calc(var(--mouse-y, 0) * -15px)) scale(1.05);
+  transition: transform 0.2s ease-out;
+}
+
+/* ===== 背景层：暗角晕影 ===== */
+.mc-vignette {
+  background: radial-gradient(circle at center, transparent 0%, rgba(0,0,0,0.85) 100%);
+  pointer-events: none;
+}
+
+/* ===== 导航栏 ===== */
+.mc-navbar {
+  box-shadow: 0 8px 0 0 rgba(0,0,0,0.4);
+}
+
+.mc-navbar-overlay {
+  background: rgba(0,0,0,0.4);
+  pointer-events: none;
+}
+
+/* ===== MC 文字阴影 ===== */
+.mc-text-shadow {
+  text-shadow: 2px 2px 0 #000;
+}
+
+.mc-text-shadow-heavy {
+  text-shadow: 3px 3px 0 #000;
+}
+
+.mc-text-shadow-3d {
+  text-shadow: 4px 4px 0px #000, 0px 8px 16px rgba(0,0,0,0.8);
+}
+
+.mc-text-shadow-light {
+  text-shadow: 1px 1px 0 #000;
+}
+
+.mc-text-shadow-white {
+  text-shadow: 1px 1px 0px #fff;
+}
+
+.mc-text-shadow-gold {
+  text-shadow: 1px 1px 0px #3f3f00;
+}
+
+.mc-text-shadow-error {
+  text-shadow: 2px 2px 0px #3f0000;
+}
+
+/* ===== MC 绿色按钮 ===== */
 .mc-btn {
   position: relative;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 8px 24px;
-  font-size: 14px;
+  padding: 12px 32px;
+  background: #3c8527;
+  border: 4px solid #000;
   color: white;
-  background: #3b8526;
-  border: 3px solid #000;
+  font-weight: bold;
+  font-family: 'Minecraft', monospace;
   box-shadow:
-    inset -3px -3px 0 #2a5e1a,
-    inset 3px 3px 0 #5ec462;
+    inset 4px 4px 0 0 #5eac44,
+    inset -4px -4px 0 0 #225313;
+  text-shadow: 2px 2px 0px #1a3b11;
   cursor: pointer;
-  transition: filter 0.1s;
-  text-shadow: 2px 2px 0 #2a2a2a;
-  letter-spacing: 1px;
+  transition: all 0.1s;
 }
 
 .mc-btn:hover {
-  filter: brightness(1.2);
+  filter: brightness(1.15);
 }
 
 .mc-btn:active {
   box-shadow:
-    inset 3px 3px 0 #2a5e1a,
-    inset -3px -3px 0 #5ec462;
+    inset 4px 4px 0 0 #225313,
+    inset -4px -4px 0 0 #5eac44;
 }
 
+.mc-btn:active > * {
+  transform: translate(2px, 2px);
+}
+
+.mc-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ===== MC 灰色按钮 ===== */
 .mc-btn-secondary {
+  padding: 8px 12px;
   background: #555;
-  box-shadow:
-    inset -3px -3px 0 #333,
-    inset 3px 3px 0 #777;
-}
-
-.mc-btn-secondary:active {
-  box-shadow:
-    inset 3px 3px 0 #333,
-    inset -3px -3px 0 #777;
-}
-
-/* ===== MC 风格输入框 ===== */
-.mc-input {
-  font-size: 14px;
+  border: 2px solid #000;
   color: white;
-  background: #000;
-  border: 3px solid #555;
+  font-family: 'Minecraft', monospace;
   box-shadow:
-    inset 2px 2px 0 #1a1a1a;
+    inset 2px 2px 0 0 #777,
+    inset -2px -2px 0 0 #333;
+  text-shadow: 1px 1px 0 #000;
+  cursor: pointer;
+  transition: background 0.1s;
+}
+
+.mc-btn-secondary:hover {
+  background: #666;
+}
+
+/* ===== MC 箱子 GUI 面板 ===== */
+.mc-gui {
+  background: #c6c6c6;
+  border: 4px solid #000;
+  padding: 4px;
+  box-shadow: 16px 16px 0 0 rgba(0,0,0,0.6);
+  backdrop-filter: blur(4px);
+}
+
+.mc-gui-inner {
+  background: #c6c6c6;
+  border: 4px solid;
+  border-color: #ffffff #555555 #555555 #ffffff;
+  padding: 24px;
+}
+
+/* ===== MC 下凹输入框 (Sunken Field) ===== */
+.mc-input-sunken {
+  background: black;
+  border: 4px solid;
+  border-color: #373737 #ffffff #ffffff #373737;
+  padding: 4px;
+  box-shadow: inset 0 2px 4px rgba(0,0,0,0.5);
+}
+
+.mc-input-sunken input {
+  width: 100%;
+  background: black;
+  color: white;
+  font-size: 18px;
   padding: 8px 12px;
   outline: none;
-  width: 100%;
+  font-family: 'Minecraft', monospace;
 }
 
-.mc-input:focus {
-  border-color: #5ec462;
+.mc-input-sunken input::placeholder {
+  color: #555;
 }
 
-.mc-input::placeholder {
-  color: #666;
+/* ===== MC 下凹展示区 ===== */
+.mc-display {
+  border: 4px solid;
+  border-color: #373737 #ffffff #ffffff #373737;
+  background: #1e1e1e;
+  padding: 16px;
+  min-height: 160px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
 }
 
-/* ===== MC 风格面板/卡片 ===== */
-.mc-panel {
-  background: #2a2a2a;
-  border: 3px solid #000;
+/* ===== MC 像素图标通用 ===== */
+.mc-pixel-icon {
+  image-rendering: pixelated;
+  filter: drop-shadow(2px 2px 0 rgba(0,0,0,1));
+}
+
+/* ===== 导航栏绿色链接按钮 ===== */
+.mc-nav-link {
+  padding: 8px 16px;
+  background: #3c8527;
+  border: 2px solid #000;
+  color: white;
+  font-family: 'Minecraft', monospace;
   box-shadow:
-    inset -2px -2px 0 #1a1a1a,
-    inset 2px 2px 0 #3a3a3a;
-  padding: 20px;
+    inset 2px 2px 0 0 #5eac44,
+    inset -2px -2px 0 0 #225313;
+  text-shadow: 1px 1px 0 #1a3b11;
+  transition: background 0.1s;
 }
 
-/* ===== 泥土纹理背景条 ===== */
-.dirt-strip {
-  background:
-    repeating-linear-gradient(
-      90deg,
-      #6b4f32 0px, #6b4f32 4px,
-      #7a5a3a 4px, #7a5a3a 8px,
-      #5e4429 8px, #5e4429 12px,
-      #8b6b47 12px, #8b6b47 16px
-    ),
-    repeating-linear-gradient(
-      0deg,
-      rgba(0,0,0,0.1) 0px, rgba(0,0,0,0.1) 4px,
-      transparent 4px, transparent 8px
-    );
-  background-blend-mode: overlay;
+.mc-nav-link:hover {
+  background: #4caf33;
 }
 
-/* ===== 草地顶部条纹 ===== */
-.grass-top {
-  height: 4px;
-  background: repeating-linear-gradient(
-    90deg,
-    #3cb043 0px, #3cb043 4px,
-    #5ec462 4px, #5ec462 8px,
-    #2d8632 8px, #2d8632 12px
-  );
-}
-
-/* ===== 像素化分割线 ===== */
-.pixel-divider {
-  height: 4px;
-  background: repeating-linear-gradient(
-    90deg,
-    #3a3a3a 0px, #3a3a3a 4px,
-    transparent 4px, transparent 8px
-  );
+/* ===== 页脚遮罩 ===== */
+.mc-footer-overlay {
+  background: rgba(0,0,0,0.6);
+  pointer-events: none;
 }
