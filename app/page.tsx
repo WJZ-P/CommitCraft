@@ -37,7 +37,7 @@ export default function Home() {
   return (
     <div className="min-h-screen flex flex-col">
       {/* ===== 顶部导航栏 ===== */}
-      <nav className="dirt-strip px-6 py-3 flex items-center justify-between border-b-4 border-black">
+      <nav className="dirt-strip px-6 py-3 flex items-center justify-between border-black">
         <div className="flex items-center gap-3">
           {/* 像素方块 Logo */}
           <div className="relative w-10 h-10">
@@ -52,10 +52,10 @@ export default function Home() {
           </h1>
         </div>
         <a
-          href="https://github.com"
+          href="https://github.com/WJZ-P/CommitCraft"
           target="_blank"
           rel="noopener noreferrer"
-          className="mc-btn mc-btn-secondary text-xs"
+          className="mc-btn mc-btn-secondary"
         >
           GitHub
         </a>
