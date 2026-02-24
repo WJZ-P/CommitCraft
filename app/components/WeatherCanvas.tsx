@@ -21,7 +21,7 @@ interface Particle {
   wobbleSpeed: number;
 }
 
-const RAIN_COUNT = 350;
+const RAIN_COUNT = 200;
 const SNOW_COUNT = 200;
 
 function createParticle(

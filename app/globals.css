@@ -58,7 +58,7 @@ body {
 
 /* ===== 背景层：暗角晕影 ===== */
 .mc-vignette {
-  background: radial-gradient(circle at center, transparent 0%, rgba(0,0,0,0.85) 100%);
+  background: radial-gradient(circle at center, transparent 0%, rgba(0,0,0,0.8) 100%);
   pointer-events: none;
 }
 

@@ -119,7 +119,7 @@ export default function Home() {
             </div>
 
             {/* ===== 背景层 2：暗调遮罩 ===== */}
-            <div className="fixed inset-0 z-[1] bg-black/20 pointer-events-none"/>
+            <div className="fixed inset-0 z-[1] bg-black/15 pointer-events-none"/>
 
             {/* ===== 背景层 3：中心聚焦打光 (Vignette) ===== */}
             <div className="fixed inset-0 z-[2] mc-vignette"/>
