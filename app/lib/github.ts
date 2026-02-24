@@ -2,6 +2,19 @@
  * GitHub GraphQL API - 获取用户 Commit 贡献数据
  */
 
+import { ProxyAgent, setGlobalDispatcher } from "undici";
+
+// ===== 全局代理注入 =====
+const proxyUrl = process.env.HTTPS_PROXY || process.env.HTTP_PROXY;
+
+if (proxyUrl) {
+  console.log(`[System] 🛡️ 侦测到代理配置，强制拦截全局 fetch，指向: ${proxyUrl}`);
+  const dispatcher = new ProxyAgent(proxyUrl);
+  setGlobalDispatcher(dispatcher);
+} else {
+  console.log("[System] ⚠️ 未配置代理，fetch 将尝试直连...");
+}
+
 // ===== 类型定义 =====
 
 export interface ContributionDay {
@@ -85,12 +98,13 @@ export async function fetchContributions(
 
   if (!response.ok) {
     const text = await response.text();
+    console.log("[GitHub] ❌ 非 200 响应体:", text);
     throw new Error(`GitHub API error (${response.status}): ${text}`);
   }
 
   const json = await response.json();
-
   if (json.errors) {
+    console.log("[GitHub] ❌ GraphQL errors:", JSON.stringify(json.errors));
     throw new Error(
       `GitHub GraphQL errors: ${json.errors.map((e: { message: string }) => e.message).join(", ")}`
     );
