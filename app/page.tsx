@@ -2,6 +2,8 @@
 
 import {useState, useEffect, useCallback} from "react";
 import WeatherCanvas from "./components/WeatherCanvas";
+import IsometricMap from "./components/IsometricMap";
+import type {ContributionCalendar} from "@/app/lib/github";
 
 // 原版 MC 材质 CDN 链接
 const TEXTURES = {
@@ -24,9 +26,8 @@ const ORE_SPAWN_CHANCE = 0.05
 export default function Home() {
     const [username, setUsername] = useState("");
     const [loading, setLoading] = useState(false);
-    const [svgPreview, setSvgPreview] = useState<string | null>(null);
+    const [calendarData, setCalendarData] = useState<ContributionCalendar | null>(null);
     const [error, setError] = useState<string | null>(null);
-    const [totalContributions, setTotalContributions] = useState<number | null>(null);
     const [ores, setOres] = useState<{ id: number; x: number; y: number; type: string }[]>([]);
     const [weather, setWeather] = useState<"clear" | "rain" | "snow">("snow");
     const [mouse, setMouse] = useState({x: 0, y: 0});
@@ -72,8 +73,7 @@ export default function Home() {
         if (!username.trim()) return;
         setLoading(true);
         setError(null);
-        setSvgPreview(null);
-        setTotalContributions(null);
+        setCalendarData(null);
 
         try {
             const res = await fetch(`/api/contributions/${encodeURIComponent(username.trim())}`);
@@ -84,9 +84,7 @@ export default function Home() {
                 return;
             }
 
-            setTotalContributions(data.totalContributions);
-            // TODO: 后续接入 SVG 生成引擎，目前先展示原始数据
-            setSvgPreview(JSON.stringify(data, null, 2));
+            setCalendarData(data as ContributionCalendar);
         } catch {
             setError("Network error. Please try again.");
         } finally {
@@ -172,7 +170,7 @@ export default function Home() {
 
             {/* ===== 主体内容区 ===== */}
             <main
-                className="relative z-[20] flex-1 w-full max-w-3xl mx-auto px-4 py-12 flex flex-col items-center justify-center">
+                className="relative z-[20] flex-1 w-full max-w-5xl mx-auto px-4 py-12 flex flex-col items-center justify-center">
 
                 {/* Hero 标题 */}
                 <div className="mb-10 flex flex-col items-center animate-[bounce_4s_infinite]">
@@ -223,7 +221,7 @@ export default function Home() {
                         <div className="mc-display mt-8 relative">
 
                             {/* 空状态 */}
-                            {!loading && !error && !svgPreview && (
+                            {!loading && !error && !calendarData && (
                                 <div className="text-[#888] text-center mc-text-shadow-light">
                                     <p className="mb-2">Awaiting target...</p>
                                     <p className="text-sm">The 3D SVG blueprint will appear here.</p>
@@ -257,27 +255,12 @@ export default function Home() {
                                     <p className="text-sm">{error}</p>
                                 </div>
                             )}
-
-                            {/* 预览 */}
-                            {svgPreview && !loading && (
-                                <div className="w-full text-left overflow-auto max-h-[300px] p-2">
-                                    <div className="flex items-center justify-between mb-2">
-                                        <p className="text-[#ffff55] text-sm mc-text-shadow-gold">
-                                            &gt; {username}&apos;s World:
-                                        </p>
-                                        {totalContributions !== null && (
-                                            <span className="text-xs text-[#5ec462] mc-text-shadow-light">
-                        {totalContributions.toLocaleString()} contributions
-                      </span>
-                                        )}
-                                    </div>
-                                    <pre
-                                        className="text-white text-xs whitespace-pre-wrap break-all leading-relaxed mc-text-shadow-light">
-                    {svgPreview}
-                  </pre>
-                                </div>
-                            )}
                         </div>
+
+                        {/* ===== 等距 SVG 地图 ===== */}
+                        {calendarData && !loading && (
+                            <IsometricMap calendar={calendarData} username={username} />
+                        )}
                     </div>
                 </div>
             </main>
