@@ -1,6 +1,6 @@
 "use client";
 
-import {useState, useEffect, useCallback} from "react";
+import {useState, useEffect, useCallback, useRef} from "react";
 import WeatherCanvas from "./components/WeatherCanvas";
 import IsometricMap from "./components/IsometricMap";
 import type {ContributionCalendar} from "@/app/lib/github";
@@ -30,16 +30,16 @@ export default function Home() {
     const [error, setError] = useState<string | null>(null);
     const [ores, setOres] = useState<{ id: number; x: number; y: number; type: string }[]>([]);
     const [weather, setWeather] = useState<"clear" | "rain" | "snow">("snow");
-    const [mouse, setMouse] = useState({x: 0, y: 0});
+    const mouseRef = useRef({x: 0, y: 0});
 
-    // 监听鼠标位置，注入 CSS 变量用于背景视差 + 传递给天气粒子
+    // 监听鼠标位置，注入 CSS 变量 + 更新 ref（不触发 re-render）
     const handleMouseMove = useCallback((e: MouseEvent) => {
         //  这里的x和y是在做归一化处理，第一步除法结果是0-1， 减去0.5，就是-0.5 ~ 0.5，再乘以2就是-1到1，鼠标在最左侧就是-1，最右侧就是1.
         const x = (e.clientX / window.innerWidth - 0.5) * 2;
         const y = (e.clientY / window.innerHeight - 0.5) * 2;
         document.documentElement.style.setProperty("--mouse-x", x.toString());
         document.documentElement.style.setProperty("--mouse-y", y.toString());
-        setMouse({x, y});
+        mouseRef.current = {x, y};
     }, []);
 
     useEffect(() => {
@@ -123,7 +123,7 @@ export default function Home() {
             <div className="fixed inset-0 z-[2] mc-vignette"/>
 
             {/* ===== 背景层 4：Canvas 粒子天气系统 ===== */}
-            <WeatherCanvas weather={weather} mouseX={mouse.x} mouseY={mouse.y}/>
+            <WeatherCanvas weather={weather} mouseRef={mouseRef}/>
 
             {/* ===== 顶部导航栏 ===== */}
             <nav
@@ -217,45 +217,46 @@ export default function Home() {
                             </button>
                         </div>
 
-                        {/* ===== 状态展示区 ===== */}
-                        <div className="mc-display mt-8 relative">
-
-                            {/* 空状态 */}
-                            {!loading && !error && !calendarData && (
-                                <div className="text-[#888] text-center mc-text-shadow-light">
-                                    <p className="mb-2">Awaiting target...</p>
-                                    <p className="text-sm">The 3D SVG blueprint will appear here.</p>
-                                </div>
-                            )}
-
-                            {/* 加载中 */}
-                            {loading && (
-                                <div className="flex flex-col items-center">
-                                    <div className="flex gap-2 mb-4">
-                                        {[0, 1, 2].map((i) => (
-                                            <img
-                                                key={i}
-                                                src={TEXTURES.emerald}
-                                                alt="Mining..."
-                                                className="w-8 h-8 mc-pixel-icon animate-bounce"
-                                                style={{animationDelay: `${i * 0.15}s`, animationFillMode: "both"}}
-                                            />
-                                        ))}
+                        {/* ===== 状态展示区（仅在无地图数据时显示） ===== */}
+                        {(!calendarData || loading || error) && (
+                            <div className="mc-display mt-8 relative">
+                                {/* 空状态 */}
+                                {!loading && !error && !calendarData && (
+                                    <div className="text-[#888] text-center mc-text-shadow-light">
+                                        <p className="mb-2">Awaiting target...</p>
+                                        <p className="text-sm">The 3D SVG blueprint will appear here.</p>
                                     </div>
-                                    <p className="text-[#5ec462] animate-pulse mc-text-shadow">
-                                        Forging Isometric World...
-                                    </p>
-                                </div>
-                            )}
+                                )}
 
-                            {/* 错误 */}
-                            {error && (
-                                <div className="text-[#ff5555] text-center mc-text-shadow-error">
-                                    <p className="text-xl mb-1">⚠ ERROR</p>
-                                    <p className="text-sm">{error}</p>
-                                </div>
-                            )}
-                        </div>
+                                {/* 加载中 */}
+                                {loading && (
+                                    <div className="flex flex-col items-center">
+                                        <div className="flex gap-2 mb-4">
+                                            {[0, 1, 2].map((i) => (
+                                                <img
+                                                    key={i}
+                                                    src={TEXTURES.emerald}
+                                                    alt="Mining..."
+                                                    className="w-8 h-8 mc-pixel-icon animate-bounce"
+                                                    style={{animationDelay: `${i * 0.15}s`, animationFillMode: "both"}}
+                                                />
+                                            ))}
+                                        </div>
+                                        <p className="text-[#5ec462] animate-pulse mc-text-shadow">
+                                            Forging Isometric World...
+                                        </p>
+                                    </div>
+                                )}
+
+                                {/* 错误 */}
+                                {error && (
+                                    <div className="text-[#ff5555] text-center mc-text-shadow-error">
+                                        <p className="text-xl mb-1">⚠ ERROR</p>
+                                        <p className="text-sm">{error}</p>
+                                    </div>
+                                )}
+                            </div>
+                        )}
 
                         {/* ===== 等距 SVG 地图 ===== */}
                         {calendarData && !loading && (

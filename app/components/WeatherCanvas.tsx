@@ -1,11 +1,10 @@
 "use client";
 
-import { useRef, useEffect, useCallback } from "react";
+import { useRef, useEffect, useCallback, type RefObject } from "react";
 
 interface WeatherCanvasProps {
   weather: "clear" | "rain" | "snow";
-  mouseX: number; // -1 ~ 1
-  mouseY: number; // -1 ~ 1
+  mouseRef: RefObject<{ x: number; y: number }>; // 直接读 ref，不触发 re-render
 }
 
 interface Particle {
@@ -64,19 +63,12 @@ function createParticle(
 
 export default function WeatherCanvas({
   weather,
-  mouseX,
-  mouseY,
+  mouseRef,
 }: WeatherCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const particlesRef = useRef<Particle[]>([]);
   const animFrameRef = useRef<number>(0);
   const prevWeatherRef = useRef(weather);
-  const mouseRef = useRef({ x: mouseX, y: mouseY });
-
-  // 保持鼠标值实时更新，不触发重渲染
-  useEffect(() => {
-    mouseRef.current = { x: mouseX, y: mouseY };
-  }, [mouseX, mouseY]);
 
   const initParticles = useCallback(
     (w: number, h: number, type: "rain" | "snow") => {

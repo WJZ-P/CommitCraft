@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useMemo } from "react";
+import { useMemo } from "react";
 import type { ContributionCalendar } from "@/app/lib/github";
 
 // ===== 等距投影配置 =====
@@ -47,11 +47,6 @@ interface IsometricMapProps {
 }
 
 export default function IsometricMap({ calendar, username }: IsometricMapProps) {
-  const [scale, setScale] = useState(1);
-  const [pan, setPan] = useState({ x: 0, y: 0 });
-  const [isDragging, setIsDragging] = useState(false);
-  const lastMousePos = useRef({ x: 0, y: 0 });
-
   // 将 ContributionCalendar 扁平化为 { w, d, level }[]
   const data = useMemo(() => {
     const result: { w: number; d: number; level: number }[] = [];
@@ -131,14 +126,18 @@ export default function IsometricMap({ calendar, username }: IsometricMapProps) 
           ? "animated-water-wave"
           : "animated-wave";
 
+      const interactiveClass = !isBaseWater ? "interactive-block" : "";
+
       return `
-        <g transform="translate(${sx}, ${sy + 14 - h})" class="${animationClass}" ${!isBaseWater ? `style="animation-delay: ${delay.toFixed(2)}s"` : ""}>
-          <polygon points="0,0 0,${h} -14,${h - 7} -14,-7" fill="${texLeft}" />
-          <polygon points="0,0 14,-7 14,${h - 7} 0,${h}" fill="${texRight}" />
-          <polygon points="0,-14 14,-7 0,0 -14,-7" fill="${texTop}" />
-          <polygon points="0,0 0,${h} -14,${h - 7} -14,-7" fill="#000" opacity="${isWater || isBaseWater ? "0.4" : "0.5"}" />
-          <polygon points="0,0 14,-7 14,${h - 7} 0,${h}" fill="#000" opacity="0.15" />
-          <polygon points="0,-14 14,-7 0,0 -14,-7" fill="#fff" opacity="${isWater || isBaseWater ? "0.1" : "0.05"}" />
+        <g transform="translate(${sx}, ${sy + 14 - h})">
+          <g class="${animationClass} ${interactiveClass}" ${!isBaseWater ? `style="animation-delay: ${delay.toFixed(2)}s"` : ""}>
+            <polygon points="0,0 0,${h} -14,${h - 7} -14,-7" fill="${texLeft}" />
+            <polygon points="0,0 14,-7 14,${h - 7} 0,${h}" fill="${texRight}" />
+            <polygon points="0,-14 14,-7 0,0 -14,-7" fill="${texTop}" />
+            <polygon points="0,0 0,${h} -14,${h - 7} -14,-7" fill="#000" opacity="${isWater || isBaseWater ? "0.4" : "0.5"}" />
+            <polygon points="0,0 14,-7 14,${h - 7} 0,${h}" fill="#000" opacity="0.15" />
+            <polygon points="0,-14 14,-7 0,0 -14,-7" fill="#fff" opacity="${isWater || isBaseWater ? "0.1" : "0.05"}" />
+          </g>
         </g>`;
     };
 
@@ -164,6 +163,13 @@ export default function IsometricMap({ calendar, username }: IsometricMapProps) 
       .animated-water-wave {
         animation: water-float 4s ease-in-out infinite;
       }
+      .interactive-block {
+        transition: filter 0.2s;
+        cursor: crosshair;
+      }
+      .interactive-block:hover {
+        filter: brightness(1.5) contrast(1.2);
+      }
       @keyframes float {
         0%, 100% { transform: translateY(0); }
         50% { transform: translateY(-8px); }
@@ -178,32 +184,6 @@ export default function IsometricMap({ calendar, username }: IsometricMapProps) 
   <g>${blocks}</g>
 </svg>`;
   }, [data, weeks]);
-
-  // ===== 交互事件 =====
-  const handleMouseDown = (e: React.MouseEvent) => {
-    setIsDragging(true);
-    lastMousePos.current = { x: e.clientX, y: e.clientY };
-  };
-
-  const handleMouseMove = (e: React.MouseEvent) => {
-    if (!isDragging) return;
-    const dx = e.clientX - lastMousePos.current.x;
-    const dy = e.clientY - lastMousePos.current.y;
-    setPan((prev) => ({ x: prev.x + dx, y: prev.y + dy }));
-    lastMousePos.current = { x: e.clientX, y: e.clientY };
-  };
-
-  const handleMouseUp = () => setIsDragging(false);
-
-  const handleWheel = (e: React.WheelEvent) => {
-    const sensitivity = 0.0015;
-    setScale((prev) => Math.min(Math.max(0.3, prev - e.deltaY * sensitivity), 5));
-  };
-
-  const resetView = () => {
-    setScale(1);
-    setPan({ x: 0, y: 0 });
-  };
 
   const handleDownload = () => {
     const blob = new Blob([svgContent], { type: "image/svg+xml" });
@@ -223,46 +203,22 @@ export default function IsometricMap({ calendar, username }: IsometricMapProps) 
     <div className="w-full mt-8">
       {/* 工具栏 */}
       <div className="flex items-center justify-between mb-3">
-        <div className="flex items-center gap-3">
-          <span className="text-[#5ec462] text-sm mc-text-shadow">
-            {calendar.totalContributions.toLocaleString()} contributions
-          </span>
-          <span className="text-[#888] text-xs">
-            Scale: {scale.toFixed(2)}x
-          </span>
-        </div>
-        <div className="flex gap-3">
-          <button onClick={resetView} className="mc-btn-secondary text-xs">
-            RESET VIEW
-          </button>
-          <button onClick={handleDownload} className="mc-btn text-sm px-4 py-2">
-            <span>DOWNLOAD .SVG</span>
-          </button>
-        </div>
+        <span className="text-[#5ec462] text-sm mc-text-shadow">
+          {calendar.totalContributions.toLocaleString()} contributions
+        </span>
+        <button onClick={handleDownload} className="mc-btn text-sm px-4 py-2">
+          <span>DOWNLOAD .SVG</span>
+        </button>
       </div>
 
-      {/* SVG 查看器（拖拽 + 缩放） */}
+      {/* SVG 渲染区 */}
       <div
-        className={`mc-display relative !min-h-[400px] ${isDragging ? "cursor-grabbing" : "cursor-grab"}`}
-        onMouseDown={handleMouseDown}
-        onMouseMove={handleMouseMove}
-        onMouseUp={handleMouseUp}
-        onMouseLeave={handleMouseUp}
-        onWheel={handleWheel}
-      >
-        <div
-          className="absolute inset-0 w-full h-full flex items-center justify-center"
-          style={{
-            transform: `translate(${pan.x}px, ${pan.y}px) scale(${scale})`,
-            transitionDuration: isDragging ? "0ms" : "150ms",
-            transitionProperty: "transform",
-          }}
-          dangerouslySetInnerHTML={{ __html: svgContent }}
-        />
-      </div>
+        className="mc-display overflow-auto"
+        dangerouslySetInnerHTML={{ __html: svgContent }}
+      />
 
       <p className="text-[#666] text-xs mt-2 text-center mc-text-shadow-light">
-        Drag to pan &bull; Scroll to zoom &bull; Blocks: water → dirt → grass → stone → diamond
+        Hover to highlight &bull; Blocks: water → dirt → grass → stone → diamond
       </p>
     </div>
   );
