@@ -298,7 +298,8 @@ export default function IsometricMap({ calendar, username, avatarUrl }: Isometri
       .block-tooltip {
         opacity: 0;
         pointer-events: none;
-        transition: opacity 0.15s;
+        transform: translateY(8px);
+        transition: opacity 0.25s ease, transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
         paint-order: stroke;
         stroke: #000;
         stroke-width: 3px;
@@ -306,6 +307,7 @@ export default function IsometricMap({ calendar, username, avatarUrl }: Isometri
       }
       .block-column:hover .block-tooltip {
         opacity: 1;
+        transform: translateY(0);
       }
       .block-column {
         cursor: crosshair;
