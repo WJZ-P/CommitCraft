@@ -22,14 +22,17 @@ const TEXTURES: Record<string, string> = {
   diamond_ore: `${TEX_BASE}diamond_ore.png`,
 };
 
-// 贡献等级 → 方块类型映射
-const LEVELS = [
-  { id: "water", top: "water", side: "water", height: 8 },
-  { id: "dirt", top: "dirt", side: "dirt", height: 16 },
-  { id: "grass", top: "grassTop", side: "grassSide", height: 26 },
-  { id: "stone", top: "stone", side: "stone", height: 38 },
-  { id: "diamond", top: "diamond_ore", side: "diamond_ore", height: 52 },
-];
+// 贡献等级 → 方块类型映射（每层固定高度 14，堆叠式）
+const BLOCK_H = 14; // 每层方块的固定高度
+
+const BLOCK_TYPES = {
+  waterDeep: { top: "water", side: "water" },
+  water:     { top: "water", side: "water" },
+  dirt:      { top: "dirt", side: "dirt" },
+  grass:     { top: "grassTop", side: "grassSide" },
+  stone:     { top: "stone", side: "stone" },
+  diamond:   { top: "diamond_ore", side: "diamond_ore" },
+};
 
 // GitHub 颜色等级 → 0~4
 function colorToLevel(color: string): number {
@@ -100,13 +103,23 @@ export default function IsometricMap({ calendar, username, avatarUrl }: Isometri
     if (data.length === 0) return "";
 
     // SVG 滤镜 + 材质 pattern
+    // 水面染色参数与 Gemini Canvas 引擎对齐：
+    // waterSurface = tintImage(water, '#4a82ff') 清透蔚蓝
+    // waterDeep    = tintImage(water, '#203c80') 深邃暗蓝
     const defs = `
-      <filter id="tint-water">
+      <filter id="tint-water-surface">
         <feColorMatrix type="matrix" values="
-          0.1 0 0 0 0.15
-          0.3 0 0 0 0.35
-          0.6 0 0 0 0.85
-          0   0 0 1 0" />
+          0.29 0 0 0 0
+          0.51 0 0 0 0
+          1.0  0 0 0 0
+          0    0 0 1 0" />
+      </filter>
+      <filter id="tint-water-deep">
+        <feColorMatrix type="matrix" values="
+          0.125 0 0 0 0
+          0.235 0 0 0 0
+          0.5   0 0 0 0
+          0     0 0 1 0" />
       </filter>
       <filter id="tint-grass">
         <feColorMatrix type="matrix" values="
@@ -118,10 +131,31 @@ export default function IsometricMap({ calendar, username, avatarUrl }: Isometri
     ${Object.entries(TEXTURES)
       .map(([key, url]) => {
         const getFilter = () => {
-          if (key === "water") return 'filter="url(#tint-water)"';
           if (key === "grassTop") return 'filter="url(#tint-grass)"';
           return "";
         };
+        // 水的贴图需要两套 pattern（surface 和 deep）
+        if (key === "water") {
+          return `
+        <pattern id="pat-waterSurface-top" width="16" height="16" patternUnits="userSpaceOnUse" patternTransform="matrix(0.875, 0.4375, -0.875, 0.4375, 0, -14)">
+          <image href="${url}" width="16" height="16" preserveAspectRatio="none" style="image-rendering: pixelated;" filter="url(#tint-water-surface)" />
+        </pattern>
+        <pattern id="pat-waterSurface-left" width="16" height="16" patternUnits="userSpaceOnUse" patternTransform="matrix(0.875, 0.4375, 0, 1, -14, -7)">
+          <image href="${url}" width="16" height="16" preserveAspectRatio="none" style="image-rendering: pixelated;" filter="url(#tint-water-surface)" />
+        </pattern>
+        <pattern id="pat-waterSurface-right" width="16" height="16" patternUnits="userSpaceOnUse" patternTransform="matrix(0.875, -0.4375, 0, 1, 0, 0)">
+          <image href="${url}" width="16" height="16" preserveAspectRatio="none" style="image-rendering: pixelated;" filter="url(#tint-water-surface)" />
+        </pattern>
+        <pattern id="pat-waterDeep-top" width="16" height="16" patternUnits="userSpaceOnUse" patternTransform="matrix(0.875, 0.4375, -0.875, 0.4375, 0, -14)">
+          <image href="${url}" width="16" height="16" preserveAspectRatio="none" style="image-rendering: pixelated;" filter="url(#tint-water-deep)" />
+        </pattern>
+        <pattern id="pat-waterDeep-left" width="16" height="16" patternUnits="userSpaceOnUse" patternTransform="matrix(0.875, 0.4375, 0, 1, -14, -7)">
+          <image href="${url}" width="16" height="16" preserveAspectRatio="none" style="image-rendering: pixelated;" filter="url(#tint-water-deep)" />
+        </pattern>
+        <pattern id="pat-waterDeep-right" width="16" height="16" patternUnits="userSpaceOnUse" patternTransform="matrix(0.875, -0.4375, 0, 1, 0, 0)">
+          <image href="${url}" width="16" height="16" preserveAspectRatio="none" style="image-rendering: pixelated;" filter="url(#tint-water-deep)" />
+        </pattern>`;
+        }
         return `
         <pattern id="pat-${key}-top" width="16" height="16" patternUnits="userSpaceOnUse" patternTransform="matrix(0.875, 0.4375, -0.875, 0.4375, 0, -14)">
           <image href="${url}" width="16" height="16" preserveAspectRatio="none" style="image-rendering: pixelated;" ${getFilter()} />
@@ -135,59 +169,105 @@ export default function IsometricMap({ calendar, username, avatarUrl }: Isometri
       })
       .join("\n")}`;
 
-    // 辅助：渲染单个方块
-    const renderBlock = (
-      w: number,
-      d: number,
-      renderLevel: number,
-      isBaseWater: boolean
-    ) => {
-      const config = LEVELS[renderLevel];
-      const h = config.height;
-      const isWater = renderLevel === 0;
+    // 根据 level 确定每层用什么方块类型
+    function getBlockType(level: number, z: number): keyof typeof BLOCK_TYPES {
+      if (level === 1) return "dirt";
+      if (level === 2) return z === level ? "grass" : "dirt";
+      if (level === 3) return "stone";
+      // level === 4
+      return z === level ? "diamond" : "stone";
+    }
 
-      const sx = (w - d) * TILE_W;
-      const sy = (w + d) * TILE_H;
-
-      const delay = -((w + d) * 0.15);
-
-      const texTop = `url(#pat-${config.top}-top)`;
-      const texLeft = `url(#pat-${config.side}-left)`;
-      const texRight = `url(#pat-${config.side}-right)`;
-
-      const animationClass = isBaseWater
-        ? ""
-        : isWater
-          ? "animated-water-wave"
-          : "animated-wave";
-
-      const interactiveClass = !isBaseWater ? "interactive-block" : "";
-
+    // 渲染水方块（蔚蓝，有浮动动画+扫光，光照：左0.2 右0.05 顶shimmer白色）
+    const renderWater = (sx: number, sy: number, delay: number) => {
+      const h = BLOCK_H;
       return `
-        <g transform="translate(${sx}, ${sy + 14 - h})">
-          <g class="${animationClass} ${interactiveClass}" ${!isBaseWater ? `style="animation-delay: ${delay.toFixed(2)}s"` : ""}>
-            <polygon points="0,0 0,${h} -14,${h - 7} -14,-7" fill="${texLeft}" />
-            <polygon points="0,0 14,-7 14,${h - 7} 0,${h}" fill="${texRight}" />
-            <polygon points="0,-14 14,-7 0,0 -14,-7" fill="${texTop}" />
-            <polygon points="0,0 0,${h} -14,${h - 7} -14,-7" fill="#000" opacity="${isWater || isBaseWater ? "0.4" : "0.5"}" />
-            <polygon points="0,0 14,-7 14,${h - 7} 0,${h}" fill="#000" opacity="0.15" />
-            <polygon points="0,-14 14,-7 0,0 -14,-7" fill="#fff" opacity="${isWater || isBaseWater ? "0.1" : "0.05"}" />
+        <g transform="translate(${sx}, ${sy})">
+          <g class="animated-water-wave" style="animation-delay: ${delay.toFixed(2)}s">
+            <polygon points="0,0 0,${h} -14,${h - 7} -14,-7" fill="url(#pat-waterSurface-left)" />
+            <polygon points="0,0 14,-7 14,${h - 7} 0,${h}" fill="url(#pat-waterSurface-right)" />
+            <polygon points="0,-14 14,-7 0,0 -14,-7" fill="url(#pat-waterSurface-top)" />
+            <polygon points="0,0 0,${h} -14,${h - 7} -14,-7" fill="#000" opacity="0.2" />
+            <polygon points="0,0 14,-7 14,${h - 7} 0,${h}" fill="#000" opacity="0.05" />
+            <polygon points="0,-14 14,-7 0,0 -14,-7" fill="#fff" class="water-shimmer" style="animation-delay: ${delay.toFixed(2)}s" />
           </g>
         </g>`;
     };
 
-    let blocks = "";
+    // 渲染陆地方块（固定高度 BLOCK_H=14，光照：左0.5 右0.15 顶0.05白色）
+    const renderBlock = (
+      sx: number,
+      cy: number,
+      blockType: keyof typeof BLOCK_TYPES,
+      delay: number
+    ) => {
+      const bt = BLOCK_TYPES[blockType];
+      const h = BLOCK_H;
+
+      const texTop = `url(#pat-${bt.top}-top)`;
+      const texLeft = `url(#pat-${bt.side}-left)`;
+      const texRight = `url(#pat-${bt.side}-right)`;
+
+      return `
+        <g transform="translate(${sx}, ${cy})">
+          <g class="animated-wave interactive-block" style="animation-delay: ${delay.toFixed(2)}s">
+            <polygon points="0,0 0,${h} -14,${h - 7} -14,-7" fill="${texLeft}" />
+            <polygon points="0,0 14,-7 14,${h - 7} 0,${h}" fill="${texRight}" />
+            <polygon points="0,-14 14,-7 0,0 -14,-7" fill="${texTop}" />
+            <polygon points="0,0 0,${h} -14,${h - 7} -14,-7" fill="#000" opacity="0.5" />
+            <polygon points="0,0 14,-7 14,${h - 7} 0,${h}" fill="#000" opacity="0.15" />
+            <polygon points="0,-14 14,-7 0,0 -14,-7" fill="#fff" opacity="0.05" />
+          </g>
+        </g>`;
+    };
+
+    // ===== 构建渲染队列：水底座 + 陆地方块 =====
+    interface VoxelEntry {
+      w: number; d: number; z: number;
+      kind: "water" | "land";
+      blockType?: keyof typeof BLOCK_TYPES;
+    }
+    const voxels: VoxelEntry[] = [];
+
     data.forEach(({ w, d, level }) => {
-      // 底座水层（静止）
-      blocks += renderBlock(w, d, 0, true);
-      // 表面方块（动画）
-      blocks += renderBlock(w, d, level, false);
+      // 每个格子都有水底座 (z=0)
+      voxels.push({ w, d, z: 0, kind: "water" });
+
+      if (level > 0) {
+        // 陆地堆叠
+        for (let z = 0; z <= level; z++) {
+          voxels.push({ w, d, z, kind: "land", blockType: getBlockType(level, z) });
+        }
+      }
     });
 
-    // 动态计算 viewBox — 精确覆盖等距投影的实际边界
-    // 等距坐标: sx = (w - d) * TILE_W, sy = (w + d) * TILE_H
-    // w: 0 ~ weeks-1, d: 0 ~ 6
-    const maxH = LEVELS[LEVELS.length - 1].height; // 最高方块高度
+    // 画家算法排序：先按深度(w+d)，再按高度(z)，同高度水在陆地前
+    voxels.sort((a, b) => {
+      const depthA = a.w + a.d;
+      const depthB = b.w + b.d;
+      if (depthA !== depthB) return depthA - depthB;
+      if (a.z !== b.z) return a.z - b.z;
+      const kindOrder = { water: 0, land: 1 };
+      return kindOrder[a.kind] - kindOrder[b.kind];
+    });
+
+    let allBlocks = "";
+    voxels.forEach((v) => {
+      const sx = (v.w - v.d) * TILE_W;
+      const sy = (v.w + v.d) * TILE_H;
+      const delay = -((v.w + v.d) * 0.15);
+
+      if (v.kind === "water") {
+        allBlocks += renderWater(sx, sy, delay);
+      } else {
+        const cy = sy - v.z * BLOCK_H;
+        allBlocks += renderBlock(sx, cy, v.blockType!, delay);
+      }
+    });
+
+    // 动态计算 viewBox
+    const maxZ = 4; // 最高堆叠层数
+    const maxH = (maxZ + 1) * BLOCK_H + BLOCK_H; // 最高方块顶部偏移
     const minSx = (0 - 6) * TILE_W;           // 左边界: w=0, d=6
     const maxSx = (weeks - 1 - 0) * TILE_W;   // 右边界: w=max, d=0
     const minSy = (0 + 0) * TILE_H;           // 上边界: w=0, d=0
@@ -209,7 +289,7 @@ export default function IsometricMap({ calendar, username, avatarUrl }: Isometri
         animation: float 4s ease-in-out infinite;
       }
       .animated-water-wave {
-        animation: water-float 4s ease-in-out infinite;
+        animation: water-float 6s ease-in-out infinite;
       }
       .interactive-block {
         transition: filter 0.2s;
@@ -226,10 +306,21 @@ export default function IsometricMap({ calendar, username, avatarUrl }: Isometri
         0%, 100% { transform: translateY(0); }
         50% { transform: translateY(-3px); }
       }
+      /* 水面扫光：opacity 脉冲 + 基于位置的 delay → 阳光扫过海面 */
+      .water-shimmer {
+        opacity: 0.03;
+        animation: shimmer 4s ease-in-out infinite;
+      }
+      @keyframes shimmer {
+        0%, 100% { opacity: 0.03; }
+        40% { opacity: 0.25; }
+        60% { opacity: 0.25; }
+        80% { opacity: 0.03; }
+      }
     </style>
   </defs>
   <rect x="${vbX}" y="${vbY}" width="${vbW}" height="${vbH}" fill="#09121c" />
-  <g>${blocks}</g>
+  <g>${allBlocks}</g>
 </svg>`;
   }, [data, weeks]);
 
