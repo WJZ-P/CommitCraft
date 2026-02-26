@@ -1,11 +1,13 @@
 "use client";
 
-import { useMemo } from "react";
+import { useState, useMemo } from "react";
 import type { ContributionCalendar } from "@/app/lib/github";
+
+type MapMode = "color" | "count";
 
 // ===== 等距投影配置 =====
 const TILE_W = 14;
-const TILE_H = 7;
+const TILE_H =7;
 
 // MC 原版材质 CDN
 const TEX_BASE =
@@ -41,22 +43,55 @@ function colorToLevel(color: string): number {
   return map[color] ?? 0;
 }
 
+// 贡献数 → 0~4（基于整体数据的分位数）
+function countToLevel(count: number, thresholds: number[]): number {
+  if (count === 0) return 0;
+  if (count <= thresholds[0]) return 1;
+  if (count <= thresholds[1]) return 2;
+  if (count <= thresholds[2]) return 3;
+  return 4;
+}
+
+// 计算分位数阈值（排除 0 后的 25%/50%/75%）
+function computeThresholds(calendar: ContributionCalendar): number[] {
+  const counts: number[] = [];
+  calendar.weeks.forEach((week) => {
+    week.contributionDays.forEach((day) => {
+      if (day.contributionCount > 0) counts.push(day.contributionCount);
+    });
+  });
+  if (counts.length === 0) return [1, 2, 3];
+  counts.sort((a, b) => a - b);
+  const q = (p: number) => counts[Math.min(Math.floor(p * counts.length), counts.length - 1)];
+  return [q(0.25), q(0.5), q(0.75)];
+}
+
 interface IsometricMapProps {
   calendar: ContributionCalendar;
   username: string;
+  avatarUrl?: string | null;
 }
 
-export default function IsometricMap({ calendar, username }: IsometricMapProps) {
+export default function IsometricMap({ calendar, username, avatarUrl }: IsometricMapProps) {
+  const [mode, setMode] = useState<MapMode>("color");
+
+  // 预计算分位数阈值（仅 count 模式用到）
+  const thresholds = useMemo(() => computeThresholds(calendar), [calendar]);
+
   // 将 ContributionCalendar 扁平化为 { w, d, level }[]
   const data = useMemo(() => {
     const result: { w: number; d: number; level: number }[] = [];
     calendar.weeks.forEach((week, w) => {
       week.contributionDays.forEach((day, d) => {
-        result.push({ w, d, level: colorToLevel(day.color) });
+        const level =
+          mode === "color"
+            ? colorToLevel(day.color)
+            : countToLevel(day.contributionCount, thresholds);
+        result.push({ w, d, level });
       });
     });
     return result;
-  }, [calendar]);
+  }, [calendar, mode, thresholds]);
 
   const weeks = calendar.weeks.length;
 
@@ -149,11 +184,24 @@ export default function IsometricMap({ calendar, username }: IsometricMapProps) 
       blocks += renderBlock(w, d, level, false);
     });
 
-    // 动态计算 viewBox
-    const vbW = (weeks + 7) * TILE_W + 40;
-    const vbH = (weeks + 7) * TILE_H + 80;
+    // 动态计算 viewBox — 精确覆盖等距投影的实际边界
+    // 等距坐标: sx = (w - d) * TILE_W, sy = (w + d) * TILE_H
+    // w: 0 ~ weeks-1, d: 0 ~ 6
+    const maxH = LEVELS[LEVELS.length - 1].height; // 最高方块高度
+    const minSx = (0 - 6) * TILE_W;           // 左边界: w=0, d=6
+    const maxSx = (weeks - 1 - 0) * TILE_W;   // 右边界: w=max, d=0
+    const minSy = (0 + 0) * TILE_H;           // 上边界: w=0, d=0
+    const maxSy = (weeks - 1 + 6) * TILE_H;   // 下边界: w=max, d=6
 
-    return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${-weeks * TILE_W / 2 - 20} -80 ${vbW} ${vbH}" width="100%" height="100%">
+    const padding = 20;
+    // 方块顶部最高点在 sy + 14 - h - 14 = sy - h
+    const vbX = minSx - TILE_W - padding;
+    const vbY = minSy - maxH - padding;
+    // 方块底部最低点在 sy + 14 - h + h = sy + 14
+    const vbW = (maxSx + TILE_W) - vbX + padding * 2;
+    const vbH = (maxSy + maxH) - vbY + padding * 2;
+
+    return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${vbX} ${vbY} ${vbW} ${vbH}" width="100%" height="100%">
   <defs>
     ${defs}
     <style>
@@ -180,7 +228,7 @@ export default function IsometricMap({ calendar, username }: IsometricMapProps) 
       }
     </style>
   </defs>
-  <rect x="${-weeks * TILE_W / 2 - 100}" y="-200" width="${vbW + 200}" height="${vbH + 300}" fill="#09121c" />
+  <rect x="${vbX}" y="${vbY}" width="${vbW}" height="${vbH}" fill="#09121c" />
   <g>${blocks}</g>
 </svg>`;
   }, [data, weeks]);
@@ -201,24 +249,48 @@ export default function IsometricMap({ calendar, username }: IsometricMapProps) 
 
   return (
     <div className="w-full mt-8">
-      {/* 工具栏 */}
-      <div className="flex items-center justify-between mb-3">
-        <span className="text-[#5ec462] text-sm mc-text-shadow">
-          {calendar.totalContributions.toLocaleString()} contributions
-        </span>
-        <button onClick={handleDownload} className="mc-btn text-sm px-4 py-2">
-          <span>DOWNLOAD .SVG</span>
-        </button>
+      {/* 用户信息栏 */}
+      <div className="mc-player-bar mb-3">
+        <div className="flex items-center gap-3">
+          {avatarUrl && (
+            <div className="mc-avatar-frame">
+              <img
+                src={avatarUrl}
+                alt={username}
+                className="w-7 h-7"
+              />
+            </div>
+          )}
+          <div className="flex flex-col leading-tight">
+            <span className="text-white text-sm font-bold mc-text-shadow">
+              {username}
+            </span>
+            <span className="text-[#FFAA00] text-xs mc-text-shadow-gold">
+              {calendar.totalContributions.toLocaleString()} contributions
+            </span>
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setMode((m) => (m === "color" ? "count" : "color"))}
+            className="mc-btn-secondary text-xs"
+          >
+            MODE: {mode === "color" ? "COLOR" : "COUNT"}
+          </button>
+          <button onClick={handleDownload} className="mc-btn-secondary text-xs">
+            DOWNLOAD .SVG
+          </button>
+        </div>
       </div>
 
       {/* SVG 渲染区 */}
       <div
-        className="mc-display overflow-auto"
+        className="mc-display overflow-auto !p-0"
         dangerouslySetInnerHTML={{ __html: svgContent }}
       />
 
-      <p className="text-[#666] text-xs mt-2 text-center mc-text-shadow-light">
-        Hover to highlight &bull; Blocks: water → dirt → grass → stone → diamond
+      <p className="text-[#888] text-xs mt-2 text-center mc-text-shadow-light">
+        Hover to highlight &bull; water → dirt → grass → stone → diamond
       </p>
     </div>
   );

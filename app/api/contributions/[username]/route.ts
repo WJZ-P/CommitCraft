@@ -32,10 +32,10 @@ export async function GET(
 
     try {
         console.log("[API] 开始调用 fetchContributions...");
-        const calendar = await fetchContributions(username, token, from, to);
+        const { calendar, avatarUrl } = await fetchContributions(username, token, from, to);
         console.log("[API] ✅ 成功! totalContributions =", calendar.totalContributions, "| weeks =", calendar.weeks.length);
 
-        return Response.json(calendar, {
+        return Response.json({ ...calendar, avatarUrl }, {
             headers: {
                 "Cache-Control": "public, s-maxage=3600, stale-while-revalidate=1800",
             },

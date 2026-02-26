@@ -37,6 +37,7 @@ export interface ContributionCalendar {
 
 export interface GitHubContributionResponse {
   user: {
+    avatarUrl: string;
     contributionsCollection: {
       contributionCalendar: ContributionCalendar;
     };
@@ -48,6 +49,7 @@ export interface GitHubContributionResponse {
 const CONTRIBUTIONS_QUERY = `
   query($username: String!, $from: DateTime, $to: DateTime) {
     user(login: $username) {
+      avatarUrl
       contributionsCollection(from: $from, to: $to) {
         contributionCalendar {
           totalContributions
@@ -74,12 +76,17 @@ const CONTRIBUTIONS_QUERY = `
  * @param from - 起始日期（可选，默认为过去一年）
  * @param to - 结束日期（可选，默认为今天）
  */
+export interface FetchContributionsResult {
+  calendar: ContributionCalendar;
+  avatarUrl: string;
+}
+
 export async function fetchContributions(
   username: string,
   token: string,
   from?: string,
   to?: string
-): Promise<ContributionCalendar> {
+): Promise<FetchContributionsResult> {
   const variables: Record<string, string> = { username };
   if (from) variables.from = new Date(from).toISOString();
   if (to) variables.to = new Date(to).toISOString();
@@ -116,5 +123,8 @@ export async function fetchContributions(
     throw new Error(`GitHub user "${username}" not found`);
   }
 
-  return data.user.contributionsCollection.contributionCalendar;
+  return {
+    calendar: data.user.contributionsCollection.contributionCalendar,
+    avatarUrl: data.user.avatarUrl,
+  };
 }

@@ -113,7 +113,7 @@ body {
   box-shadow:
     inset 4px 4px 0 0 #5eac44,
     inset -4px -4px 0 0 #225313;
-  text-shadow: 2px 2px 0px #1a3b11;
+  text-shadow: 2px 2px 0 #1a3b11;
   cursor: pointer;
   transition: all 0.1s;
 }
@@ -128,9 +128,6 @@ body {
     inset -4px -4px 0 0 #5eac44;
 }
 
-.mc-btn:active > * {
-  transform: translate(2px, 2px);
-}
 
 .mc-btn:disabled {
   opacity: 0.5;
@@ -230,6 +227,33 @@ body {
 
 .mc-nav-link:hover {
   background: #4caf33;
+}
+
+/* ===== MC 头像框（物品栏格子风格） ===== */
+.mc-avatar-frame {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px;
+  background: #555;
+  border: 2px solid #000;
+  box-shadow:
+    inset 2px 2px 0 0 #373737,
+    inset -2px -2px 0 0 #8b8b8b;
+  image-rendering: pixelated;
+}
+
+/* ===== MC 玩家信息栏 ===== */
+.mc-player-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 10px;
+  background: #1e1e1e;
+  border: 2px solid #000;
+  box-shadow:
+    inset 2px 2px 0 0 #373737,
+    inset -2px -2px 0 0 #4a4a4a;
 }
 
 /* ===== 页脚遮罩 ===== */

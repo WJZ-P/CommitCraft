@@ -27,18 +27,23 @@ export default function Home() {
     const [username, setUsername] = useState("");
     const [loading, setLoading] = useState(false);
     const [calendarData, setCalendarData] = useState<ContributionCalendar | null>(null);
+    const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
     const [error, setError] = useState<string | null>(null);
     const [ores, setOres] = useState<{ id: number; x: number; y: number; type: string }[]>([]);
     const [weather, setWeather] = useState<"clear" | "rain" | "snow">("snow");
     const mouseRef = useRef({x: 0, y: 0});
+    //  指向石头背景的ref，避免把鼠标位置挂载在全局HTML上，优化性能。
+    const bgRef = useRef<HTMLDivElement>(null);
 
     // 监听鼠标位置，注入 CSS 变量 + 更新 ref（不触发 re-render）
     const handleMouseMove = useCallback((e: MouseEvent) => {
         //  这里的x和y是在做归一化处理，第一步除法结果是0-1， 减去0.5，就是-0.5 ~ 0.5，再乘以2就是-1到1，鼠标在最左侧就是-1，最右侧就是1.
         const x = (e.clientX / window.innerWidth - 0.5) * 2;
         const y = (e.clientY / window.innerHeight - 0.5) * 2;
-        document.documentElement.style.setProperty("--mouse-x", x.toString());
-        document.documentElement.style.setProperty("--mouse-y", y.toString());
+        if (bgRef.current) {
+            bgRef.current.style.setProperty("--mouse-x", x.toString());
+            bgRef.current.style.setProperty("--mouse-y", y.toString());
+        }
         mouseRef.current = {x, y};
     }, []);
 
@@ -74,6 +79,7 @@ export default function Home() {
         setLoading(true);
         setError(null);
         setCalendarData(null);
+        setAvatarUrl(null);
 
         try {
             const res = await fetch(`/api/contributions/${encodeURIComponent(username.trim())}`);
@@ -85,6 +91,7 @@ export default function Home() {
             }
 
             setCalendarData(data as ContributionCalendar);
+            setAvatarUrl(data.avatarUrl || null);
         } catch {
             setError("Network error. Please try again.");
         } finally {
@@ -97,6 +104,7 @@ export default function Home() {
 
             {/* ===== 背景层 1：石头材质 + 动态矿石 ===== */}
             <div
+                ref={bgRef}
                 className="fixed inset-0 z-[0] mc-bg-stone mc-texture"
                 style={{backgroundImage: `url('${TEXTURES.stone}')`}}
             >
@@ -260,7 +268,7 @@ export default function Home() {
 
                         {/* ===== 等距 SVG 地图 ===== */}
                         {calendarData && !loading && (
-                            <IsometricMap calendar={calendarData} username={username} />
+                            <IsometricMap calendar={calendarData} username={username} avatarUrl={avatarUrl} />
                         )}
                     </div>
                 </div>

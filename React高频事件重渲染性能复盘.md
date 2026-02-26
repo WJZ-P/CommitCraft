@@ -167,9 +167,36 @@ State 在 <Component> → 局部重渲染 ✅
 
 使用 `dangerouslySetInnerHTML` 注入大量 HTML/SVG 时，所在组件的任何 re-render 都会触发昂贵的字符串 Diff。务必确保该组件的 re-render 频率极低，或用 `React.memo` 保护。
 
-### 规则 4：CSS 变量的继承陷阱
+### 规则 4：CSS 变量的继承陷阱 — 必须限定作用域
 
-CSS 自定义属性设在 `:root` 上会影响整棵 DOM 树的样式计算。如果变量高频变化，应将其限定在实际使用的子树节点上。
+CSS 自定义属性（Custom Properties）是**继承**的。设在 `:root`（`document.documentElement`）上，意味着整棵 DOM 树的每一个节点都会被标记为"继承的样式可能已变"。
+
+**灾难场景**：当页面中存在几千个 SVG 节点时，每次 `mousemove` 修改 `:root` 上的 CSS 变量，浏览器都要对这几千个节点执行 **Style Recalculation**（样式重算），即使这些节点根本不使用这个变量。
+
+```tsx
+// ❌ 设在 :root — 影响整棵 DOM 树
+document.documentElement.style.setProperty("--mouse-x", x.toString());
+document.documentElement.style.setProperty("--mouse-y", y.toString());
+
+// ✅ 设在实际消费变量的元素上 — 只影响该子树
+const bgRef = useRef<HTMLDivElement>(null);
+
+if (bgRef.current) {
+    bgRef.current.style.setProperty("--mouse-x", x.toString());
+    bgRef.current.style.setProperty("--mouse-y", y.toString());
+}
+```
+
+```tsx
+// 背景层 div 绑定 ref
+<div ref={bgRef} className="fixed inset-0 mc-bg-stone mc-texture" />
+```
+
+**实测效果**：将 CSS 变量从 `:root` 改为设在背景层 `div` 上后，在包含大量 SVG 节点的页面中帧率明显回升、稳定保持流畅。
+
+**原理**：浏览器的 Style Recalculation 是按子树范围进行的。变量设在某个 `div` 上，只有该 `div` 及其子节点需要重算样式；而 SVG 所在的兄弟子树完全不受影响，Style Recalculation 的工作量从"几千个节点"降到"背景层的几十个节点"。
+
+**原则：高频变化的 CSS 变量，务必设在实际使用它的最小 DOM 子树的根节点上，绝不要无脑挂 `:root`。**
 
 ---
 
