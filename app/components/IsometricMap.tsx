@@ -81,16 +81,16 @@ export default function IsometricMap({ calendar, username, avatarUrl }: Isometri
   // 预计算分位数阈值（仅 count 模式用到）
   const thresholds = useMemo(() => computeThresholds(calendar), [calendar]);
 
-  // 将 ContributionCalendar 扁平化为 { w, d, level }[]
+  // 将 ContributionCalendar 扁平化为 { w, d, level, count }[]
   const data = useMemo(() => {
-    const result: { w: number; d: number; level: number }[] = [];
+    const result: { w: number; d: number; level: number; count: number }[] = [];
     calendar.weeks.forEach((week, w) => {
       week.contributionDays.forEach((day, d) => {
         const level =
           mode === "color"
             ? colorToLevel(day.color)
             : countToLevel(day.contributionCount, thresholds);
-        result.push({ w, d, level });
+        result.push({ w, d, level, count: day.contributionCount });
       });
     });
     return result;
@@ -106,6 +106,8 @@ export default function IsometricMap({ calendar, username, avatarUrl }: Isometri
     // 水面染色参数与 Gemini Canvas 引擎对齐：
     // waterSurface = tintImage(water, '#4a82ff') 清透蔚蓝
     // waterDeep    = tintImage(water, '#203c80') 深邃暗蓝
+
+    // feColorMatrix的值永远是四行五列，每行是计算后的新颜色通道RGBA。五列分别代表原图的RGBA和偏移常量1。
     const defs = `
       <filter id="tint-water-surface">
         <feColorMatrix type="matrix" values="
@@ -163,7 +165,7 @@ export default function IsometricMap({ calendar, username, avatarUrl }: Isometri
         <pattern id="pat-${key}-left" width="16" height="16" patternUnits="userSpaceOnUse" patternTransform="matrix(0.875, 0.4375, 0, 1, -14, -7)">
           <image href="${url}" width="16" height="16" preserveAspectRatio="none" style="image-rendering: pixelated;" ${getFilter()} />
         </pattern>
-        <pattern id="pat-${key}-right" width="16" height="16" patternUnits="userSpaceOnUse" patternTransform="matrix(0.875, -0.4375, 0, 1, 0, 0)">
+        <pattern id="pat-${key}-right" width="16" height="16" patternUnits="userSpaceOnUse" patternTransform="matrix(0.875, -0.4375, 0, 0.875, 0, 0)">
           <image href="${url}" width="16" height="16" preserveAspectRatio="none" style="image-rendering: pixelated;" ${getFilter()} />
         </pattern>`;
       })
@@ -222,47 +224,42 @@ export default function IsometricMap({ calendar, username, avatarUrl }: Isometri
     };
 
     // ===== 构建渲染队列：水底座 + 陆地方块 =====
-    interface VoxelEntry {
-      w: number; d: number; z: number;
-      kind: "water" | "land";
-      blockType?: keyof typeof BLOCK_TYPES;
+    // 先按格子分组，每个格子一个 <g class="block-column">
+    interface CellData {
+      w: number; d: number; level: number; count: number;
     }
-    const voxels: VoxelEntry[] = [];
-
-    data.forEach(({ w, d, level }) => {
-      // 每个格子都有水底座 (z=0)
-      voxels.push({ w, d, z: 0, kind: "water" });
-
-      if (level > 0) {
-        // 陆地堆叠
-        for (let z = 0; z <= level; z++) {
-          voxels.push({ w, d, z, kind: "land", blockType: getBlockType(level, z) });
-        }
-      }
-    });
-
-    // 画家算法排序：先按深度(w+d)，再按高度(z)，同高度水在陆地前
-    voxels.sort((a, b) => {
+    // 按画家算法排序格子
+    const sortedCells: CellData[] = [...data].sort((a, b) => {
       const depthA = a.w + a.d;
       const depthB = b.w + b.d;
-      if (depthA !== depthB) return depthA - depthB;
-      if (a.z !== b.z) return a.z - b.z;
-      const kindOrder = { water: 0, land: 1 };
-      return kindOrder[a.kind] - kindOrder[b.kind];
+      return depthA - depthB;
     });
 
     let allBlocks = "";
-    voxels.forEach((v) => {
-      const sx = (v.w - v.d) * TILE_W;
-      const sy = (v.w + v.d) * TILE_H;
-      const delay = -((v.w + v.d) * 0.15);
+    sortedCells.forEach(({ w, d, level, count }) => {
+      const sx = (w - d) * TILE_W;
+      const sy = (w + d) * TILE_H;
+      const delay = -((w + d) * 0.15);
 
-      if (v.kind === "water") {
-        allBlocks += renderWater(sx, sy, delay);
-      } else {
-        const cy = sy - v.z * BLOCK_H;
-        allBlocks += renderBlock(sx, cy, v.blockType!, delay);
+      // 水底座（下沉 一点点，避免水面高于一格方块）
+      let columnSvg = renderWater(sx, sy + 3, delay);
+
+      // 陆地堆叠（从 z=0 开始覆盖水面，共 level 层）
+      if (level > 0) {
+        for (let z = 0; z < level; z++) {
+          const cy = sy - z * BLOCK_H;
+          columnSvg += renderBlock(sx, cy, getBlockType(level, z + 1), delay);
+        }
       }
+
+      // tooltip：显示在最顶层方块的顶面上方
+      // 陆地共 level 层，从 z=0 开始，最高 z = level-1
+      const topZ = level > 0 ? level - 1 : 0;
+      const tooltipY = sy - topZ * BLOCK_H - 14 - 8;
+      columnSvg += `
+        <text class="block-tooltip" x="${sx}" y="${tooltipY}" text-anchor="middle" fill="#FFAA00" font-size="10" font-family="monospace" font-weight="bold">${count}</text>`;
+
+      allBlocks += `<g class="block-column">${columnSvg}</g>`;
     });
 
     // 动态计算 viewBox
@@ -297,6 +294,21 @@ export default function IsometricMap({ calendar, username, avatarUrl }: Isometri
       }
       .interactive-block:hover {
         filter: brightness(1.5) contrast(1.2);
+      }
+      .block-tooltip {
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.15s;
+        paint-order: stroke;
+        stroke: #000;
+        stroke-width: 3px;
+        stroke-linejoin: round;
+      }
+      .block-column:hover .block-tooltip {
+        opacity: 1;
+      }
+      .block-column {
+        cursor: crosshair;
       }
       @keyframes float {
         0%, 100% { transform: translateY(0); }
