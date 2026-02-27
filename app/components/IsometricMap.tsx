@@ -81,16 +81,16 @@ export default function IsometricMap({ calendar, username, avatarUrl }: Isometri
   // 预计算分位数阈值（仅 count 模式用到）
   const thresholds = useMemo(() => computeThresholds(calendar), [calendar]);
 
-  // 将 ContributionCalendar 扁平化为 { w, d, level, count }[]
+  // 将 ContributionCalendar 扁平化为 { w, d, level, count, date }[]
   const data = useMemo(() => {
-    const result: { w: number; d: number; level: number; count: number }[] = [];
+    const result: { w: number; d: number; level: number; count: number; date: string }[] = [];
     calendar.weeks.forEach((week, w) => {
       week.contributionDays.forEach((day, d) => {
         const level =
           mode === "color"
             ? colorToLevel(day.color)
             : countToLevel(day.contributionCount, thresholds);
-        result.push({ w, d, level, count: day.contributionCount });
+        result.push({ w, d, level, count: day.contributionCount, date: day.date });
       });
     });
     return result;
@@ -226,7 +226,7 @@ export default function IsometricMap({ calendar, username, avatarUrl }: Isometri
     // ===== 构建渲染队列：水底座 + 陆地方块 =====
     // 先按格子分组，每个格子一个 <g class="block-column">
     interface CellData {
-      w: number; d: number; level: number; count: number;
+      w: number; d: number; level: number; count: number; date: string;
     }
     // 按画家算法排序格子
     const sortedCells: CellData[] = [...data].sort((a, b) => {
@@ -236,7 +236,7 @@ export default function IsometricMap({ calendar, username, avatarUrl }: Isometri
     });
 
     let allBlocks = "";
-    sortedCells.forEach(({ w, d, level, count }) => {
+    sortedCells.forEach(({ w, d, level, count, date }) => {
       const sx = (w - d) * TILE_W;
       const sy = (w + d) * TILE_H;
       const delay = -((w + d) * 0.15);
@@ -252,12 +252,27 @@ export default function IsometricMap({ calendar, username, avatarUrl }: Isometri
         }
       }
 
-      // tooltip：显示在最顶层方块的顶面上方
-      // 陆地共 level 层，从 z=0 开始，最高 z = level-1
+      // MC 风格 tooltip 框：显示在最顶层方块上方
       const topZ = level > 0 ? level - 1 : 0;
-      const tooltipY = sy - topZ * BLOCK_H - 14 - 8;
+      const tooltipBaseY = sy - topZ * BLOCK_H - 14 - 16;
+
+      // tooltip 尺寸
+      const line1 = date;
+      const line2 = `${count} commits`;
+      const maxChars = Math.max(line1.length, line2.length);
+      const boxW = maxChars * 6 + 12;
+      const boxH = 26;
+      const boxX = sx - boxW / 2;
+      const boxY = tooltipBaseY - boxH - 2;
+
       columnSvg += `
-        <text class="block-tooltip" x="${sx}" y="${tooltipY}" text-anchor="middle" fill="#FFAA00" font-size="10" font-family="monospace" font-weight="bold">${count}</text>`;
+        <g class="block-tooltip">
+          <rect x="${boxX}" y="${boxY}" width="${boxW}" height="${boxH}" rx="1" fill="#100010" fill-opacity="0.94" />
+          <rect x="${boxX + 1}" y="${boxY + 1}" width="${boxW - 2}" height="${boxH - 2}" rx="1" fill="none" stroke="#5000FF" stroke-opacity="0.4" stroke-width="1" />
+          <text x="${sx}" y="${boxY + 10}" text-anchor="middle" fill="#AAAAAA" font-size="8" font-family="'Courier New', Courier, monospace">${line1}</text>
+          <text x="${sx + 0.5}" y="${boxY + 21.5}" text-anchor="middle" fill="#3F3F3F" font-size="9" font-family="'Courier New', Courier, monospace" font-weight="bold">${line2}</text>
+          <text x="${sx}" y="${boxY + 21}" text-anchor="middle" fill="#fff" font-size="9" font-family="'Courier New', Courier, monospace" font-weight="bold">${line2}</text>
+        </g>`;
 
       allBlocks += `<g class="block-column">${columnSvg}</g>`;
     });
@@ -300,10 +315,6 @@ export default function IsometricMap({ calendar, username, avatarUrl }: Isometri
         pointer-events: none;
         transform: translateY(8px);
         transition: opacity 0.25s ease, transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
-        paint-order: stroke;
-        stroke: #000;
-        stroke-width: 3px;
-        stroke-linejoin: round;
       }
       .block-column:hover .block-tooltip {
         opacity: 1;
