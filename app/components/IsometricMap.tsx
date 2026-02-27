@@ -22,6 +22,17 @@ const TEXTURES: Record<string, string> = {
   diamond_ore: `${TEX_BASE}diamond_ore.png`,
 };
 
+// 等级对应的矿石 icon（用于 tooltip）
+const ITEM_BASE =
+  "https://cdn.jsdelivr.net/gh/InventivetalentDev/minecraft-assets@1.20.4/assets/minecraft/textures/item/";
+
+const LEVEL_ORE: Record<number, { icon: string; name: string; color: string; quote: string }> = {
+  1: { icon: `${ITEM_BASE}coal.png`,    name: "Coal",    color: "#555555", quote: "Every journey starts with a single step." },
+  2: { icon: `${ITEM_BASE}iron_ingot.png`, name: "Iron", color: "#CCCCCC", quote: "Steady progress, forging ahead!" },
+  3: { icon: `${ITEM_BASE}gold_ingot.png`, name: "Gold", color: "#FFAA00", quote: "You're on fire today!" },
+  4: { icon: `${ITEM_BASE}diamond.png`,  name: "Diamond", color: "#55FFFF", quote: "Unstoppable! Absolute legend!" },
+};
+
 // 贡献等级 → 方块类型映射（每层固定高度 14，堆叠式）
 const BLOCK_H = 14; // 每层方块的固定高度
 
@@ -256,22 +267,33 @@ export default function IsometricMap({ calendar, username, avatarUrl }: Isometri
       if (level > 0) {
         const topZ = level - 1;
         const tooltipBaseY = sy - topZ * BLOCK_H - 14 - 16;
+        const ore = LEVEL_ORE[level];
 
         const line1 = date;
         const line2 = `${count} commits`;
-        const maxChars = Math.max(line1.length, line2.length);
-        const boxW = maxChars * 8.4 + 20;
-        const boxH = 40;
+        const line3 = ore.quote;
+        const maxChars = Math.max(line1.length, line2.length + 3, line3.length);
+        const boxW = maxChars * 7.2 + 10;
+        const boxH = 52;
         const boxX = sx - boxW / 2;
         const boxY = tooltipBaseY - boxH - 2;
+
+        // 矿石 icon 放在 commits 文字右侧
+        const iconSize = 12;
+        const line2HalfW = line2.length * 3.6;
+        const iconX = sx + line2HalfW + 10;
+        const iconY = boxY + 30 - iconSize + 1;
 
         columnSvg += `
           <g class="block-tooltip">
             <rect x="${boxX}" y="${boxY}" width="${boxW}" height="${boxH}" rx="1" fill="#100010" fill-opacity="0.94" />
             <rect x="${boxX + 1}" y="${boxY + 1}" width="${boxW - 2}" height="${boxH - 2}" rx="1" fill="none" stroke="#5000FF" stroke-opacity="0.4" stroke-width="1" />
-            <text x="${sx}" y="${boxY + 15}" text-anchor="middle" fill="#AAAAAA" font-size="12" font-family="'Courier New', Courier, monospace">${line1}</text>
-            <text x="${sx + 0.7}" y="${boxY + 32.7}" text-anchor="middle" fill="#3F3F3F" font-size="13" font-family="'Courier New', Courier, monospace" font-weight="bold">${line2}</text>
-            <text x="${sx}" y="${boxY + 32}" text-anchor="middle" fill="#fff" font-size="13" font-family="'Courier New', Courier, monospace" font-weight="bold">${line2}</text>
+            <text x="${sx}" y="${boxY + 15}" text-anchor="middle" fill="#AAAAAA" font-size="12" font-family="'Courier New', Courier, monospace" font-weight="bold">${line1}</text>
+            <text x="${sx}" y="${boxY + 30}" text-anchor="middle" fill="#fff" font-size="13" font-family="'Courier New', Courier, monospace" font-weight="bold">${line2}</text>
+            <g class="ore-icon-wrap" style="transform-box: fill-box; transform-origin: center;">
+              <image href="${ore.icon}" x="${iconX}" y="${iconY}" width="${iconSize}" height="${iconSize}" style="image-rendering: pixelated;" />
+            </g>
+            <text x="${sx}" y="${boxY + 45}" text-anchor="middle" fill="${ore.color}" font-size="12" font-family="'Courier New', Courier, monospace" font-style="italic">${line3}</text>
           </g>`;
       }
 
@@ -321,8 +343,24 @@ export default function IsometricMap({ calendar, username, avatarUrl }: Isometri
         opacity: 1;
         transform: translateY(0);
       }
+      .ore-icon-wrap {
+        transform-box: fill-box;
+        transform-origin: center;
+      }
+      .block-column:hover .ore-icon-wrap {
+        animation: ore-wobble 1.0s ease-in-out;
+      }
       .block-column {
         cursor: crosshair;
+      }
+      @keyframes ore-wobble {
+        0%   { transform: scale(1) rotate(0deg); }
+        15%  { transform: scale(1.4) rotate(-12deg); }
+        30%  { transform: scale(1.3) rotate(10deg); }
+        45%  { transform: scale(1.2) rotate(-8deg); }
+        60%  { transform: scale(1.1) rotate(5deg); }
+        80%  { transform: scale(1.05) rotate(-2deg); }
+        100% { transform: scale(1) rotate(0deg); }
       }
       @keyframes float {
         0%, 100% { transform: translateY(0); }
