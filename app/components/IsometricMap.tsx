@@ -252,27 +252,28 @@ export default function IsometricMap({ calendar, username, avatarUrl }: Isometri
         }
       }
 
-      // MC 风格 tooltip 框：显示在最顶层方块上方
-      const topZ = level > 0 ? level - 1 : 0;
-      const tooltipBaseY = sy - topZ * BLOCK_H - 14 - 16;
+      // MC 风格 tooltip 框：仅对陆地方块生效（水方块 = 0 commit，不显示）
+      if (level > 0) {
+        const topZ = level - 1;
+        const tooltipBaseY = sy - topZ * BLOCK_H - 14 - 16;
 
-      // tooltip 尺寸
-      const line1 = date;
-      const line2 = `${count} commits`;
-      const maxChars = Math.max(line1.length, line2.length);
-      const boxW = maxChars * 6 + 12;
-      const boxH = 26;
-      const boxX = sx - boxW / 2;
-      const boxY = tooltipBaseY - boxH - 2;
+        const line1 = date;
+        const line2 = `${count} commits`;
+        const maxChars = Math.max(line1.length, line2.length);
+        const boxW = maxChars * 8.4 + 20;
+        const boxH = 40;
+        const boxX = sx - boxW / 2;
+        const boxY = tooltipBaseY - boxH - 2;
 
-      columnSvg += `
-        <g class="block-tooltip">
-          <rect x="${boxX}" y="${boxY}" width="${boxW}" height="${boxH}" rx="1" fill="#100010" fill-opacity="0.94" />
-          <rect x="${boxX + 1}" y="${boxY + 1}" width="${boxW - 2}" height="${boxH - 2}" rx="1" fill="none" stroke="#5000FF" stroke-opacity="0.4" stroke-width="1" />
-          <text x="${sx}" y="${boxY + 10}" text-anchor="middle" fill="#AAAAAA" font-size="8" font-family="'Courier New', Courier, monospace">${line1}</text>
-          <text x="${sx + 0.5}" y="${boxY + 21.5}" text-anchor="middle" fill="#3F3F3F" font-size="9" font-family="'Courier New', Courier, monospace" font-weight="bold">${line2}</text>
-          <text x="${sx}" y="${boxY + 21}" text-anchor="middle" fill="#fff" font-size="9" font-family="'Courier New', Courier, monospace" font-weight="bold">${line2}</text>
-        </g>`;
+        columnSvg += `
+          <g class="block-tooltip">
+            <rect x="${boxX}" y="${boxY}" width="${boxW}" height="${boxH}" rx="1" fill="#100010" fill-opacity="0.94" />
+            <rect x="${boxX + 1}" y="${boxY + 1}" width="${boxW - 2}" height="${boxH - 2}" rx="1" fill="none" stroke="#5000FF" stroke-opacity="0.4" stroke-width="1" />
+            <text x="${sx}" y="${boxY + 15}" text-anchor="middle" fill="#AAAAAA" font-size="12" font-family="'Courier New', Courier, monospace">${line1}</text>
+            <text x="${sx + 0.7}" y="${boxY + 32.7}" text-anchor="middle" fill="#3F3F3F" font-size="13" font-family="'Courier New', Courier, monospace" font-weight="bold">${line2}</text>
+            <text x="${sx}" y="${boxY + 32}" text-anchor="middle" fill="#fff" font-size="13" font-family="'Courier New', Courier, monospace" font-weight="bold">${line2}</text>
+          </g>`;
+      }
 
       allBlocks += `<g class="block-column">${columnSvg}</g>`;
     });
@@ -367,33 +368,33 @@ export default function IsometricMap({ calendar, username, avatarUrl }: Isometri
     <div className="w-full mt-8">
       {/* 用户信息栏 */}
       <div className="mc-player-bar mb-3">
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-4">
           {avatarUrl && (
             <div className="mc-avatar-frame">
               <img
                 src={avatarUrl}
                 alt={username}
-                className="w-7 h-7"
+                className="w-9 h-9"
               />
             </div>
           )}
           <div className="flex flex-col leading-tight">
-            <span className="text-white text-sm font-bold mc-text-shadow">
+            <span className="text-white text-base font-bold mc-text-shadow">
               {username}
             </span>
-            <span className="text-[#FFAA00] text-xs mc-text-shadow-gold">
+            <span className="text-[#FFAA00] text-sm mc-text-shadow-gold">
               {calendar.totalContributions.toLocaleString()} contributions
             </span>
           </div>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
           <button
             onClick={() => setMode((m) => (m === "color" ? "count" : "color"))}
-            className="mc-btn-secondary text-xs"
+            className="mc-btn-secondary text-sm"
           >
             MODE: {mode === "color" ? "COLOR" : "COUNT"}
           </button>
-          <button onClick={handleDownload} className="mc-btn-secondary text-xs">
+          <button onClick={handleDownload} className="mc-btn-secondary text-sm">
             DOWNLOAD .SVG
           </button>
         </div>
