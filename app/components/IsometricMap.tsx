@@ -18,8 +18,12 @@ const TEXTURES: Record<string, string> = {
   grassSide: `${TEX_BASE}grass_block_side.png`,
   stone: `${TEX_BASE}stone.png`,
   coal_ore: `${TEX_BASE}coal_ore.png`,
+  copper_ore: `${TEX_BASE}copper_ore.png`,
   iron_ore: `${TEX_BASE}iron_ore.png`,
+  lapis_ore: `${TEX_BASE}lapis_ore.png`,
+  redstone_ore: `${TEX_BASE}redstone_ore.png`,
   gold_ore: `${TEX_BASE}gold_ore.png`,
+  emerald_ore: `${TEX_BASE}emerald_ore.png`,
   diamond_ore: `${TEX_BASE}diamond_ore.png`,
 };
 
@@ -29,23 +33,24 @@ const ITEM_BASE =
 
 // tooltip 矿石等级（基于 count 划分，11 级）
 const LEVEL_ORE: Record<number, { icon: string; name: string; color: string; quote: string }> = {
-  1:  { icon: `${ITEM_BASE}coal.png`,           name: "Coal",          color: "#888888", quote: "A spark in the dark." },
-  2:  { icon: `${ITEM_BASE}raw_copper.png`,     name: "Raw Copper",    color: "#C87533", quote: "Warming up the furnace." },
-  3:  { icon: `${ITEM_BASE}iron_ingot.png`,     name: "Iron",          color: "#CCCCCC", quote: "Getting into the rhythm." },
-  4:  { icon: `${ITEM_BASE}copper_ingot.png`,   name: "Copper",        color: "#E07040", quote: "Steady progress, forging ahead!" },
-  5:  { icon: `${ITEM_BASE}lapis_lazuli.png`,   name: "Lapis",         color: "#3355DD", quote: "Building momentum!" },
-  6:  { icon: `${ITEM_BASE}redstone.png`,       name: "Redstone",      color: "#FF2020", quote: "Powered up! Full charge!" },
-  7:  { icon: `${ITEM_BASE}gold_ingot.png`,     name: "Gold",          color: "#FFAA00", quote: "You're on fire today!" },
-  8:  { icon: `${ITEM_BASE}emerald.png`,        name: "Emerald",       color: "#00DD55", quote: "Villagers would be jealous!" },
-  9:  { icon: `${ITEM_BASE}diamond.png`,        name: "Diamond",       color: "#55FFFF", quote: "Mass production! Incredible!" },
-  10: { icon: `${ITEM_BASE}amethyst_shard.png`, name: "Amethyst",      color: "#AA55FF", quote: "Transcending the ordinary!" },
-  11: { icon: `${ITEM_BASE}nether_star.png`,    name: "Nether Star",   color: "#FF8C00", quote: "Unstoppable! Absolute legend!" },
+  1:  { icon: `${ITEM_BASE}coal.png`,            name: "Coal",            color: "#888888", quote: "A spark in the dark." },
+  2:  { icon: `${ITEM_BASE}raw_copper.png`,      name: "Raw Copper",      color: "#C87533", quote: "Warming up the furnace." },
+  3:  { icon: `${ITEM_BASE}iron_ingot.png`,      name: "Iron",            color: "#CCCCCC", quote: "Getting into the rhythm." },
+  4:  { icon: `${ITEM_BASE}copper_ingot.png`,    name: "Copper",          color: "#E07040", quote: "Steady progress, forging ahead!" },
+  5:  { icon: `${ITEM_BASE}lapis_lazuli.png`,    name: "Lapis",           color: "#3355DD", quote: "Building momentum!" },
+  6:  { icon: `${ITEM_BASE}redstone.png`,        name: "Redstone",        color: "#FF2020", quote: "Powered up! Full charge!" },
+  7:  { icon: `${ITEM_BASE}gold_ingot.png`,      name: "Gold",            color: "#FFAA00", quote: "You're on fire today!" },
+  8:  { icon: `${ITEM_BASE}emerald.png`,         name: "Emerald",         color: "#00DD55", quote: "Villagers would be jealous!" },
+  9:  { icon: `${ITEM_BASE}diamond.png`,         name: "Diamond",         color: "#55FFFF", quote: "Mass production! Incredible!" },
+  10: { icon: `${ITEM_BASE}nether_star.png`,     name: "Nether Star",     color: "#FF8C00", quote: "Unstoppable! Absolute legend!" },
+  11: { icon: `${ITEM_BASE}totem_of_undying.png`, name: "Totem of Undying", color: "#FFD700", quote: "GODLIKE! Beyond mortal limits!" },
 };
 
 // count → tooltip 矿石等级 (1~11)
 function countToOreLevel(count: number): number {
-  if (count <= 10) return count; // 1~10 严格对应
-  return 11;                      // >10
+  if (count <= 9) return count;  // 1~9 严格对应
+  if (count < 20) return 10;     // 10~19: Nether Star
+  return 11;                      // >=20: Totem of Undying
 }
 
 // count → 柱高 (0 = 水, 1~10)
@@ -60,14 +65,18 @@ function countToHeight(count: number): number {
 const BLOCK_H = 14; // 每层方块的固定高度
 
 const BLOCK_TYPES = {
-  water:       { top: "water", side: "water" },
-  dirt:        { top: "dirt", side: "dirt" },
-  grass:       { top: "grassTop", side: "grassSide" },
-  stone:       { top: "stone", side: "stone" },
-  coal_ore:    { top: "coal_ore", side: "coal_ore" },
-  iron_ore:    { top: "iron_ore", side: "iron_ore" },
-  gold_ore:    { top: "gold_ore", side: "gold_ore" },
-  diamond_ore: { top: "diamond_ore", side: "diamond_ore" },
+  water:        { top: "water", side: "water" },
+  dirt:         { top: "dirt", side: "dirt" },
+  grass:        { top: "grassTop", side: "grassSide" },
+  stone:        { top: "stone", side: "stone" },
+  coal_ore:     { top: "coal_ore", side: "coal_ore" },
+  copper_ore:   { top: "copper_ore", side: "copper_ore" },
+  iron_ore:     { top: "iron_ore", side: "iron_ore" },
+  lapis_ore:    { top: "lapis_ore", side: "lapis_ore" },
+  redstone_ore: { top: "redstone_ore", side: "redstone_ore" },
+  gold_ore:     { top: "gold_ore", side: "gold_ore" },
+  emerald_ore:  { top: "emerald_ore", side: "emerald_ore" },
+  diamond_ore:  { top: "diamond_ore", side: "diamond_ore" },
 };
 
 interface IsometricMapProps {
@@ -166,14 +175,21 @@ export default function IsometricMap({ calendar, username, avatarUrl }: Isometri
       .join("\n")}`;
 
     // ===== 矿石生成系统 =====
-    // z: 当前层(1=最底), height: 总高度, count: 当天 commit 数
-    // 地表覆盖：顶层=草, 次顶层=随机泥土/草
-    // 石头层：根据深度和 count 生成不同矿石
-    //   - 煤矿：靠近地表（浅层高概率）
-    //   - 铁矿：中层
-    //   - 金矿：中深层
-    //   - 钻石矿：最深层
-    //   - count > 10 时，整体矿物生成概率提升
+    // 矿石按稀有度排列（低→高），每种有：
+    //   - minDepth: 最浅出现深度比 (0=最深, 1=最浅)
+    //   - baseChance: 基础生成概率
+    //   - countWeight: count 对该矿的加权（count 越高，高级矿越容易出）
+    const ORE_TABLE: { type: keyof typeof BLOCK_TYPES; minDepth: number; baseChance: number; countWeight: number }[] = [
+      { type: "coal_ore",     minDepth: 1.0,  baseChance: 0.15, countWeight: 0.5 },  // 到处都有，count高时反而少
+      { type: "copper_ore",   minDepth: 0.85, baseChance: 0.12, countWeight: 0.7 },
+      { type: "iron_ore",     minDepth: 0.7,  baseChance: 0.10, countWeight: 1.0 },
+      { type: "lapis_ore",    minDepth: 0.5,  baseChance: 0.07, countWeight: 1.3 },
+      { type: "redstone_ore", minDepth: 0.4,  baseChance: 0.06, countWeight: 1.5 },
+      { type: "gold_ore",     minDepth: 0.35, baseChance: 0.05, countWeight: 1.8 },
+      { type: "emerald_ore",  minDepth: 0.25, baseChance: 0.04, countWeight: 2.2 },
+      { type: "diamond_ore",  minDepth: 0.2,  baseChance: 0.03, countWeight: 2.5 },
+    ];
+
     function getBlockType(height: number, z: number, count: number): keyof typeof BLOCK_TYPES {
       if (height <= 2) {
         // 矮柱：顶层根据 count 决定，底层泥土
@@ -189,37 +205,33 @@ export default function IsometricMap({ calendar, username, avatarUrl }: Isometri
       if (z === height - 2 && height >= 5) return Math.random() < 0.4 ? "dirt" : "stone";
 
       // --- 石头层：矿石生成 ---
-      // count > 10 后每多 5 个 commit 提升 5% 矿物概率（最高翻倍）
-      const bonusMult = count > 10 ? Math.min(2.0, 1.0 + (count - 10) * 0.05) : 1.0;
-
-      // 深度比 = 当前层在石头区域中的相对位置 (0=最深, 1=最浅)
-      const stoneTop = height - 2;  // 石头区域的顶部
+      // 深度比 (0=最深/底部, 1=最浅/靠近地表)
+      const stoneTop = height - 2;
       const depthRatio = stoneTop > 1 ? (z - 1) / (stoneTop - 1) : 0.5;
 
-      // 各矿石基础概率（基于深度）
-      // 煤矿：浅层高 (15% 浅 → 3% 深)
-      const coalChance    = (0.03 + 0.12 * depthRatio) * bonusMult;
-      // 铁矿：中层高 (峰值 ~12%)
-      const ironChance    = (0.12 * Math.sin(depthRatio * Math.PI)) * bonusMult;
-      // 金矿：中深层 (8% 深 → 1% 浅)
-      const goldChance    = (0.08 * (1 - depthRatio) * (depthRatio < 0.6 ? 1 : 0.3)) * bonusMult;
-      // 钻石：仅最深层 (深处 6%, 浅处几乎为 0)
-      const diamondChance = (0.06 * Math.pow(1 - depthRatio, 3)) * bonusMult;
+      // count 加成系数：每个 commit 都有帮助，越多越强
+      // count=1 → 1.0, count=5 → 1.4, count=10 → 1.9, count=20 → 2.5(cap)
+      const countFactor = Math.min(2.5, 1.0 + (count - 1) * 0.1);
 
+      // 从最稀有开始判定（优先生成高级矿）
       const roll = Math.random();
       let cumulative = 0;
 
-      cumulative += diamondChance;
-      if (roll < cumulative) return "diamond_ore";
+      for (let i = ORE_TABLE.length - 1; i >= 0; i--) {
+        const ore = ORE_TABLE[i];
+        // 深度不够则跳过（深度比必须 <= minDepth 才能生成）
+        if (depthRatio > ore.minDepth) continue;
 
-      cumulative += goldChance;
-      if (roll < cumulative) return "gold_ore";
+        // 深度越深，概率越高（在允许范围内的深度加成）
+        const depthBonus = 1 - depthRatio / ore.minDepth; // 0~1，越深越大
 
-      cumulative += ironChance;
-      if (roll < cumulative) return "iron_ore";
+        // 最终概率 = 基础概率 × (1 + 深度加成) × count加权系数
+        // 低级矿 countWeight < 1，count 高时概率反而降低 → 让位给高级矿
+        const chance = ore.baseChance * (1 + depthBonus) * (countFactor * ore.countWeight / 1.5);
 
-      cumulative += coalChance;
-      if (roll < cumulative) return "coal_ore";
+        cumulative += chance;
+        if (roll < cumulative) return ore.type;
+      }
 
       return "stone";
     }
