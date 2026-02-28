@@ -1,9 +1,7 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useMemo } from "react";
 import type { ContributionCalendar } from "@/app/lib/github";
-
-type MapMode = "color" | "count";
 
 // ===== 等距投影配置 =====
 const TILE_W = 14;
@@ -19,6 +17,9 @@ const TEXTURES: Record<string, string> = {
   grassTop: `${TEX_BASE}grass_block_top.png`,
   grassSide: `${TEX_BASE}grass_block_side.png`,
   stone: `${TEX_BASE}stone.png`,
+  coal_ore: `${TEX_BASE}coal_ore.png`,
+  iron_ore: `${TEX_BASE}iron_ore.png`,
+  gold_ore: `${TEX_BASE}gold_ore.png`,
   diamond_ore: `${TEX_BASE}diamond_ore.png`,
 };
 
@@ -26,59 +27,48 @@ const TEXTURES: Record<string, string> = {
 const ITEM_BASE =
   "https://cdn.jsdelivr.net/gh/InventivetalentDev/minecraft-assets@1.20.4/assets/minecraft/textures/item/";
 
+// tooltip 矿石等级（基于 count 划分，11 级）
 const LEVEL_ORE: Record<number, { icon: string; name: string; color: string; quote: string }> = {
-  1: { icon: `${ITEM_BASE}coal.png`,    name: "Coal",    color: "#555555", quote: "Every journey starts with a single step." },
-  2: { icon: `${ITEM_BASE}iron_ingot.png`, name: "Iron", color: "#CCCCCC", quote: "Steady progress, forging ahead!" },
-  3: { icon: `${ITEM_BASE}gold_ingot.png`, name: "Gold", color: "#FFAA00", quote: "You're on fire today!" },
-  4: { icon: `${ITEM_BASE}diamond.png`,  name: "Diamond", color: "#55FFFF", quote: "Unstoppable! Absolute legend!" },
+  1:  { icon: `${ITEM_BASE}coal.png`,           name: "Coal",          color: "#888888", quote: "A spark in the dark." },
+  2:  { icon: `${ITEM_BASE}raw_copper.png`,     name: "Raw Copper",    color: "#C87533", quote: "Warming up the furnace." },
+  3:  { icon: `${ITEM_BASE}iron_ingot.png`,     name: "Iron",          color: "#CCCCCC", quote: "Getting into the rhythm." },
+  4:  { icon: `${ITEM_BASE}copper_ingot.png`,   name: "Copper",        color: "#E07040", quote: "Steady progress, forging ahead!" },
+  5:  { icon: `${ITEM_BASE}lapis_lazuli.png`,   name: "Lapis",         color: "#3355DD", quote: "Building momentum!" },
+  6:  { icon: `${ITEM_BASE}redstone.png`,       name: "Redstone",      color: "#FF2020", quote: "Powered up! Full charge!" },
+  7:  { icon: `${ITEM_BASE}gold_ingot.png`,     name: "Gold",          color: "#FFAA00", quote: "You're on fire today!" },
+  8:  { icon: `${ITEM_BASE}emerald.png`,        name: "Emerald",       color: "#00DD55", quote: "Villagers would be jealous!" },
+  9:  { icon: `${ITEM_BASE}diamond.png`,        name: "Diamond",       color: "#55FFFF", quote: "Mass production! Incredible!" },
+  10: { icon: `${ITEM_BASE}amethyst_shard.png`, name: "Amethyst",      color: "#AA55FF", quote: "Transcending the ordinary!" },
+  11: { icon: `${ITEM_BASE}nether_star.png`,    name: "Nether Star",   color: "#FF8C00", quote: "Unstoppable! Absolute legend!" },
 };
+
+// count → tooltip 矿石等级 (1~11)
+function countToOreLevel(count: number): number {
+  if (count <= 10) return count; // 1~10 严格对应
+  return 11;                      // >10
+}
+
+// count → 柱高 (0 = 水, 1~10)
+// count <= 10 时高度严格等于 count；count > 10 时就直接返回10
+function countToHeight(count: number): number {
+  if (count === 0) return 0;
+  if (count <= 10) return count;
+  return 10;
+}
 
 // 贡献等级 → 方块类型映射（每层固定高度 14，堆叠式）
 const BLOCK_H = 14; // 每层方块的固定高度
 
 const BLOCK_TYPES = {
-  waterDeep: { top: "water", side: "water" },
-  water:     { top: "water", side: "water" },
-  dirt:      { top: "dirt", side: "dirt" },
-  grass:     { top: "grassTop", side: "grassSide" },
-  stone:     { top: "stone", side: "stone" },
-  diamond:   { top: "diamond_ore", side: "diamond_ore" },
+  water:       { top: "water", side: "water" },
+  dirt:        { top: "dirt", side: "dirt" },
+  grass:       { top: "grassTop", side: "grassSide" },
+  stone:       { top: "stone", side: "stone" },
+  coal_ore:    { top: "coal_ore", side: "coal_ore" },
+  iron_ore:    { top: "iron_ore", side: "iron_ore" },
+  gold_ore:    { top: "gold_ore", side: "gold_ore" },
+  diamond_ore: { top: "diamond_ore", side: "diamond_ore" },
 };
-
-// GitHub 颜色等级 → 0~4
-function colorToLevel(color: string): number {
-  const map: Record<string, number> = {
-    "#ebedf0": 0,
-    "#9be9a8": 1,
-    "#40c463": 2,
-    "#30a14e": 3,
-    "#216e39": 4,
-  };
-  return map[color] ?? 0;
-}
-
-// 贡献数 → 0~4（基于整体数据的分位数）
-function countToLevel(count: number, thresholds: number[]): number {
-  if (count === 0) return 0;
-  if (count <= thresholds[0]) return 1;
-  if (count <= thresholds[1]) return 2;
-  if (count <= thresholds[2]) return 3;
-  return 4;
-}
-
-// 计算分位数阈值（排除 0 后的 25%/50%/75%）
-function computeThresholds(calendar: ContributionCalendar): number[] {
-  const counts: number[] = [];
-  calendar.weeks.forEach((week) => {
-    week.contributionDays.forEach((day) => {
-      if (day.contributionCount > 0) counts.push(day.contributionCount);
-    });
-  });
-  if (counts.length === 0) return [1, 2, 3];
-  counts.sort((a, b) => a - b);
-  const q = (p: number) => counts[Math.min(Math.floor(p * counts.length), counts.length - 1)];
-  return [q(0.25), q(0.5), q(0.75)];
-}
 
 interface IsometricMapProps {
   calendar: ContributionCalendar;
@@ -87,25 +77,18 @@ interface IsometricMapProps {
 }
 
 export default function IsometricMap({ calendar, username, avatarUrl }: IsometricMapProps) {
-  const [mode, setMode] = useState<MapMode>("color");
 
-  // 预计算分位数阈值（仅 count 模式用到）
-  const thresholds = useMemo(() => computeThresholds(calendar), [calendar]);
-
-  // 将 ContributionCalendar 扁平化为 { w, d, level, count, date }[]
+  // 将 ContributionCalendar 扁平化为 { w, d, height, count, date }[]
   const data = useMemo(() => {
-    const result: { w: number; d: number; level: number; count: number; date: string }[] = [];
+    const result: { w: number; d: number; height: number; count: number; date: string }[] = [];
     calendar.weeks.forEach((week, w) => {
       week.contributionDays.forEach((day, d) => {
-        const level =
-          mode === "color"
-            ? colorToLevel(day.color)
-            : countToLevel(day.contributionCount, thresholds);
-        result.push({ w, d, level, count: day.contributionCount, date: day.date });
+        const height = countToHeight(day.contributionCount);
+        result.push({ w, d, height, count: day.contributionCount, date: day.date });
       });
     });
     return result;
-  }, [calendar, mode, thresholds]);
+  }, [calendar]);
 
   const weeks = calendar.weeks.length;
 
@@ -182,13 +165,63 @@ export default function IsometricMap({ calendar, username, avatarUrl }: Isometri
       })
       .join("\n")}`;
 
-    // 根据 level 确定每层用什么方块类型
-    function getBlockType(level: number, z: number): keyof typeof BLOCK_TYPES {
-      if (level === 1) return "dirt";
-      if (level === 2) return z === level ? "grass" : "dirt";
-      if (level === 3) return "stone";
-      // level === 4
-      return z === level ? "diamond" : "stone";
+    // ===== 矿石生成系统 =====
+    // z: 当前层(1=最底), height: 总高度, count: 当天 commit 数
+    // 地表覆盖：顶层=草, 次顶层=随机泥土/草
+    // 石头层：根据深度和 count 生成不同矿石
+    //   - 煤矿：靠近地表（浅层高概率）
+    //   - 铁矿：中层
+    //   - 金矿：中深层
+    //   - 钻石矿：最深层
+    //   - count > 10 时，整体矿物生成概率提升
+    function getBlockType(height: number, z: number, count: number): keyof typeof BLOCK_TYPES {
+      if (height <= 2) {
+        // 矮柱：顶层根据 count 决定，底层泥土
+        if (z === height) return count <= 1 ? "dirt" : "grass";
+        return "dirt";
+      }
+
+      // 最顶层：1 commit 用泥土，≥2 用草方块
+      if (z === height) return count <= 1 ? "dirt" : "grass";
+      // 次顶层：泥土
+      if (z === height - 1) return "dirt";
+      // 第三层开始可能泥土（过渡层）
+      if (z === height - 2 && height >= 5) return Math.random() < 0.4 ? "dirt" : "stone";
+
+      // --- 石头层：矿石生成 ---
+      // count > 10 后每多 5 个 commit 提升 5% 矿物概率（最高翻倍）
+      const bonusMult = count > 10 ? Math.min(2.0, 1.0 + (count - 10) * 0.05) : 1.0;
+
+      // 深度比 = 当前层在石头区域中的相对位置 (0=最深, 1=最浅)
+      const stoneTop = height - 2;  // 石头区域的顶部
+      const depthRatio = stoneTop > 1 ? (z - 1) / (stoneTop - 1) : 0.5;
+
+      // 各矿石基础概率（基于深度）
+      // 煤矿：浅层高 (15% 浅 → 3% 深)
+      const coalChance    = (0.03 + 0.12 * depthRatio) * bonusMult;
+      // 铁矿：中层高 (峰值 ~12%)
+      const ironChance    = (0.12 * Math.sin(depthRatio * Math.PI)) * bonusMult;
+      // 金矿：中深层 (8% 深 → 1% 浅)
+      const goldChance    = (0.08 * (1 - depthRatio) * (depthRatio < 0.6 ? 1 : 0.3)) * bonusMult;
+      // 钻石：仅最深层 (深处 6%, 浅处几乎为 0)
+      const diamondChance = (0.06 * Math.pow(1 - depthRatio, 3)) * bonusMult;
+
+      const roll = Math.random();
+      let cumulative = 0;
+
+      cumulative += diamondChance;
+      if (roll < cumulative) return "diamond_ore";
+
+      cumulative += goldChance;
+      if (roll < cumulative) return "gold_ore";
+
+      cumulative += ironChance;
+      if (roll < cumulative) return "iron_ore";
+
+      cumulative += coalChance;
+      if (roll < cumulative) return "coal_ore";
+
+      return "stone";
     }
 
     // 渲染水方块（蔚蓝，有浮动动画+扫光，光照：左0.2 右0.05 顶shimmer白色）
@@ -237,7 +270,7 @@ export default function IsometricMap({ calendar, username, avatarUrl }: Isometri
     // ===== 构建渲染队列：水底座 + 陆地方块 =====
     // 先按格子分组，每个格子一个 <g class="block-column">
     interface CellData {
-      w: number; d: number; level: number; count: number; date: string;
+      w: number; d: number; height: number; count: number; date: string;
     }
     // 按画家算法排序格子
     const sortedCells: CellData[] = [...data].sort((a, b) => {
@@ -247,7 +280,7 @@ export default function IsometricMap({ calendar, username, avatarUrl }: Isometri
     });
 
     let allBlocks = "";
-    sortedCells.forEach(({ w, d, level, count, date }) => {
+    sortedCells.forEach(({ w, d, height, count, date }) => {
       const sx = (w - d) * TILE_W;
       const sy = (w + d) * TILE_H;
       const delay = -((w + d) * 0.15);
@@ -255,19 +288,19 @@ export default function IsometricMap({ calendar, username, avatarUrl }: Isometri
       // 水底座（下沉 一点点，避免水面高于一格方块）
       let columnSvg = renderWater(sx, sy + 3, delay);
 
-      // 陆地堆叠（从 z=0 开始覆盖水面，共 level 层）
-      if (level > 0) {
-        for (let z = 0; z < level; z++) {
+      // 陆地堆叠（从 z=0 开始覆盖水面，共 height 层）
+      if (height > 0) {
+        for (let z = 0; z < height; z++) {
           const cy = sy - z * BLOCK_H;
-          columnSvg += renderBlock(sx, cy, getBlockType(level, z + 1), delay);
+          columnSvg += renderBlock(sx, cy, getBlockType(height, z + 1, count), delay);
         }
       }
 
       // MC 风格 tooltip 框：仅对陆地方块生效（水方块 = 0 commit，不显示）
-      if (level > 0) {
-        const topZ = level - 1;
+      if (height > 0) {
+        const topZ = height - 1;
         const tooltipBaseY = sy - topZ * BLOCK_H - 14 - 16;
-        const ore = LEVEL_ORE[level];
+        const ore = LEVEL_ORE[countToOreLevel(count)];
 
         const line1 = date;
         const line2 = `${count} commits`;
@@ -301,7 +334,7 @@ export default function IsometricMap({ calendar, username, avatarUrl }: Isometri
     });
 
     // 动态计算 viewBox
-    const maxZ = 4; // 最高堆叠层数
+    const maxZ = 10; // 最高堆叠层数
     const maxH = (maxZ + 1) * BLOCK_H + BLOCK_H; // 最高方块顶部偏移
     const minSx = (0 - 6) * TILE_W;           // 左边界: w=0, d=6
     const maxSx = (weeks - 1 - 0) * TILE_W;   // 右边界: w=max, d=0
@@ -426,12 +459,6 @@ export default function IsometricMap({ calendar, username, avatarUrl }: Isometri
           </div>
         </div>
         <div className="flex items-center gap-3">
-          <button
-            onClick={() => setMode((m) => (m === "color" ? "count" : "color"))}
-            className="mc-btn-secondary text-sm"
-          >
-            MODE: {mode === "color" ? "COLOR" : "COUNT"}
-          </button>
           <button onClick={handleDownload} className="mc-btn-secondary text-sm">
             DOWNLOAD .SVG
           </button>
@@ -445,7 +472,7 @@ export default function IsometricMap({ calendar, username, avatarUrl }: Isometri
       />
 
       <p className="text-[#888] text-xs mt-2 text-center mc-text-shadow-light">
-        Hover to highlight &bull; water → dirt → grass → stone → diamond
+        Hover to inspect &bull; Height &amp; ores scale with commits
       </p>
     </div>
   );
