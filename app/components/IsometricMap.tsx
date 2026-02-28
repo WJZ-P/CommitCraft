@@ -428,7 +428,7 @@ export default function IsometricMap({ calendar, username, avatarUrl }: Isometri
       }
     </style>
   </defs>
-  <rect x="${vbX}" y="${vbY}" width="${vbW}" height="${vbH}" fill="#09121c" />
+  <rect x="${vbX}" y="${vbY}" width="${vbW}" height="${vbH}" fill="none" />
   <g>${allBlocks}</g>
 </svg>`;
   }, [data, weeks]);

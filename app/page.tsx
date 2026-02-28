@@ -25,6 +25,7 @@ const ORE_SPAWN_CHANCE = 0.05
 
 export default function Home() {
     const [username, setUsername] = useState("");
+    const [displayUsername, setDisplayUsername] = useState("");
     const [loading, setLoading] = useState(false);
     const [calendarData, setCalendarData] = useState<ContributionCalendar | null>(null);
     const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
@@ -92,6 +93,7 @@ export default function Home() {
 
             setCalendarData(data as ContributionCalendar);
             setAvatarUrl(data.avatarUrl || null);
+            setDisplayUsername(username.trim());
         } catch {
             setError("Network error. Please try again.");
         } finally {
@@ -268,7 +270,7 @@ export default function Home() {
 
                         {/* ===== 等距 SVG 地图 ===== */}
                         {calendarData && !loading && (
-                            <IsometricMap calendar={calendarData} username={username} avatarUrl={avatarUrl} />
+                            <IsometricMap calendar={calendarData} username={displayUsername} avatarUrl={avatarUrl} />
                         )}
                     </div>
                 </div>

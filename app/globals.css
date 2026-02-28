@@ -126,6 +126,7 @@ body {
   box-shadow:
     inset 4px 4px 0 0 #225313,
     inset -4px -4px 0 0 #5eac44;
+  transform: translateY(2px) !important;
 }
 
 
@@ -136,6 +137,7 @@ body {
 
 /* ===== MC 灰色按钮 ===== */
 .mc-btn-secondary {
+  position: relative;
   padding: 8px 12px;
   background: #555;
   border: 2px solid #000;
@@ -146,11 +148,19 @@ body {
     inset -2px -2px 0 0 #333;
   text-shadow: 1px 1px 0 #000;
   cursor: pointer;
-  transition: background 0.1s;
+  transition: all 0.1s;
 }
 
 .mc-btn-secondary:hover {
   background: #666;
+}
+
+.mc-btn-secondary:active {
+  background: #4a4a4a ;
+  box-shadow:
+    inset 2px 2px 0 0 #333,
+    inset -2px -2px 0 0 #777 ;
+  transform: translateY(2px) ;
 }
 
 /* ===== MC 箱子 GUI 面板 ===== */
@@ -196,7 +206,13 @@ body {
 .mc-display {
   border: 4px solid;
   border-color: #373737 #ffffff #ffffff #373737;
-  background: #1e1e1e;
+  background-color: #1a1a1a !important;
+  background-image:
+    linear-gradient(rgba(0, 0, 0, 0.85), rgba(0, 0, 0, 0.85)),
+    url('https://cdn.jsdelivr.net/gh/InventivetalentDev/minecraft-assets@1.20.4/assets/minecraft/textures/block/sand.png') !important;
+  background-size: auto, 64px 64px !important;
+  background-repeat: repeat !important;
+  image-rendering: pixelated;
   padding: 16px;
   min-height: 160px;
   display: flex;
