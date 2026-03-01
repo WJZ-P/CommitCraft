@@ -3,7 +3,8 @@
 import {useState, useEffect, useCallback, useRef} from "react";
 import WeatherCanvas from "./components/WeatherCanvas";
 import IsometricMap from "./components/IsometricMap";
-import type {ContributionCalendar} from "@/app/lib/github";
+import BannerHall from "./components/BannerHall";
+import type {ContributionCalendar, UserStats} from "@/app/lib/github";
 
 // 原版 MC 材质 CDN 链接
 const TEXTURES = {
@@ -29,8 +30,12 @@ export default function Home() {
     const [loading, setLoading] = useState(false);
     const [calendarData, setCalendarData] = useState<ContributionCalendar | null>(null);
     const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+    const [userStats, setUserStats] = useState<UserStats | null>(null);
     const [error, setError] = useState<string | null>(null);
     const [ores, setOres] = useState<{ id: number; x: number; y: number; type: string }[]>([]);
+    const [activeView, setActiveView] = useState<"map" | "banner">("map");
+    const VIEW_LABELS: Record<string, string> = { map: "Contribution Map", banner: "Banner Hall" };
+    const VIEW_KEYS: ("map" | "banner")[] = ["map", "banner"];
     const [weather, setWeather] = useState<"clear" | "rain" | "snow">("snow");
     const mouseRef = useRef({x: 0, y: 0});
     //  指向石头背景的ref，避免把鼠标位置挂载在全局HTML上，优化性能。
@@ -81,6 +86,7 @@ export default function Home() {
         setError(null);
         setCalendarData(null);
         setAvatarUrl(null);
+        setUserStats(null);
 
         try {
             const res = await fetch(`/api/contributions/${encodeURIComponent(username.trim())}`);
@@ -93,6 +99,7 @@ export default function Home() {
 
             setCalendarData(data as ContributionCalendar);
             setAvatarUrl(data.avatarUrl || null);
+            setUserStats(data.stats || null);
             setDisplayUsername(username.trim());
         } catch {
             setError("Network error. Please try again.");
@@ -227,6 +234,33 @@ export default function Home() {
                             </button>
                         </div>
 
+                        {/* ===== 视图切换栏 ===== */}
+                        {calendarData && !loading && !error && (
+                            <div className="mc-view-switcher mt-6 mb-2 flex items-center justify-center select-none">
+                                <button
+                                    className="mc-btn-secondary text-sm px-4 py-2"
+                                    onClick={() => {
+                                        const idx = VIEW_KEYS.indexOf(activeView);
+                                        setActiveView(VIEW_KEYS[(idx - 1 + VIEW_KEYS.length) % VIEW_KEYS.length]);
+                                    }}
+                                >
+                                    &lt;
+                                </button>
+                                <div className="mc-view-label mx-4 min-w-[180px] text-center text-white font-bold mc-text-shadow">
+                                    {VIEW_LABELS[activeView]}
+                                </div>
+                                <button
+                                    className="mc-btn-secondary text-sm px-4 py-2"
+                                    onClick={() => {
+                                        const idx = VIEW_KEYS.indexOf(activeView);
+                                        setActiveView(VIEW_KEYS[(idx + 1) % VIEW_KEYS.length]);
+                                    }}
+                                >
+                                    &gt;
+                                </button>
+                            </div>
+                        )}
+
                         {/* ===== 状态展示区（仅在无地图数据时显示） ===== */}
                         {(!calendarData || loading || error) && (
                             <div className="mc-display mt-8 relative">
@@ -269,8 +303,13 @@ export default function Home() {
                         )}
 
                         {/* ===== 等距 SVG 地图 ===== */}
-                        {calendarData && !loading && (
-                            <IsometricMap calendar={calendarData} username={displayUsername} avatarUrl={avatarUrl} />
+                        {calendarData && !loading && activeView === "map" && (
+                            <IsometricMap calendar={calendarData} username={displayUsername} avatarUrl={avatarUrl} stats={userStats} />
+                        )}
+
+                        {/* ===== 旗帜战绩大厅 ===== */}
+                        {calendarData && !loading && activeView === "banner" && userStats && (
+                            <BannerHall stats={userStats} totalContributions={calendarData.totalContributions} />
                         )}
                     </div>
                 </div>

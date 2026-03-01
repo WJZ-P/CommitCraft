@@ -208,9 +208,9 @@ body {
   border-color: #373737 #ffffff #ffffff #373737;
   background-color: #1a1a1a !important;
   background-image:
-    linear-gradient(rgba(0, 0, 0, 0.85), rgba(0, 0, 0, 0.85)),
-    url('https://cdn.jsdelivr.net/gh/InventivetalentDev/minecraft-assets@1.20.4/assets/minecraft/textures/block/sand.png') !important;
-  background-size: auto, 64px 64px !important;
+    linear-gradient(rgba(0, 0, 0, 0.75), rgba(0, 0, 0, 0.75)),
+    url('https://cdn.jsdelivr.net/gh/InventivetalentDev/minecraft-assets@1.20.4/assets/minecraft/textures/block/stone.png') !important;
+  background-size: auto, 96px 96px !important;
   background-repeat: repeat !important;
   image-rendering: pixelated;
   padding: 16px;
@@ -276,4 +276,68 @@ body {
 .mc-footer-overlay {
   background: rgba(0,0,0,0.6);
   pointer-events: none;
+}
+
+/* ===== MC 视图切换栏 ===== */
+.mc-view-switcher {
+  background: #8b8b8b;
+  border: 2px solid #000;
+  padding: 6px 12px;
+  box-shadow:
+    inset 2px 2px 0 0 #aaa,
+    inset -2px -2px 0 0 #555;
+  font-size: 18px;
+}
+
+.mc-view-label {
+  letter-spacing: 1px;
+  font-size: 18px;
+}
+
+/* ===== MC 风格 Slider ===== */
+.mc-slider-track {
+  position: relative;
+  width: 240px;
+  height: 24px;
+  background: #555;
+  border: 3px solid;
+  border-color: #373737 #999 #999 #373737;
+  cursor: pointer;
+  touch-action: none;
+  user-select: none;
+  box-shadow: inset 0 2px 4px rgba(0,0,0,0.6);
+}
+
+.mc-slider-fill {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  background: #3c8527;
+  box-shadow: inset 0 3px 0 0 #5eac44, inset 0 -2px 0 0 #225313;
+  pointer-events: none;
+}
+
+.mc-slider-thumb {
+  position: absolute;
+  top: 50%;
+  width: 22px;
+  height: 32px;
+  transform: translate(-50%, -50%);
+  background: #c6c6c6;
+  border: 3px solid #000;
+  box-shadow:
+    inset 3px 3px 0 0 #fff,
+    inset -3px -3px 0 0 #555;
+  cursor: grab;
+  pointer-events: none;
+  image-rendering: pixelated;
+}
+
+.mc-slider-track:active .mc-slider-thumb {
+  background: #aaa;
+  box-shadow:
+    inset 3px 3px 0 0 #555,
+    inset -3px -3px 0 0 #fff;
+  cursor: grabbing;
 }

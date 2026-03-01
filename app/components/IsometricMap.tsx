@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
-import type { ContributionCalendar } from "@/app/lib/github";
+import type { ContributionCalendar, UserStats } from "@/app/lib/github";
 
 // ===== 等距投影配置 =====
 const TILE_W = 14;
@@ -83,9 +83,10 @@ interface IsometricMapProps {
   calendar: ContributionCalendar;
   username: string;
   avatarUrl?: string | null;
+  stats?: UserStats | null;
 }
 
-export default function IsometricMap({ calendar, username, avatarUrl }: IsometricMapProps) {
+export default function IsometricMap({ calendar, username, avatarUrl, stats }: IsometricMapProps) {
 
   // 将 ContributionCalendar 扁平化为 { w, d, height, count, date }[]
   const data = useMemo(() => {
