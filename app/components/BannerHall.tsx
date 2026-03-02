@@ -3,33 +3,33 @@
 import { useState, useMemo, useCallback, useRef } from "react";
 import type { UserStats } from "@/app/lib/github";
 
-// ===== MC 材质 =====
-const ASSETS_BASE =
-  "https://cdn.jsdelivr.net/gh/InventivetalentDev/minecraft-assets@1.20.4/assets/minecraft/textures/block";
+// ===== MC 材质与贴图 CDN =====
+const BLOCK_BASE = "https://cdn.jsdelivr.net/gh/InventivetalentDev/minecraft-assets@1.20.4/assets/minecraft/textures/block";
+const ITEM_BASE = "https://cdn.jsdelivr.net/gh/InventivetalentDev/minecraft-assets@1.20.4/assets/minecraft/textures/item";
 
 const TEXTURES = {
-  stone: `${ASSETS_BASE}/stone.png`,
-  spruce_log: `${ASSETS_BASE}/spruce_log.png`,
+  stone: `${BLOCK_BASE}/stone.png`,
+  spruce_log: `${BLOCK_BASE}/spruce_log.png`,
 };
 
-// ===== 成就等级色彩 =====
-const TIER_CONFIG: Record<string, { name: string; base: string; text: string; border: string }> = {
-  S: { name: "Diamond", base: "#2bcccc", text: "#51ffff", border: "#179e9e" },
-  A: { name: "Emerald", base: "#36b041", text: "#55ff55", border: "#22752b" },
-  B: { name: "Gold",    base: "#f1b329", text: "#ffff55", border: "#c77f00" },
-  C: { name: "Iron",    base: "#e6e6e6", text: "#ffffff", border: "#999999" },
-  D: { name: "Stone",   base: "#949494", text: "#aaaaaa", border: "#4d4d4d" },
+// ===== 成就等级色彩 (对标 MC 原版羊毛/旗帜染料色号) =====
+const TIER_CONFIG: Record<string, { name: string; base: string; text: string }> = {
+  S: { name: "Diamond", base: "#158991", text: "#55FFFF" },
+  A: { name: "Emerald", base: "#70B919", text: "#55FF55" },
+  B: { name: "Gold",    base: "#F8C527", text: "#FFFF55" },
+  C: { name: "Iron",    base: "#D8D8D8", text: "#FFFFFF" },
+  D: { name: "Stone",   base: "#474F52", text: "#AAAAAA" },
 };
 
-// ===== 图标路径 =====
+// ===== 图标 (原版物品贴图) =====
 const ICONS: Record<string, string> = {
-  commits:   "M 2 12 L 2 5 L 6 8 L 8 3 L 10 8 L 14 5 L 14 12 Z",
-  prs:       "M 4 4 H 7 V 7 H 4 Z M 9 4 H 12 V 7 H 9 Z M 6 7 H 10 V 10 H 11 V 13 H 9 V 11 H 7 V 13 H 5 V 10 H 6 Z",
-  stars:     "M 8 1 L 10 6 L 15 6 L 11 9 L 12 14 L 8 11 L 4 14 L 5 9 L 1 6 L 6 6 Z",
-  issues:    "M 3 13 L 11 5 L 14 2 L 12 2 L 11 3 L 3 11 Z M 4 14 L 2 12 L 5 9 L 7 11 Z",
-  followers: "M 4 6 L 8 11 L 12 6 H 9 V 2 H 7 V 6 Z",
-  repos:     "M 3 2 H 13 V 14 H 3 Z M 5 4 H 11 M 5 7 H 11 M 5 10 H 9",
-  merged:    "M 4 3 V 13 M 12 3 V 7 Q 12 10 8 10 L 4 10",
+  commits:   `${ITEM_BASE}/diamond_pickaxe.png`,
+  prs:       `${ITEM_BASE}/writable_book.png`,
+  stars:     `${ITEM_BASE}/nether_star.png`,
+  issues:    `${ITEM_BASE}/spider_eye.png`,
+  followers: `${ITEM_BASE}/emerald.png`,
+  repos:     `${ITEM_BASE}/book.png`,
+  merged:    `${ITEM_BASE}/gold_ingot.png`,
 };
 
 // ===== 根据数值计算等级 =====
@@ -164,6 +164,9 @@ function BannerItem({ stat, proj, getMatrix }: {
             <stop offset="0%" stopColor="#000" stopOpacity={0.6} />
             <stop offset="100%" stopColor="#000" stopOpacity={0} />
           </linearGradient>
+          <filter id="icon-darken">
+            <feColorMatrix type="matrix" values="0 0 0 0 0   0 0 0 0 0   0 0 0 0 0   0 0 0 0.6 0" />
+          </filter>
         </defs>
 
         {/* 旗杆 Z:0~1 */}
@@ -191,33 +194,37 @@ function BannerItem({ stat, proj, getMatrix }: {
           <g transform={getMatrix("front", 0, 0, 1.5)}>
             <polygon points="0,-2 24,-2 24,68 12,58 0,68" fill={config.base} />
 
-            <text x="12" y="15" fontSize="4.2" fontFamily="'Minecraft', VT323, monospace" textAnchor="middle" fill="#1a1108" fontWeight="bold" opacity={0.8}>
+            {/* 标题：白字黑影 */}
+            <text x="12.2" y="12.2" fontSize="3.5" fontFamily="'Minecraft', VT323, monospace" textAnchor="middle" fill="#000" fontWeight="bold">
+              {stat.title}
+            </text>
+            <text x="12" y="12" fontSize="3.5" fontFamily="'Minecraft', VT323, monospace" textAnchor="middle" fill="#E0E0E0" fontWeight="bold">
               {stat.title}
             </text>
 
-            <g transform="translate(7, 21)">
-              <svg width={10} height={10} viewBox="0 0 16 16">
-                <path d={stat.icon} fill="#000" opacity={0.5} transform="translate(0, 1.5)" />
-                <path d={stat.icon} fill={config.text} stroke={config.border} strokeWidth={1} strokeLinejoin="miter" />
-              </svg>
+            {/* 原版物品图标 + 像素阴影 */}
+            <g transform="translate(5, 17)">
+              <image href={stat.icon} x="0.5" y="1.5" width="14" height="14" filter="url(#icon-darken)" />
+              <image href={stat.icon} x="0" y="0" width="14" height="14" />
             </g>
 
-            <text x="12.2" y="45.2" fontSize="5.5" fontFamily="'Minecraft', VT323, monospace" textAnchor="middle" fill="#000" fontWeight="bold">
+            {/* 数值 */}
+            <text x="12.2" y="42.2" fontSize="6" fontFamily="'Minecraft', VT323, monospace" textAnchor="middle" fill="#000" fontWeight="bold">
               {stat.value}
             </text>
-            <text x="12" y="45" fontSize="5.5" fontFamily="'Minecraft', VT323, monospace" textAnchor="middle" fill={config.text} fontWeight="bold">
+            <text x="12" y="42" fontSize="6" fontFamily="'Minecraft', VT323, monospace" textAnchor="middle" fill={config.text} fontWeight="bold">
               {stat.value}
             </text>
 
-            <text x="12.2" y="56.2" fontSize="3.5" fontFamily="'Minecraft', VT323, monospace" textAnchor="middle" fill="#000" fontWeight="bold">
+            {/* 等级 */}
+            <text x="12.2" y="52.2" fontSize="3.5" fontFamily="'Minecraft', VT323, monospace" textAnchor="middle" fill="#000" fontWeight="bold">
               RANK: {stat.tier}
             </text>
-            <text x="12" y="56" fontSize="3.5" fontFamily="'Minecraft', VT323, monospace" textAnchor="middle" fill="#1a1108" fontWeight="bold" opacity={0.9}>
-              RANK: <tspan fill={config.border}>{stat.tier}</tspan>
+            <text x="12" y="52" fontSize="3.5" fontFamily="'Minecraft', VT323, monospace" textAnchor="middle" fill="#E0E0E0" fontWeight="bold">
+              RANK: <tspan fill={config.text}>{stat.tier}</tspan>
             </text>
 
             <polygon points="0,-2 24,-2 24,68 12,58 0,68" fill={`url(#cloth-shading-${stat.id})`} style={{ pointerEvents: "none" }} />
-            {/* 阴影铺满整块布料形状，渐变在 Y=4 自然褪色 */}
             <polygon points="0,-2 24,-2 24,68 12,58 0,68" fill={`url(#top-shadow-${stat.id})`} style={{ pointerEvents: "none" }} />
           </g>
 
