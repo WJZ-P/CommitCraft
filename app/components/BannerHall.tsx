@@ -168,15 +168,15 @@ function BannerItem({ stat, proj, getMatrix }: {
 
         {/* 旗杆 */}
         <g>
-          <g transform={getMatrix("front", 9, 0, 0)}>
+          <g transform={getMatrix("front", 11, 0, 0)}>
             <image href={TEXTURES.spruce_log} width={2} height={80} preserveAspectRatio="none" />
             <polygon points="0,0 2,0 2,80 0,80" fill="#000" opacity={0.3} />
           </g>
-          <g transform={getMatrix("right", 11, 0, 0)}>
+          <g transform={getMatrix("right", 13, 0, 0)}>
             <image href={TEXTURES.spruce_log} width={2} height={80} preserveAspectRatio="none" />
             <polygon points="0,0 2,0 2,80 0,80" fill="#000" opacity={0.6} />
           </g>
-          <g transform={getMatrix("top", 9, 80, 0)}>
+          <g transform={getMatrix("top", 11, 80, 0)}>
             <image href={TEXTURES.spruce_log} width={2} height={2} preserveAspectRatio="none" />
             <polygon points="0,0 2,0 2,2 0,2" fill="#000" opacity={0.8} />
           </g>
@@ -189,39 +189,39 @@ function BannerItem({ stat, proj, getMatrix }: {
         >
           {/* 正面 */}
           <g transform={getMatrix("front", 0, 0, 1)}>
-            <polygon points="0,-2 20,-2 20,68 10,58 0,68" fill={config.base} />
+            <polygon points="0,-2 24,-2 24,68 12,58 0,68" fill={config.base} />
 
-            <text x="10" y="14" fontSize="4.2" fontFamily="'Minecraft', VT323, monospace" textAnchor="middle" fill="#1a1108" fontWeight="bold" opacity={0.8}>
+            <text x="12" y="14" fontSize="4.2" fontFamily="'Minecraft', VT323, monospace" textAnchor="middle" fill="#1a1108" fontWeight="bold" opacity={0.8}>
               {stat.title}
             </text>
 
-            <g transform="translate(5, 20)">
+            <g transform="translate(7, 20)">
               <svg width={10} height={10} viewBox="0 0 16 16">
                 <path d={stat.icon} fill="#000" opacity={0.5} transform="translate(0, 1.5)" />
                 <path d={stat.icon} fill={config.text} stroke={config.border} strokeWidth={1} strokeLinejoin="miter" />
               </svg>
             </g>
 
-            <text x="10.2" y="44.2" fontSize="5.5" fontFamily="'Minecraft', VT323, monospace" textAnchor="middle" fill="#000" fontWeight="bold">
+            <text x="12.2" y="44.2" fontSize="5.5" fontFamily="'Minecraft', VT323, monospace" textAnchor="middle" fill="#000" fontWeight="bold">
               {stat.value}
             </text>
-            <text x="10" y="44" fontSize="5.5" fontFamily="'Minecraft', VT323, monospace" textAnchor="middle" fill={config.text} fontWeight="bold">
+            <text x="12" y="44" fontSize="5.5" fontFamily="'Minecraft', VT323, monospace" textAnchor="middle" fill={config.text} fontWeight="bold">
               {stat.value}
             </text>
 
-            <text x="10.2" y="55.2" fontSize="3.5" fontFamily="'Minecraft', VT323, monospace" textAnchor="middle" fill="#000" fontWeight="bold">
+            <text x="12.2" y="55.2" fontSize="3.5" fontFamily="'Minecraft', VT323, monospace" textAnchor="middle" fill="#000" fontWeight="bold">
               RANK: {stat.tier}
             </text>
-            <text x="10" y="55" fontSize="3.5" fontFamily="'Minecraft', VT323, monospace" textAnchor="middle" fill="#fff" fontWeight="bold">
-              RANK: <tspan fill={config.text}>{stat.tier}</tspan>
+            <text x="12" y="55" fontSize="3.5" fontFamily="'Minecraft', VT323, monospace" textAnchor="middle" fill="#1a1108" fontWeight="bold" opacity={0.9}>
+              RANK: <tspan fill={config.border}>{stat.tier}</tspan>
             </text>
 
-            <polygon points="0,-2 20,-2 20,68 10,58 0,68" fill={`url(#cloth-shading-${stat.id})`} style={{ pointerEvents: "none" }} />
-            <polygon points="0,-2 20,-2 20,4 0,4" fill={`url(#top-shadow-${stat.id})`} style={{ pointerEvents: "none" }} />
+            <polygon points="0,-2 24,-2 24,68 12,58 0,68" fill={`url(#cloth-shading-${stat.id})`} style={{ pointerEvents: "none" }} />
+            <polygon points="0,-2 24,-2 24,4 0,4" fill={`url(#top-shadow-${stat.id})`} style={{ pointerEvents: "none" }} />
           </g>
 
           {/* 侧面厚度 */}
-          <g transform={getMatrix("right", 20, 0, 0)}>
+          <g transform={getMatrix("right", 24, 0, 0)}>
             <polygon points="0,-2 1,-2 1,68 0,68" fill={config.base} />
             <polygon points="0,-2 1,-2 1,68 0,68" fill="#000" opacity={0.4} />
           </g>
@@ -230,14 +230,14 @@ function BannerItem({ stat, proj, getMatrix }: {
         {/* 顶部横梁 */}
         <g>
           <g transform={getMatrix("front", -2, -2, 2)}>
-            <image href={TEXTURES.spruce_log} width={24} height={2} preserveAspectRatio="none" />
-            <polygon points="0,0 24,0 24,2 0,2" fill="#000" opacity={0.1} />
+            <image href={TEXTURES.spruce_log} width={28} height={2} preserveAspectRatio="none" />
+            <polygon points="0,0 28,0 28,2 0,2" fill="#000" opacity={0.1} />
           </g>
           <g transform={getMatrix("top", -2, -2, 0)}>
-            <image href={TEXTURES.spruce_log} width={24} height={2} preserveAspectRatio="none" />
-            <polygon points="0,0 24,0 24,2 0,2" fill="#fff" opacity={0.1} />
+            <image href={TEXTURES.spruce_log} width={28} height={2} preserveAspectRatio="none" />
+            <polygon points="0,0 28,0 28,2 0,2" fill="#fff" opacity={0.1} />
           </g>
-          <g transform={getMatrix("right", 22, -2, 0)}>
+          <g transform={getMatrix("right", 26, -2, 0)}>
             <image href={TEXTURES.spruce_log} width={2} height={2} preserveAspectRatio="none" />
             <polygon points="0,0 2,0 2,2 0,2" fill="#000" opacity={0.5} />
           </g>
