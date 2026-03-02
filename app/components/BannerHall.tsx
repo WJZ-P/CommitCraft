@@ -129,9 +129,7 @@ function McSlider({ min, max, value, onChange }: {
       onPointerMove={onPointerMove}
       onPointerUp={onPointerUp}
     >
-      {/* 已填充部分 */}
       <div className="mc-slider-fill" style={{ width: `${pct}%` }} />
-      {/* 滑块 */}
       <div className="mc-slider-thumb" style={{ left: `${pct}%` }} />
     </div>
   );
@@ -144,13 +142,15 @@ function BannerItem({ stat, proj, getMatrix }: {
   getMatrix: (plane: string, x: number, y: number, z: number) => string;
 }) {
   const config = TIER_CONFIG[stat.tier];
-  const swayOrigin = `${proj.Ox + 10 * proj.Wx + 0 * proj.Hx + 1 * proj.Dx}px ${proj.Oy + 10 * proj.Wy + 0 * proj.Hy + 1 * proj.Dy}px`;
+
+  // 摆动圆心：X=12中心, Y=0挂点, Z=1.25厚度中点
+  const swayOrigin = `${proj.Ox + 12 * proj.Wx + 0 * proj.Hx + 1.25 * proj.Dx}px ${proj.Oy + 12 * proj.Wy + 0 * proj.Hy + 1.25 * proj.Dy}px`;
 
   return (
     <div className="flex flex-col items-center group cursor-crosshair">
       <svg
         viewBox="-50 0 400 800"
-        className="w-32 h-56 drop-shadow-[0_12px_12px_rgba(0,0,0,0.8)] transition-transform duration-300 group-hover:scale-105"
+        className="w-40 h-[280px] drop-shadow-[0_12px_12px_rgba(0,0,0,0.8)] transition-transform duration-300 group-hover:scale-105"
         style={{ imageRendering: "pixelated" }}
       >
         <defs>
@@ -160,86 +160,92 @@ function BannerItem({ stat, proj, getMatrix }: {
             <stop offset="75%" stopColor="#fff" stopOpacity={0} />
             <stop offset="100%" stopColor="#fff" stopOpacity={0.2} />
           </linearGradient>
-          <linearGradient id={`top-shadow-${stat.id}`} x1="0" y1="0" x2="0" y2="4" gradientUnits="userSpaceOnUse">
+          <linearGradient id={`top-shadow-${stat.id}`} x1="0" y1="-2" x2="0" y2="4" gradientUnits="userSpaceOnUse">
             <stop offset="0%" stopColor="#000" stopOpacity={0.6} />
             <stop offset="100%" stopColor="#000" stopOpacity={0} />
           </linearGradient>
         </defs>
 
-        {/* 旗杆 */}
+        {/* 旗杆 Z:0~1 */}
         <g>
-          <g transform={getMatrix("front", 11, 0, 0)}>
-            <image href={TEXTURES.spruce_log} width={2} height={80} preserveAspectRatio="none" />
-            <polygon points="0,0 2,0 2,80 0,80" fill="#000" opacity={0.3} />
+          <g transform={getMatrix("front", 10.5, 0, 1)}>
+            <image href={TEXTURES.spruce_log} width={3} height={80} preserveAspectRatio="none" />
+            <polygon points="0,0 3,0 3,80 0,80" fill="#000" opacity={0.3} />
           </g>
-          <g transform={getMatrix("right", 13, 0, 0)}>
-            <image href={TEXTURES.spruce_log} width={2} height={80} preserveAspectRatio="none" />
-            <polygon points="0,0 2,0 2,80 0,80" fill="#000" opacity={0.6} />
+          <g transform={getMatrix("right", 13.5, 0, 0)}>
+            <image href={TEXTURES.spruce_log} width={1} height={80} preserveAspectRatio="none" />
+            <polygon points="0,0 1,0 1,80 0,80" fill="#000" opacity={0.6} />
           </g>
-          <g transform={getMatrix("top", 11, 80, 0)}>
-            <image href={TEXTURES.spruce_log} width={2} height={2} preserveAspectRatio="none" />
-            <polygon points="0,0 2,0 2,2 0,2" fill="#000" opacity={0.8} />
+          <g transform={getMatrix("top", 10.5, 80, 0)}>
+            <image href={TEXTURES.spruce_log} width={3} height={1} preserveAspectRatio="none" />
+            <polygon points="0,0 3,0 3,1 0,1" fill="#000" opacity={0.8} />
           </g>
         </g>
 
-        {/* 旗帜布料 */}
+        {/* 旗帜布料 Z:1~1.5 */}
         <g
           className={`mc-cloth-sway-${stat.id}`}
           style={{ transformOrigin: swayOrigin }}
         >
-          {/* 正面 */}
-          <g transform={getMatrix("front", 0, 0, 1)}>
+          {/* 布料正面 Z=1.5 */}
+          <g transform={getMatrix("front", 0, 0, 1.5)}>
             <polygon points="0,-2 24,-2 24,68 12,58 0,68" fill={config.base} />
 
-            <text x="12" y="14" fontSize="4.2" fontFamily="'Minecraft', VT323, monospace" textAnchor="middle" fill="#1a1108" fontWeight="bold" opacity={0.8}>
+            <text x="12" y="15" fontSize="4.2" fontFamily="'Minecraft', VT323, monospace" textAnchor="middle" fill="#1a1108" fontWeight="bold" opacity={0.8}>
               {stat.title}
             </text>
 
-            <g transform="translate(7, 20)">
+            <g transform="translate(7, 21)">
               <svg width={10} height={10} viewBox="0 0 16 16">
                 <path d={stat.icon} fill="#000" opacity={0.5} transform="translate(0, 1.5)" />
                 <path d={stat.icon} fill={config.text} stroke={config.border} strokeWidth={1} strokeLinejoin="miter" />
               </svg>
             </g>
 
-            <text x="12.2" y="44.2" fontSize="5.5" fontFamily="'Minecraft', VT323, monospace" textAnchor="middle" fill="#000" fontWeight="bold">
+            <text x="12.2" y="45.2" fontSize="5.5" fontFamily="'Minecraft', VT323, monospace" textAnchor="middle" fill="#000" fontWeight="bold">
               {stat.value}
             </text>
-            <text x="12" y="44" fontSize="5.5" fontFamily="'Minecraft', VT323, monospace" textAnchor="middle" fill={config.text} fontWeight="bold">
+            <text x="12" y="45" fontSize="5.5" fontFamily="'Minecraft', VT323, monospace" textAnchor="middle" fill={config.text} fontWeight="bold">
               {stat.value}
             </text>
 
-            <text x="12.2" y="55.2" fontSize="3.5" fontFamily="'Minecraft', VT323, monospace" textAnchor="middle" fill="#000" fontWeight="bold">
+            <text x="12.2" y="56.2" fontSize="3.5" fontFamily="'Minecraft', VT323, monospace" textAnchor="middle" fill="#000" fontWeight="bold">
               RANK: {stat.tier}
             </text>
-            <text x="12" y="55" fontSize="3.5" fontFamily="'Minecraft', VT323, monospace" textAnchor="middle" fill="#1a1108" fontWeight="bold" opacity={0.9}>
+            <text x="12" y="56" fontSize="3.5" fontFamily="'Minecraft', VT323, monospace" textAnchor="middle" fill="#1a1108" fontWeight="bold" opacity={0.9}>
               RANK: <tspan fill={config.border}>{stat.tier}</tspan>
             </text>
 
             <polygon points="0,-2 24,-2 24,68 12,58 0,68" fill={`url(#cloth-shading-${stat.id})`} style={{ pointerEvents: "none" }} />
-            <polygon points="0,-2 24,-2 24,4 0,4" fill={`url(#top-shadow-${stat.id})`} style={{ pointerEvents: "none" }} />
+            {/* 阴影铺满整块布料形状，渐变在 Y=4 自然褪色 */}
+            <polygon points="0,-2 24,-2 24,68 12,58 0,68" fill={`url(#top-shadow-${stat.id})`} style={{ pointerEvents: "none" }} />
           </g>
 
-          {/* 侧面厚度 */}
-          <g transform={getMatrix("right", 24, 0, 0)}>
-            <polygon points="0,-2 1,-2 1,68 0,68" fill={config.base} />
-            <polygon points="0,-2 1,-2 1,68 0,68" fill="#000" opacity={0.4} />
+          {/* 布料侧面厚度 X=24, Z:1~1.5 */}
+          <g transform={getMatrix("right", 24, 0, 1)}>
+            <polygon points="0,-2 3,-2 3,68 0,68" fill={config.base} />
+            <polygon points="0,-2 3,-2 3,68 0,68" fill="#000" opacity={0.35} />
+          </g>
+          {/* 布料顶面厚度 Y=-2, Z:1~1.5 */}
+          <g transform={getMatrix("top", 0, -2, 1)}>
+            <polygon points="0,0 24,0 24,1 0,1" fill={config.base} />
+            <polygon points="0,0 24,0 24,1 0,1" fill="#fff" opacity={0.15} />
           </g>
         </g>
 
-        {/* 顶部横梁 */}
+        {/* 顶部横梁 Z:1~3，完美遮盖接缝 */}
         <g>
-          <g transform={getMatrix("front", -2, -2, 2)}>
-            <image href={TEXTURES.spruce_log} width={28} height={2} preserveAspectRatio="none" />
-            <polygon points="0,0 28,0 28,2 0,2" fill="#000" opacity={0.1} />
+          <g transform={getMatrix("front", -2, -3, 3)}>
+            <image href={TEXTURES.spruce_log} width={28} height={3} preserveAspectRatio="none" />
+            <polygon points="0,0 28,0 28,3 0,3" fill="#000" opacity={0.1} />
           </g>
-          <g transform={getMatrix("top", -2, -2, 0)}>
+          <g transform={getMatrix("top", -2, -3, 1)}>
             <image href={TEXTURES.spruce_log} width={28} height={2} preserveAspectRatio="none" />
             <polygon points="0,0 28,0 28,2 0,2" fill="#fff" opacity={0.1} />
           </g>
-          <g transform={getMatrix("right", 26, -2, 0)}>
-            <image href={TEXTURES.spruce_log} width={2} height={2} preserveAspectRatio="none" />
-            <polygon points="0,0 2,0 2,2 0,2" fill="#000" opacity={0.5} />
+          <g transform={getMatrix("right", 26, -3, 1)}>
+            <image href={TEXTURES.spruce_log} width={2} height={3} preserveAspectRatio="none" />
+            <polygon points="0,0 2,0 2,3 0,3" fill="#000" opacity={0.5} />
           </g>
         </g>
       </svg>
@@ -254,17 +260,17 @@ interface BannerHallProps {
 }
 
 export default function BannerHall({ stats, totalContributions }: BannerHallProps) {
-  const [rotation, setRotation] = useState(0); // 默认正面，支持 -90 ~ 90
+  const [rotation, setRotation] = useState(0);
   const displayRef = useRef<HTMLDivElement>(null);
 
   const statItems = useMemo(() => buildStats(stats, totalContributions), [stats, totalContributions]);
   const bannerDelays = useMemo(() => statItems.map(() => ({
     delay: Math.random() * 0.25,
     duration: 4.0 + Math.random() * 1,          // 4~5s 周期
-    rotateA: -1 - Math.random() * 1.5,          // -1~-2.5deg
-    rotateB: 3 + Math.random() * 2,             // 3~5deg
-    skewA: 1.5 + Math.random() * 1,             // 1.5~2.5deg
-    skewB: -1.5 - Math.random() * 1,            // -1.5~-2.5deg
+    rotateA: -0.6 - Math.random() * 0.9,        // -0.6~-1.5deg
+    rotateB: 1.8 + Math.random() * 1.2,         // 1.8~3deg
+    skewA: 0.9 + Math.random() * 0.6,           // 0.9~1.5deg
+    skewB: -0.9 - Math.random() * 0.6,          // -0.9~-1.5deg
   })), [statItems]);
 
   const proj = useMemo<Proj>(() => {
