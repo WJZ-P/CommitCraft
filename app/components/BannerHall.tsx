@@ -13,12 +13,12 @@ const TEXTURES = {
 };
 
 // ===== 成就等级色彩 (对标 MC 原版羊毛/旗帜染料色号) =====
-const TIER_CONFIG: Record<string, { name: string; base: string; text: string }> = {
-  S: { name: "Diamond", base: "#158991", text: "#55FFFF" },
-  A: { name: "Emerald", base: "#70B919", text: "#55FF55" },
-  B: { name: "Gold",    base: "#F8C527", text: "#FFFF55" },
-  C: { name: "Iron",    base: "#D8D8D8", text: "#FFFFFF" },
-  D: { name: "Stone",   base: "#474F52", text: "#AAAAAA" },
+const TIER_CONFIG: Record<string, { name: string; base: string; text: string; label: string }> = {
+  S: { name: "Diamond", base: "#158991", text: "#55FFFF", label: "#E0E0E0" },
+  A: { name: "Orange",   base: "#F9801D", text: "#333333", label: "#2A2A2A" },
+  B: { name: "Gold",    base: "#F8C527", text: "#333333", label: "#2A2A2A" },
+  C: { name: "Iron",    base: "#D8D8D8", text: "#333333", label: "#2A2A2A" },
+  D: { name: "Stone",   base: "#474F52", text: "#E0E0E0", label: "#E0E0E0" },
 };
 
 // ===== 图标 (原版物品贴图) =====
@@ -27,7 +27,7 @@ const ICONS: Record<string, string> = {
   prs:       `${ITEM_BASE}/writable_book.png`,
   stars:     `${ITEM_BASE}/nether_star.png`,
   issues:    `${ITEM_BASE}/spider_eye.png`,
-  followers: `${ITEM_BASE}/emerald.png`,
+  followers: `https://cdn.jsdelivr.net/gh/InventivetalentDev/minecraft-assets@1.20.4/assets/minecraft/textures/gui/sprites/hud/heart/full.png`,
   repos:     `${ITEM_BASE}/book.png`,
   merged:    `${ITEM_BASE}/gold_ingot.png`,
 };
@@ -35,9 +35,9 @@ const ICONS: Record<string, string> = {
 // ===== 根据数值计算等级 =====
 function getTier(id: string, value: number): string {
   const thresholds: Record<string, number[]> = {
-    commits:   [5000, 2000, 500, 100],
+    commits:   [2000, 1000, 500, 100],
     prs:       [200, 100, 30, 10],
-    stars:     [500, 100, 30, 5],
+    stars:     [1000, 100, 30, 5],
     issues:    [200, 100, 30, 10],
     followers: [500, 100, 30, 10],
     repos:     [50, 30, 15, 5],
@@ -73,7 +73,7 @@ function buildStats(stats: UserStats, totalContributions: number): StatItem[] {
   return items.map((item) => ({
     id: item.id,
     title: item.title,
-    value: item.raw.toLocaleString(),
+    value: String(item.raw),
     rawValue: item.raw,
     tier: getTier(item.id, item.raw),
     icon: ICONS[item.id] || ICONS.commits,
@@ -194,34 +194,34 @@ function BannerItem({ stat, proj, getMatrix }: {
           <g transform={getMatrix("front", 0, 0, 1.5)}>
             <polygon points="0,-2 24,-2 24,68 12,58 0,68" fill={config.base} />
 
-            {/* 标题：白字黑影 */}
-            <text x="12.2" y="12.2" fontSize="3.5" fontFamily="'Minecraft', VT323, monospace" textAnchor="middle" fill="#000" fontWeight="bold">
+            {/* 标题：上移到 y=8 */}
+            <text x="12.2" y="8.2" fontSize="3.5" fontFamily="'Minecraft', VT323, monospace" textAnchor="middle" fill={config.label === "#E0E0E0" ? "#000" : "#fff"} fontWeight="bold" opacity={config.label === "#E0E0E0" ? 1 : 0.3}>
               {stat.title}
             </text>
-            <text x="12" y="12" fontSize="3.5" fontFamily="'Minecraft', VT323, monospace" textAnchor="middle" fill="#E0E0E0" fontWeight="bold">
+            <text x="12" y="8" fontSize="3.5" fontFamily="'Minecraft', VT323, monospace" textAnchor="middle" fill={config.label} fontWeight="bold">
               {stat.title}
             </text>
 
             {/* 原版物品图标 + 像素阴影 */}
-            <g transform="translate(5, 17)">
+            <g transform="translate(5, 12)">
               <image href={stat.icon} x="0.5" y="1.5" width="14" height="14" filter="url(#icon-darken)" />
               <image href={stat.icon} x="0" y="0" width="14" height="14" />
             </g>
 
             {/* 数值 */}
-            <text x="12.2" y="42.2" fontSize="6" fontFamily="'Minecraft', VT323, monospace" textAnchor="middle" fill="#000" fontWeight="bold">
+            <text x="12.2" y="38.2" fontSize="6" fontFamily="'Minecraft', VT323, monospace" textAnchor="middle" fill={config.label === "#E0E0E0" ? "#000" : "#fff"} fontWeight="bold" opacity={config.label === "#E0E0E0" ? 1 : 0.3}>
               {stat.value}
             </text>
-            <text x="12" y="42" fontSize="6" fontFamily="'Minecraft', VT323, monospace" textAnchor="middle" fill={config.text} fontWeight="bold">
+            <text x="12" y="38" fontSize="6" fontFamily="'Minecraft', VT323, monospace" textAnchor="middle" fill={config.text} fontWeight="bold">
               {stat.value}
             </text>
 
-            {/* 等级 */}
-            <text x="12.2" y="52.2" fontSize="3.5" fontFamily="'Minecraft', VT323, monospace" textAnchor="middle" fill="#000" fontWeight="bold">
-              RANK: {stat.tier}
+            {/* 等级字母：大号居中 */}
+            <text x="12.8" y="51.3" fontSize="10" fontFamily="'Minecraft', VT323, monospace" textAnchor="middle" fill={config.label === "#E0E0E0" ? "#000" : "#fff"} fontWeight="bold" opacity={config.label === "#E0E0E0" ? 1 : 0.3}>
+              {stat.tier}
             </text>
-            <text x="12" y="52" fontSize="3.5" fontFamily="'Minecraft', VT323, monospace" textAnchor="middle" fill="#E0E0E0" fontWeight="bold">
-              RANK: <tspan fill={config.text}>{stat.tier}</tspan>
+            <text x="12.5" y="51" fontSize="10" fontFamily="'Minecraft', VT323, monospace" textAnchor="middle" fill={config.text} fontWeight="bold">
+              {stat.tier}
             </text>
 
             <polygon points="0,-2 24,-2 24,68 12,58 0,68" fill={`url(#cloth-shading-${stat.id})`} style={{ pointerEvents: "none" }} />
@@ -313,36 +313,110 @@ export default function BannerHall({ stats, totalContributions }: BannerHallProp
     [proj]
   );
 
-  const handleDownload = useCallback(() => {
+  // Base64 字体缓存
+  const fontBase64CacheRef = useRef<{ regular: string; bold: string } | null>(null);
+
+  const handleDownload = useCallback(async () => {
     if (!displayRef.current) return;
     const svgs = displayRef.current.querySelectorAll("svg");
     if (svgs.length === 0) return;
 
-    const serializer = new XMLSerializer();
+    // 加载字体并转 Base64（只 fetch 一次）
+    if (!fontBase64CacheRef.current) {
+      try {
+        const [regularBuf, boldBuf] = await Promise.all([
+          fetch("https://fonts.cdnfonts.com/s/25041/1_MinecraftRegular1.woff").then(r => r.arrayBuffer()),
+          fetch("https://fonts.cdnfonts.com/s/25041/3_MinecraftBold1.woff").then(r => r.arrayBuffer()),
+        ]);
+        const toBase64 = (buf: ArrayBuffer) => {
+          const bytes = new Uint8Array(buf);
+          let binary = "";
+          bytes.forEach((b) => { binary += String.fromCharCode(b); });
+          return btoa(binary);
+        };
+        fontBase64CacheRef.current = {
+          regular: toBase64(regularBuf),
+          bold: toBase64(boldBuf),
+        };
+      } catch (e) {
+        console.error("[BannerHall] 字体加载失败:", e);
+        return;
+      }
+    }
+    const fontData = fontBase64CacheRef.current;
+
+    // 构建 @font-face 嵌入样式
+    const fontFaceCSS = `
+      @font-face {
+        font-family: 'Minecraft';
+        src: url('data:font/woff;base64,${fontData.regular}') format('woff');
+        font-weight: normal;
+        font-style: normal;
+      }
+      @font-face {
+        font-family: 'Minecraft';
+        src: url('data:font/woff;base64,${fontData.bold}') format('woff');
+        font-weight: bold;
+        font-style: normal;
+      }
+    `;
+
     const cols = 4;
     const gap = 20;
-    const parts: { xml: string; w: number; h: number }[] = [];
+    const padding = 30;
+    const parts: { inner: string; defs: string; vb: number[] }[] = [];
 
     svgs.forEach((svg) => {
       const vb = svg.getAttribute("viewBox")?.split(" ").map(Number) || [0, 0, 300, 800];
-      parts.push({ xml: serializer.serializeToString(svg), w: vb[2], h: vb[3] });
+
+      // 提取 <defs> 内容
+      const defsEls = svg.querySelectorAll("defs");
+      let defsContent = "";
+      defsEls.forEach((d) => { defsContent += d.innerHTML; });
+
+      // 提取非 defs 的内容
+      let inner = "";
+      svg.childNodes.forEach((child) => {
+        if (child instanceof Element && child.tagName.toLowerCase() === "defs") return;
+        if (child instanceof Element) {
+          inner += child.outerHTML;
+        } else if (child.nodeType === Node.TEXT_NODE) {
+          inner += child.textContent;
+        }
+      });
+
+      parts.push({ inner, defs: defsContent, vb });
     });
 
-    const cellW = Math.max(...parts.map((p) => p.w));
-    const cellH = Math.max(...parts.map((p) => p.h));
+    const cellW = Math.max(...parts.map((p) => p.vb[2]));
+    const cellH = Math.max(...parts.map((p) => p.vb[3]));
     const rows = Math.ceil(parts.length / cols);
-    const totalW = cols * cellW + (cols - 1) * gap;
-    const totalH = rows * cellH + (rows - 1) * gap;
+    const totalW = cols * cellW + (cols - 1) * gap + padding * 2;
+    const totalH = rows * cellH + (rows - 1) * gap + padding * 2;
+
+    const allDefs = parts.map((p) => p.defs).join("\n");
 
     const inner = parts.map((p, i) => {
       const col = i % cols;
       const row = Math.floor(i / cols);
-      const x = col * (cellW + gap) + (cellW - p.w) / 2;
-      const y = row * (cellH + gap) + (cellH - p.h) / 2;
-      return `<g transform="translate(${x},${y})">${p.xml}</g>`;
+      const x = padding + col * (cellW + gap) + (cellW - p.vb[2]) / 2 + p.vb[0];
+      const y = padding + row * (cellH + gap) + (cellH - p.vb[3]) / 2 + p.vb[1];
+      return `<g transform="translate(${x},${y})">${p.inner}</g>`;
     }).join("");
 
-    const combined = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${totalW} ${totalH}" width="${totalW}" height="${totalH}">${inner}</svg>`;
+    const combined = [
+      `<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"`,
+      `  viewBox="0 0 ${totalW} ${totalH}" width="${totalW}" height="${totalH}"`,
+      `  style="image-rendering:pixelated;background:#2a2a2a">`,
+      `  <defs>`,
+      `    <style type="text/css">${fontFaceCSS}</style>`,
+      `    ${allDefs}`,
+      `  </defs>`,
+      `  <rect width="${totalW}" height="${totalH}" fill="#2a2a2a" rx="8"/>`,
+      `  ${inner}`,
+      `</svg>`,
+    ].join("\n");
+
     const blob = new Blob([combined], { type: "image/svg+xml" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
