@@ -309,7 +309,7 @@ export default function Home() {
 
                         {/* ===== 旗帜战绩大厅 ===== */}
                         {calendarData && !loading && activeView === "banner" && userStats && (
-                            <BannerHall stats={userStats} totalContributions={calendarData.totalContributions} />
+                            <BannerHall stats={userStats} totalContributions={calendarData.totalContributions} username={displayUsername} />
                         )}
                     </div>
                 </div>

@@ -3,6 +3,7 @@
 import React, { useState, useMemo, useCallback, useRef } from "react";
 import opentype from "opentype.js";
 import type { UserStats } from "@/app/lib/github";
+import EndpointCopyBox from "./EndpointCopyBox";
 
 // ===== MC 材质 =====
 const ASSETS_BASE =
@@ -299,9 +300,10 @@ function BannerItem({ stat, proj, getMatrix }: {
 interface BannerHallProps {
   stats: UserStats;
   totalContributions: number;
+  username: string;
 }
 
-export default function BannerHall({ stats, totalContributions }: BannerHallProps) {
+export default function BannerHall({ stats, totalContributions, username }: BannerHallProps) {
   const [rotation, setRotation] = useState(0);
   const displayRef = useRef<HTMLDivElement>(null);
   
@@ -553,6 +555,19 @@ export default function BannerHall({ stats, totalContributions }: BannerHallProp
           ))}
         </div>
       </div>
+
+      {/* URL 端点栏 */}
+      {username && (
+        <div className="mt-3 space-y-2">
+          {statItems.map((stat) => (
+            <EndpointCopyBox
+              key={stat.id}
+              url={`${typeof window !== "undefined" ? window.location.origin : ""}/api/banner/${encodeURIComponent(username)}/${stat.id}.svg`}
+              label={stat.title}
+            />
+          ))}
+        </div>
+      )}
 
       <p className="text-[#888] text-xs mt-2 text-center mc-text-shadow-light">
         Drag slider to rotate banners &bull; Ranks based on your GitHub stats

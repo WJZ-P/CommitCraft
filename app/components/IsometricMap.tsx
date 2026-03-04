@@ -2,6 +2,7 @@
 
 import { useMemo } from "react";
 import type { ContributionCalendar, UserStats } from "@/app/lib/github";
+import EndpointCopyBox from "./EndpointCopyBox";
 
 // ===== 等距投影配置 =====
 const TILE_W = 14;
@@ -483,6 +484,15 @@ export default function IsometricMap({ calendar, username, avatarUrl, stats }: I
         className="mc-display overflow-auto !p-0"
         dangerouslySetInnerHTML={{ __html: svgContent }}
       />
+
+      {/* URL 端点栏 */}
+      {username && (
+        <div className="mt-3">
+          <EndpointCopyBox
+            url={`${typeof window !== "undefined" ? window.location.origin : ""}/api/map/${encodeURIComponent(username)}.svg`}
+          />
+        </div>
+      )}
 
       <p className="text-[#888] text-xs mt-2 text-center mc-text-shadow-light">
         Hover to inspect &bull; Height &amp; ores scale with commits
