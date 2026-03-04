@@ -4,6 +4,7 @@ import {useState, useEffect, useCallback, useRef} from "react";
 import WeatherCanvas from "./components/WeatherCanvas";
 import IsometricMap from "./components/IsometricMap";
 import BannerHall from "./components/BannerHall";
+import ProfileCardView from "./components/ProfileCard";
 import type {ContributionCalendar, UserStats} from "@/app/lib/github";
 
 // 原版 MC 材质 CDN 链接
@@ -33,9 +34,9 @@ export default function Home() {
     const [userStats, setUserStats] = useState<UserStats | null>(null);
     const [error, setError] = useState<string | null>(null);
     const [ores, setOres] = useState<{ id: number; x: number; y: number; type: string }[]>([]);
-    const [activeView, setActiveView] = useState<"map" | "banner">("map");
-    const VIEW_LABELS: Record<string, string> = { map: "Contribution Map", banner: "Banner Hall" };
-    const VIEW_KEYS: ("map" | "banner")[] = ["map", "banner"];
+    const [activeView, setActiveView] = useState<"map" | "banner" | "card">("map");
+    const VIEW_LABELS: Record<string, string> = { map: "Contribution Map", banner: "Banner Hall", card: "Player Passport" };
+    const VIEW_KEYS: ("map" | "banner" | "card")[] = ["map", "banner", "card"];
     const [weather, setWeather] = useState<"clear" | "rain" | "snow">("snow");
     const mouseRef = useRef({x: 0, y: 0});
     //  指向石头背景的ref，避免把鼠标位置挂载在全局HTML上，优化性能。
@@ -310,6 +311,11 @@ export default function Home() {
                         {/* ===== 旗帜战绩大厅 ===== */}
                         {calendarData && !loading && activeView === "banner" && userStats && (
                             <BannerHall stats={userStats} totalContributions={calendarData.totalContributions} username={displayUsername} />
+                        )}
+
+                        {/* ===== 玩家护照卡片 ===== */}
+                        {calendarData && !loading && activeView === "card" && userStats && avatarUrl && (
+                            <ProfileCardView stats={userStats} totalContributions={calendarData.totalContributions} username={displayUsername} avatarUrl={avatarUrl} />
                         )}
                     </div>
                 </div>

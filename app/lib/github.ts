@@ -53,6 +53,8 @@ export interface UserStats {
   mergedPullRequests: number;
   /** 参与的仓库数 */
   contributedRepos: number;
+  /** 用户昵称（可选，可能为空） */
+  name: string | null;
   /** 用户简介 */
   bio: string | null;
   /** 用户所在地 */
@@ -65,6 +67,7 @@ export interface UserStats {
 
 export interface GitHubContributionResponse {
   user: {
+    name: string | null;
     avatarUrl: string;
     bio: string | null;
     location: string | null;
@@ -104,6 +107,7 @@ export interface GitHubContributionResponse {
 const CONTRIBUTIONS_QUERY = `
   query($username: String!, $from: DateTime, $to: DateTime) {
     user(login: $username) {
+      name
       avatarUrl
       bio
       location
@@ -196,11 +200,12 @@ export async function fetchContributions(
   const user = data.user;
   const totalStars = user.repositories.nodes.reduce((sum, repo) => sum + repo.stargazerCount, 0);
 
-  return {
+    return {
     calendar: user.contributionsCollection.contributionCalendar,
     avatarUrl: user.avatarUrl,
     stats: {
       totalStars,
+      name: user.name,
       publicRepos: user.repositories.totalCount,
       followers: user.followers.totalCount,
       following: user.following.totalCount,

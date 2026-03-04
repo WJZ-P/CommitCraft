@@ -1,6 +1,6 @@
 import { type NextRequest } from "next/server";
 import { fetchContributions } from "@/app/lib/github";
-import { generateMapSvg } from "@/app/lib/mapSvg";
+import { generateCardSvg, escapeXml } from "@/app/lib/cardSvg";
 
 export async function GET(
   request: NextRequest,
@@ -22,12 +22,22 @@ export async function GET(
     );
   }
 
-  const from = searchParams.get("from") || undefined;
-  const to = searchParams.get("to") || undefined;
+  const quote = searchParams.get("quote") || "Exploring the infinite code blocks.";
 
   try {
-    const { calendar } = await fetchContributions(username, token, from, to);
-    const svg = generateMapSvg({ weeks: calendar.weeks, interactive: false });
+    const { calendar, avatarUrl, stats } = await fetchContributions(username, token);
+    const joinDate = stats.createdAt ? stats.createdAt.slice(0, 10) : "Unknown";
+
+    const svg = generateCardSvg({
+      username,
+      displayName: stats.name || username,
+      avatarUrl,
+      joinDate,
+      stars: stats.totalStars,
+      commits: calendar.totalContributions,
+      followers: stats.followers,
+      quote,
+    });
 
     return new Response(svg, {
       headers: {
@@ -38,7 +48,7 @@ export async function GET(
   } catch (err) {
     const message = err instanceof Error ? err.message : "Unknown error";
     const status = message.includes("not found") ? 404 : 500;
-    const escapedMsg = message.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    const escapedMsg = escapeXml(message);
     return new Response(
       `<svg xmlns="http://www.w3.org/2000/svg" width="600" height="50"><text x="10" y="30" fill="red" font-size="14">${escapedMsg}</text></svg>`,
       { status, headers: { "Content-Type": "image/svg+xml" } },

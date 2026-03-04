@@ -3,129 +3,16 @@
 import React, { useState, useMemo, useCallback, useRef } from "react";
 import opentype from "opentype.js";
 import type { UserStats } from "@/app/lib/github";
+import {
+  TEXTURES,
+  TIER_CONFIG,
+  buildStats,
+  getProj,
+  getMatrix,
+  type StatItem,
+  type Proj,
+} from "@/app/lib/bannerSvg";
 import EndpointCopyBox from "./EndpointCopyBox";
-
-// ===== MC 材质 =====
-const ASSETS_BASE =
-  "https://cdn.jsdelivr.net/gh/InventivetalentDev/minecraft-assets@1.20.4/assets/minecraft/textures/block";
-
-const TEXTURES = {
-  stone: `${ASSETS_BASE}/stone.png`,
-  spruce_log: `${ASSETS_BASE}/spruce_log.png`,
-};
-
-// ===== 成就等级色彩 =====
-const TIER_CONFIG: Record<string, { name: string; base: string; text: string; label: string }> = {
-  "S+": { name: "Diamond", base: "#0E6B72", text: "#55FFFF", label: "#E0E0E0" },
-  "S":  { name: "Diamond", base: "#158991", text: "#55FFFF", label: "#E0E0E0" },
-  "S-": { name: "Diamond", base: "#1FA0A8", text: "#55FFFF", label: "#E0E0E0" },
-  "A+": { name: "Orange",  base: "#E06A0A", text: "#333333", label: "#2A2A2A" },
-  "A":  { name: "Orange",  base: "#F9801D", text: "#333333", label: "#2A2A2A" },
-  "A-": { name: "Orange",  base: "#FA9A4D", text: "#333333", label: "#2A2A2A" },
-  "B+": { name: "Gold",    base: "#E5AE0E", text: "#333333", label: "#2A2A2A" },
-  "B":  { name: "Gold",    base: "#F8C527", text: "#333333", label: "#2A2A2A" },
-  "B-": { name: "Gold",    base: "#FAD45C", text: "#333333", label: "#2A2A2A" },
-  "C+": { name: "Iron",    base: "#C0C0C0", text: "#333333", label: "#2A2A2A" },
-  "C":  { name: "Iron",    base: "#D8D8D8", text: "#333333", label: "#2A2A2A" },
-  "C-": { name: "Iron",    base: "#E8E8E8", text: "#333333", label: "#2A2A2A" },
-  "D":  { name: "Stone",   base: "#474F52", text: "#E0E0E0", label: "#E0E0E0" },
-};
-
-// ===== 图标路径 =====
-const ITEM_BASE = "https://cdn.jsdelivr.net/gh/InventivetalentDev/minecraft-assets@1.20.4/assets/minecraft/textures/item";
-const ICONS: Record<string, string> = {
-  commits:   `${ITEM_BASE}/diamond_pickaxe.png`,
-  prs:       `${ITEM_BASE}/writable_book.png`,
-  stars:     `${ITEM_BASE}/nether_star.png`,
-  issues:    `${ITEM_BASE}/spider_eye.png`,
-  followers: `https://cdn.jsdelivr.net/gh/InventivetalentDev/minecraft-assets@1.20.4/assets/minecraft/textures/gui/sprites/hud/heart/full.png`,
-  repos:     `${ITEM_BASE}/book.png`,
-  merged:    `${ITEM_BASE}/gold_ingot.png`,
-};
-
-// ===== 根据数值计算等级 =====
-// 阈值顺序: [S+, S, S-, A+, A, A-, B+, B, B-, C+, C, C-]
-// stars 的 S 档由用户指定: S-=1000, S=1500, S+=2000
-// 其他指标: 原 S 阈值作 S-, 1.5x 作 S, 2x 作 S+
-// A/B/C 各等级在 [下界, 上界) 区间内三等分
-function buildThresholds(sPlus: number, s: number, sMinus: number, a: number, b: number, c: number): number[] {
-  // A 区间: [a, sMinus), 三等分 → A-=a, A=a+1/3, A+=a+2/3
-  const aStep = (sMinus - a) / 3;
-  const aPlus  = Math.round(a + aStep * 2);
-  const aMid   = Math.round(a + aStep);
-  const aMinus = a;
-
-  // B 区间: [b, a), 三等分
-  const bStep = (a - b) / 3;
-  const bPlus  = Math.round(b + bStep * 2);
-  const bMid   = Math.round(b + bStep);
-  const bMinus = b;
-
-  // C 区间: [c, b), 三等分
-  const cStep = (b - c) / 3;
-  const cPlus  = Math.round(c + cStep * 2);
-  const cMid   = Math.round(c + cStep);
-  const cMinus = c;
-
-  return [sPlus, s, sMinus, aPlus, aMid, aMinus, bPlus, bMid, bMinus, cPlus, cMid, cMinus];
-}
-
-const TIER_THRESHOLDS: Record<string, number[]> = {
-  commits:   buildThresholds(1500, 1250, 1000, 500, 250, 100),
-  prs:       buildThresholds(400, 300, 200, 100, 30, 10),
-  stars:     buildThresholds(2000, 1500, 1000, 100, 30, 5),
-  issues:    buildThresholds(400, 300, 200, 100, 30, 10),
-  followers: buildThresholds(1000, 750, 500, 100, 30, 10),
-  repos:     buildThresholds(100, 75, 50, 30, 15, 5),
-  merged:    buildThresholds(300, 225, 150, 80, 20, 5),
-};
-
-const TIER_LABELS = ["S+", "S", "S-", "A+", "A", "A-", "B+", "B", "B-", "C+", "C", "C-"];
-
-function getTier(id: string, value: number): string {
-  const t = TIER_THRESHOLDS[id] || buildThresholds(200, 150, 100, 50, 20, 5);
-  for (let i = 0; i < TIER_LABELS.length; i++) {
-    if (value >= t[i]) return TIER_LABELS[i];
-  }
-  return "D";
-}
-
-interface StatItem {
-  id: string;
-  title: string;
-  value: string;
-  rawValue: number;
-  tier: string;
-  icon: string;
-}
-
-function buildStats(stats: UserStats, totalContributions: number): StatItem[] {
-  const items: { id: string; title: string; raw: number }[] = [
-    { id: "commits",   title: "COMMITS",    raw: totalContributions },
-    { id: "prs",       title: "PULL REQS",  raw: stats.pullRequests },
-    { id: "stars",     title: "STARS",      raw: stats.totalStars },
-    { id: "issues",    title: "ISSUES",     raw: stats.issues },
-    { id: "followers", title: "FOLLOWERS",  raw: stats.followers },
-    { id: "repos",     title: "REPOS",      raw: stats.publicRepos },
-    { id: "merged",    title: "MERGED PRs", raw: stats.mergedPullRequests },
-  ];
-  return items.map((item) => ({
-    id: item.id,
-    title: item.title,
-    value: String(item.raw),
-    rawValue: item.raw,
-    tier: getTier(item.id, item.raw),
-    icon: ICONS[item.id] || ICONS.commits,
-  }));
-}
-
-// ===== 投影工具 =====
-interface Proj {
-  Wx: number; Wy: number;
-  Hx: number; Hy: number;
-  Dx: number; Dy: number;
-  Ox: number; Oy: number;
-}
 
 // ===== MC 风格 Slider =====
 function McSlider({ min, max, value, onChange }: {
@@ -174,16 +61,15 @@ function McSlider({ min, max, value, onChange }: {
   );
 }
 
-// ===== 单个旗帜 =====
-function BannerItem({ stat, proj, getMatrix }: {
+// ===== 单个旗帜（React SVG 组件） =====
+function BannerItem({ stat, proj, getMatrixFn }: {
   stat: StatItem;
   proj: Proj;
-  getMatrix: (plane: string, x: number, y: number, z: number) => string;
+  getMatrixFn: (plane: string, x: number, y: number, z: number) => string;
 }) {
   const config = TIER_CONFIG[stat.tier];
   const tierFontSize = stat.tier.length > 1 ? 7.5 : 10;
 
-  // 摆动圆心
   const swayOrigin = `${proj.Ox + 12 * proj.Wx + 0 * proj.Hx + 1.25 * proj.Dx}px ${proj.Oy + 12 * proj.Wy + 0 * proj.Hy + 1.25 * proj.Dy}px`;
 
   return (
@@ -211,15 +97,15 @@ function BannerItem({ stat, proj, getMatrix }: {
 
         {/* 旗杆 */}
         <g>
-          <g transform={getMatrix("front", 10.5, 0, 1)}>
+          <g transform={getMatrixFn("front", 10.5, 0, 1)}>
             <image href={TEXTURES.spruce_log} width={3} height={80} preserveAspectRatio="none" />
             <polygon points="0,0 3,0 3,80 0,80" fill="#000" opacity={0.3} />
           </g>
-          <g transform={getMatrix("right", 13.5, 0, 0)}>
+          <g transform={getMatrixFn("right", 13.5, 0, 0)}>
             <image href={TEXTURES.spruce_log} width={1} height={80} preserveAspectRatio="none" />
             <polygon points="0,0 1,0 1,80 0,80" fill="#000" opacity={0.6} />
           </g>
-          <g transform={getMatrix("top", 10.5, 80, 0)}>
+          <g transform={getMatrixFn("top", 10.5, 80, 0)}>
             <image href={TEXTURES.spruce_log} width={3} height={1} preserveAspectRatio="none" />
             <polygon points="0,0 3,0 3,1 0,1" fill="#000" opacity={0.8} />
           </g>
@@ -230,7 +116,7 @@ function BannerItem({ stat, proj, getMatrix }: {
           className={`mc-cloth-sway-${stat.id}`}
           style={{ transformOrigin: swayOrigin }}
         >
-          <g transform={getMatrix("front", 0, 0, 1.5)}>
+          <g transform={getMatrixFn("front", 0, 0, 1.5)}>
             <polygon points="0,-2 24,-2 24,68 12,58 0,68" fill={config.base} />
 
             {/* 标题 */}
@@ -266,11 +152,11 @@ function BannerItem({ stat, proj, getMatrix }: {
             <polygon points="0,-2 24,-2 24,68 12,58 0,68" fill={`url(#top-shadow-${stat.id})`} style={{ pointerEvents: "none" }} />
           </g>
 
-          <g transform={getMatrix("right", 24, 0, 1)}>
+          <g transform={getMatrixFn("right", 24, 0, 1)}>
             <polygon points="0,-2 3,-2 3,68 0,68" fill={config.base} />
             <polygon points="0,-2 3,-2 3,68 0,68" fill="#000" opacity={0.35} />
           </g>
-          <g transform={getMatrix("top", 0, -2, 1)}>
+          <g transform={getMatrixFn("top", 0, -2, 1)}>
             <polygon points="0,0 24,0 24,1 0,1" fill={config.base} />
             <polygon points="0,0 24,0 24,1 0,1" fill="#fff" opacity={0.15} />
           </g>
@@ -278,15 +164,15 @@ function BannerItem({ stat, proj, getMatrix }: {
 
         {/* 顶部横梁 */}
         <g id="top-bar">
-          <g transform={getMatrix("front", -2, -3, 3)}>
+          <g transform={getMatrixFn("front", -2, -3, 3)}>
             <image href={TEXTURES.spruce_log} width={28} height={3} preserveAspectRatio="none" />
             <polygon points="0,0 28,0 28,3 0,3" fill="#000" opacity={0.1} />
           </g>
-          <g transform={getMatrix("top", -2, -3, 1)}>
+          <g transform={getMatrixFn("top", -2, -3, 1)}>
             <image href={TEXTURES.spruce_log} width={28} height={2} preserveAspectRatio="none" />
             <polygon points="0,0 28,0 28,2 0,2" fill="#fff" opacity={0.1} />
           </g>
-          <g transform={getMatrix("right", 26, -3, 1)}>
+          <g transform={getMatrixFn("right", 26, -3, 1)}>
             <image href={TEXTURES.spruce_log} width={2} height={3} preserveAspectRatio="none" />
             <polygon points="0,0 2,0 2,3 0,3" fill="#000" opacity={0.5} />
           </g>
@@ -306,50 +192,22 @@ interface BannerHallProps {
 export default function BannerHall({ stats, totalContributions, username }: BannerHallProps) {
   const [rotation, setRotation] = useState(0);
   const displayRef = useRef<HTMLDivElement>(null);
-  
-  // 用于缓存解析好的 opentype 字体引擎对象
   const fontCacheRef = useRef<opentype.Font | null>(null);
 
   const statItems = useMemo(() => buildStats(stats, totalContributions), [stats, totalContributions]);
   const bannerDelays = useMemo(() => statItems.map(() => ({
     delay: Math.random() * 0.25,
-    duration: 4.0 + Math.random() * 1,          
-    rotateA: -0.6 - Math.random() * 0.9,        
-    rotateB: 1.8 + Math.random() * 1.2,         
-    skewA: 0.9 + Math.random() * 0.6,           
-    skewB: -0.9 - Math.random() * 0.6,          
+    duration: 4.0 + Math.random() * 1,
+    rotateA: -0.6 - Math.random() * 0.9,
+    rotateB: 1.8 + Math.random() * 1.2,
+    skewA: 0.9 + Math.random() * 0.6,
+    skewB: -0.9 - Math.random() * 0.6,
   })), [statItems]);
 
-  const proj = useMemo<Proj>(() => {
-    const rad = (-rotation * Math.PI) / 180;
-    const L = 11.3137;
+  const proj = useMemo<Proj>(() => getProj(rotation), [rotation]);
 
-    const Wx = L * Math.cos(rad);
-    const Wy = L * 0.5 * Math.sin(rad);
-    const Hx = 0;
-    const Hy = 8;
-
-    const zRad = rad - Math.PI / 2;
-    const Dx = (L / 2) * Math.cos(zRad);
-    const Dy = (L / 2) * 0.5 * Math.sin(zRad);
-
-    const Ox = 150 - 10 * Wx;
-    const Oy = 100 - 10 * Wy;
-
-    return { Wx, Wy, Hx, Hy, Dx, Dy, Ox, Oy };
-  }, [rotation]);
-
-  const getMatrix = useCallback(
-    (plane: string, x: number, y: number, z: number): string => {
-      const { Wx, Wy, Hx, Hy, Dx, Dy, Ox, Oy } = proj;
-      const tx = Ox + x * Wx + y * Hx + z * Dx;
-      const ty = Oy + x * Wy + y * Hy + z * Dy;
-
-      if (plane === "front") return `matrix(${Wx}, ${Wy}, ${Hx}, ${Hy}, ${tx}, ${ty})`;
-      if (plane === "right") return `matrix(${Dx}, ${Dy}, ${Hx}, ${Hy}, ${tx}, ${ty})`;
-      if (plane === "top")   return `matrix(${Wx}, ${Wy}, ${Dx}, ${Dy}, ${tx}, ${ty})`;
-      return `matrix(${Wx}, ${Wy}, ${Hx}, ${Hy}, ${tx}, ${ty})`;
-    },
+  const getMatrixFn = useCallback(
+    (plane: string, x: number, y: number, z: number): string => getMatrix(proj, plane, x, y, z),
     [proj]
   );
 
@@ -358,7 +216,6 @@ export default function BannerHall({ stats, totalContributions, username }: Bann
     const originalSvgs = displayRef.current.querySelectorAll("svg");
     if (originalSvgs.length === 0) return;
 
-    // 1. 加载 Minecraft Bold 字体
     if (!fontCacheRef.current) {
       try {
         const buf = await fetch("https://fonts.cdnfonts.com/s/25041/3_MinecraftBold1.woff").then(r => r.arrayBuffer());
@@ -371,26 +228,20 @@ export default function BannerHall({ stats, totalContributions, username }: Bann
     }
     const font = fontCacheRef.current;
 
-    // 2. 深克隆 DOM，不干扰 React 渲染树
     const cloneContainer = displayRef.current.cloneNode(true) as HTMLDivElement;
     const svgs = Array.from(cloneContainer.querySelectorAll("svg"));
 
-    // 3. 将所有 <text> 转换为纯几何 <path>
     svgs.forEach((svg) => {
       const textEls = Array.from(svg.querySelectorAll("text"));
       textEls.forEach((textEl) => {
         const fullText = textEl.textContent || "";
-
-        // DOM 属性多路兜底：React 渲染后属性名变为小写连字符
         const fontSize = parseFloat(textEl.getAttribute("font-size") || textEl.getAttribute("fontSize") || "10");
-
         const x = parseFloat(textEl.getAttribute("x") || "0");
         const y = parseFloat(textEl.getAttribute("y") || "0");
         const baseFill = textEl.getAttribute("fill") || "#000";
         const opacity = textEl.getAttribute("opacity") || "1";
         const textAnchor = textEl.getAttribute("text-anchor") || textEl.getAttribute("textAnchor") || "start";
 
-        // text-anchor 偏移
         const totalWidth = font.getAdvanceWidth(fullText, fontSize);
         let currentX = x;
         if (textAnchor === "middle") currentX -= totalWidth / 2;
@@ -428,7 +279,6 @@ export default function BannerHall({ stats, totalContributions, username }: Bann
       });
     });
 
-    // 4. 融合所有 SVG 为一张输出图（单行排列）
     const cols = svgs.length;
     const gap = 20;
     const padding = 30;
@@ -436,7 +286,6 @@ export default function BannerHall({ stats, totalContributions, username }: Bann
 
     svgs.forEach((svg) => {
       const vb = svg.getAttribute("viewBox")?.split(" ").map(Number) || [0, 0, 300, 800];
-
       const defsEls = svg.querySelectorAll("defs");
       let defsContent = "";
       defsEls.forEach((d) => { defsContent += d.innerHTML; });
@@ -460,14 +309,12 @@ export default function BannerHall({ stats, totalContributions, username }: Bann
     const totalH = cellH + padding * 2;
 
     const allDefs = parts.map((p) => p.defs).join("\n");
-
     const inner = parts.map((p, i) => {
       const x = padding + i * (cellW + gap) + (cellW - p.vb[2]) / 2 + p.vb[0];
       const y = padding + (cellH - p.vb[3]) / 2 + p.vb[1];
       return `<g transform="translate(${x},${y})">${p.inner}</g>`;
     }).join("");
 
-    // 生成 SVG 内嵌动画样式
     const animCSS = statItems.map((stat, i) => {
       const p = bannerDelays[i];
       return `
@@ -550,7 +397,7 @@ export default function BannerHall({ stats, totalContributions, username }: Bann
               key={stat.id}
               stat={stat}
               proj={proj}
-              getMatrix={getMatrix}
+              getMatrixFn={getMatrixFn}
             />
           ))}
         </div>
