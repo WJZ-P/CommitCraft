@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useMemo, useCallback, useRef } from "react";
+import opentype from "opentype.js";
 import type { UserStats } from "@/app/lib/github";
 
 // ===== MC 材质 =====
@@ -305,7 +306,7 @@ export default function BannerHall({ stats, totalContributions }: BannerHallProp
   const displayRef = useRef<HTMLDivElement>(null);
   
   // 用于缓存解析好的 opentype 字体引擎对象
-  const fontCacheRef = useRef<any>(null);
+  const fontCacheRef = useRef<opentype.Font | null>(null);
 
   const statItems = useMemo(() => buildStats(stats, totalContributions), [stats, totalContributions]);
   const bannerDelays = useMemo(() => statItems.map(() => ({
@@ -355,26 +356,7 @@ export default function BannerHall({ stats, totalContributions }: BannerHallProp
     const originalSvgs = displayRef.current.querySelectorAll("svg");
     if (originalSvgs.length === 0) return;
 
-    // 1. 动态注入 opentype.js 引擎 (无需 npm install)
-    let opentype = (window as any).opentype;
-    if (!opentype) {
-      try {
-        await new Promise((resolve, reject) => {
-          const script = document.createElement("script");
-          script.src = "https://cdn.jsdelivr.net/npm/opentype.js@1.3.4/dist/opentype.min.js";
-          script.onload = resolve;
-          script.onerror = reject;
-          document.head.appendChild(script);
-        });
-        opentype = (window as any).opentype;
-      } catch (e) {
-        console.error("加载 opentype.js 失败", e);
-        alert("字体解析引擎加载失败，请检查网络！");
-        return;
-      }
-    }
-
-    // 2. 加载 Minecraft Bold 字体
+    // 1. 加载 Minecraft Bold 字体
     if (!fontCacheRef.current) {
       try {
         const buf = await fetch("https://fonts.cdnfonts.com/s/25041/3_MinecraftBold1.woff").then(r => r.arrayBuffer());
@@ -387,11 +369,11 @@ export default function BannerHall({ stats, totalContributions }: BannerHallProp
     }
     const font = fontCacheRef.current;
 
-    // 3. 深克隆 DOM，不干扰 React 渲染树
+    // 2. 深克隆 DOM，不干扰 React 渲染树
     const cloneContainer = displayRef.current.cloneNode(true) as HTMLDivElement;
     const svgs = Array.from(cloneContainer.querySelectorAll("svg"));
 
-    // 4. 将所有 <text> 转换为纯几何 <path>
+    // 3. 将所有 <text> 转换为纯几何 <path>
     svgs.forEach((svg) => {
       const textEls = Array.from(svg.querySelectorAll("text"));
       textEls.forEach((textEl) => {
@@ -444,7 +426,7 @@ export default function BannerHall({ stats, totalContributions }: BannerHallProp
       });
     });
 
-    // 5. 融合所有 SVG 为一张输出图
+    // 4. 融合所有 SVG 为一张输出图
     const cols = 4;
     const gap = 20;
     const padding = 30;
