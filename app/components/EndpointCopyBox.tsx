@@ -73,9 +73,6 @@ export default function EndpointCopyBox({ url, label }: { url: string; label?: s
         </div>
       </button>
 
-      <p className="text-[#555] text-[13px] font-mono font-bold mt-1">
-        Click to copy and embed in your GitHub README.
-      </p>
     </div>
   );
 }
