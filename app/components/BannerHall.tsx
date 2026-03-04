@@ -426,8 +426,8 @@ export default function BannerHall({ stats, totalContributions }: BannerHallProp
       });
     });
 
-    // 4. 融合所有 SVG 为一张输出图
-    const cols = 4;
+    // 4. 融合所有 SVG 为一张输出图（单行排列）
+    const cols = svgs.length;
     const gap = 20;
     const padding = 30;
     const parts: { inner: string; defs: string; vb: number[] }[] = [];
@@ -454,17 +454,14 @@ export default function BannerHall({ stats, totalContributions }: BannerHallProp
 
     const cellW = Math.max(...parts.map((p) => p.vb[2]));
     const cellH = Math.max(...parts.map((p) => p.vb[3]));
-    const rows = Math.ceil(parts.length / cols);
     const totalW = cols * cellW + (cols - 1) * gap + padding * 2;
-    const totalH = rows * cellH + (rows - 1) * gap + padding * 2;
+    const totalH = cellH + padding * 2;
 
     const allDefs = parts.map((p) => p.defs).join("\n");
 
     const inner = parts.map((p, i) => {
-      const col = i % cols;
-      const row = Math.floor(i / cols);
-      const x = padding + col * (cellW + gap) + (cellW - p.vb[2]) / 2 + p.vb[0];
-      const y = padding + row * (cellH + gap) + (cellH - p.vb[3]) / 2 + p.vb[1];
+      const x = padding + i * (cellW + gap) + (cellW - p.vb[2]) / 2 + p.vb[0];
+      const y = padding + (cellH - p.vb[3]) / 2 + p.vb[1];
       return `<g transform="translate(${x},${y})">${p.inner}</g>`;
     }).join("");
 
@@ -484,12 +481,11 @@ export default function BannerHall({ stats, totalContributions }: BannerHallProp
     const combined = [
       `<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"`,
       `  viewBox="0 0 ${totalW} ${totalH}" width="${totalW}" height="${totalH}"`,
-      `  style="image-rendering:pixelated;background:#2a2a2a">`,
+      `  style="image-rendering:pixelated">`,
       `  <defs>`,
       `    ${allDefs}`,
       `  </defs>`,
       `  <style>${animCSS}</style>`,
-      `  <rect width="${totalW}" height="${totalH}" fill="#2a2a2a" rx="8"/>`,
       `  ${inner}`,
       `</svg>`,
     ].join("\n");
