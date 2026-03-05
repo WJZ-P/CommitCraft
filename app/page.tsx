@@ -172,7 +172,7 @@ export default function Home() {
                         href="https://github.com/WJZ-P/CommitCraft"
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="mc-nav-link text-sm"
+                        className="mc-nav-link text-xs flex items-center gap-2"
                     >
                         GitHub
                     </a>

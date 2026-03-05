@@ -229,7 +229,7 @@ body {
 
 /* ===== 导航栏绿色链接按钮 ===== */
 .mc-nav-link {
-  padding: 8px 16px;
+  padding: 8px 12px;
   background: #3c8527;
   border: 2px solid #000;
   color: white;
@@ -238,11 +238,20 @@ body {
     inset 2px 2px 0 0 #5eac44,
     inset -2px -2px 0 0 #225313;
   text-shadow: 1px 1px 0 #1a3b11;
-  transition: background 0.1s;
+  cursor: pointer;
+  transition: all 0.1s;
 }
 
 .mc-nav-link:hover {
   background: #4caf33;
+}
+
+.mc-nav-link:active {
+  background: #2d6a1c;
+  box-shadow:
+    inset 2px 2px 0 0 #225313,
+    inset -2px -2px 0 0 #5eac44;
+  transform: translateY(2px);
 }
 
 /* ===== MC 头像框（物品栏格子风格） ===== */
