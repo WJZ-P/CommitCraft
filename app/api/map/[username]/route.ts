@@ -1,9 +1,8 @@
-import { type NextRequest } from "next/server";
 import { fetchContributions } from "@/app/lib/github";
 import { generateMapSvg } from "@/app/lib/mapSvg";
 
 export async function GET(
-  request: NextRequest,
+  request: Request,
   { params }: { params: Promise<{ username: string }> },
 ) {
   let { username } = await params;
@@ -12,7 +11,8 @@ export async function GET(
     username = username.slice(0, -4);
   }
 
-  const { searchParams } = request.nextUrl;
+  const url = new URL(request.url);
+  const { searchParams } = url;
   const token = searchParams.get("token") || process.env.GITHUB_TOKEN || "";
 
   if (!token) {

@@ -3,6 +3,7 @@
  */
 
 import type { UserStats } from "@/app/lib/github";
+import { ensureFontsLoaded, bakeTextElement } from "./fontBaker";
 
 // ===== MC 材质 =====
 const ASSETS_BASE =
@@ -217,6 +218,18 @@ export function generateBannerSvg(params: BannerSvgParams): string {
   </filter>
 </defs>
 <style>
+  @font-face {
+    font-family: 'Minecraft';
+    src: url('https://fonts.cdnfonts.com/s/25041/1_MinecraftRegular1.woff') format('woff');
+    font-weight: 400;
+    font-style: normal;
+  }
+  @font-face {
+    font-family: 'Minecraft';
+    src: url('https://fonts.cdnfonts.com/s/25041/3_MinecraftBold1.woff') format('woff');
+    font-weight: 700;
+    font-style: normal;
+  }
   @keyframes banner-sway {
     0%, 100% { transform: rotate(${rotateA}deg) skewX(${skewA}deg); }
     50% { transform: rotate(${rotateB}deg) skewX(${skewB}deg); }
@@ -264,6 +277,157 @@ export function generateBannerSvg(params: BannerSvgParams): string {
     <!-- 等级字母 -->
     <text x="12.8" y="51.3" font-size="${tierFontSize}" font-family="'Minecraft', VT323, monospace" text-anchor="middle" fill="${shadowFill}" font-weight="bold" opacity="${shadowOpacity}">${tier}</text>
     <text x="12.5" y="51" font-size="${tierFontSize}" font-family="'Minecraft', VT323, monospace" text-anchor="middle" fill="${config.text}" font-weight="bold">${tier}</text>
+
+    <polygon points="0,-2 24,-2 24,68 12,58 0,68" fill="url(#cloth-shading)" style="pointer-events: none" />
+    <polygon points="0,-2 24,-2 24,68 12,58 0,68" fill="url(#top-shadow)" style="pointer-events: none" />
+  </g>
+
+  <g transform="${gm("right", 24, 0, 1)}">
+    <polygon points="0,-2 3,-2 3,68 0,68" fill="${config.base}" />
+    <polygon points="0,-2 3,-2 3,68 0,68" fill="#000" opacity="0.35" />
+  </g>
+  <g transform="${gm("top", 0, -2, 1)}">
+    <polygon points="0,0 24,0 24,1 0,1" fill="${config.base}" />
+    <polygon points="0,0 24,0 24,1 0,1" fill="#fff" opacity="0.15" />
+  </g>
+</g>
+
+<!-- 顶部横梁 -->
+<g>
+  <g transform="${gm("front", -2, -3, 3)}">
+    <image href="${TEXTURES.spruce_log}" width="28" height="3" preserveAspectRatio="none" />
+    <polygon points="0,0 28,0 28,3 0,3" fill="#000" opacity="0.1" />
+  </g>
+  <g transform="${gm("top", -2, -3, 1)}">
+    <image href="${TEXTURES.spruce_log}" width="28" height="2" preserveAspectRatio="none" />
+    <polygon points="0,0 28,0 28,2 0,2" fill="#fff" opacity="0.1" />
+  </g>
+  <g transform="${gm("right", 26, -3, 1)}">
+    <image href="${TEXTURES.spruce_log}" width="2" height="3" preserveAspectRatio="none" />
+    <polygon points="0,0 2,0 2,3 0,3" fill="#000" opacity="0.5" />
+  </g>
+</g>
+</svg>`;
+}
+
+/**
+ * 服务端烘焙版：所有 <text> 转为 <path>，不依赖远程字体。
+ */
+export async function generateBakedBannerSvg(params: BannerSvgParams): Promise<string> {
+  await ensureFontsLoaded();
+
+  const { title, value, tier, icon, rotation } = params;
+
+  const config = TIER_CONFIG[tier];
+  const tierFontSize = tier.length > 1 ? 7.5 : 10;
+  const proj = getProj(rotation);
+  const gm = (plane: string, x: number, y: number, z: number) => getMatrix(proj, plane, x, y, z);
+
+  const swayDuration = 4.5;
+  const rotateA = -1.0;
+  const rotateB = 2.5;
+  const skewA = 1.2;
+  const skewB = -1.2;
+
+  const swayOriginX = proj.Ox + 12 * proj.Wx + 0 * proj.Hx + 1.25 * proj.Dx;
+  const swayOriginY = proj.Oy + 12 * proj.Wy + 0 * proj.Hy + 1.25 * proj.Dy;
+
+  const isDarkLabel = config.label === "#E0E0E0";
+  const shadowFill = isDarkLabel ? "#000" : "#fff";
+  const shadowOpacity = isDarkLabel ? "1" : "0.3";
+
+  // 烘焙所有文本
+  const titleShadow = bakeTextElement({
+    text: title, x: 12.2, y: 8.2, fontSize: 3.5,
+    fill: shadowFill, textAnchor: "middle", fontWeight: "bold", opacity: shadowOpacity,
+  });
+  const titleMain = bakeTextElement({
+    text: title, x: 12, y: 8, fontSize: 3.5,
+    fill: config.label, textAnchor: "middle", fontWeight: "bold",
+  });
+  const valueShadow = bakeTextElement({
+    text: String(value), x: 12.2, y: 38.2, fontSize: 6,
+    fill: shadowFill, textAnchor: "middle", fontWeight: "bold", opacity: shadowOpacity,
+  });
+  const valueMain = bakeTextElement({
+    text: String(value), x: 12, y: 38, fontSize: 6,
+    fill: config.text, textAnchor: "middle", fontWeight: "bold",
+  });
+  const tierShadow = bakeTextElement({
+    text: tier, x: 12.8, y: 51.3, fontSize: tierFontSize,
+    fill: shadowFill, textAnchor: "middle", fontWeight: "bold", opacity: shadowOpacity,
+  });
+  const tierMain = bakeTextElement({
+    text: tier, x: 12.5, y: 51, fontSize: tierFontSize,
+    fill: config.text, textAnchor: "middle", fontWeight: "bold",
+  });
+
+  return `<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"
+  viewBox="-50 0 400 800" width="320" height="640"
+  style="image-rendering: pixelated">
+<defs>
+  <linearGradient id="cloth-shading" x1="0" y1="0" x2="1" y2="0">
+    <stop offset="0%" stop-color="#000" stop-opacity="0.3" />
+    <stop offset="25%" stop-color="#000" stop-opacity="0" />
+    <stop offset="75%" stop-color="#fff" stop-opacity="0" />
+    <stop offset="100%" stop-color="#fff" stop-opacity="0.2" />
+  </linearGradient>
+  <linearGradient id="top-shadow" x1="0" y1="-2" x2="0" y2="4" gradientUnits="userSpaceOnUse">
+    <stop offset="0%" stop-color="#000" stop-opacity="0.6" />
+    <stop offset="100%" stop-color="#000" stop-opacity="0" />
+  </linearGradient>
+  <filter id="icon-darken">
+    <feColorMatrix type="matrix" values="0 0 0 0 0   0 0 0 0 0   0 0 0 0 0   0 0 0 0.6 0" />
+  </filter>
+</defs>
+<style>
+  @keyframes banner-sway {
+    0%, 100% { transform: rotate(${rotateA}deg) skewX(${skewA}deg); }
+    50% { transform: rotate(${rotateB}deg) skewX(${skewB}deg); }
+  }
+  .mc-cloth-sway {
+    animation: banner-sway ${swayDuration}s ease-in-out infinite;
+    transform-origin: ${swayOriginX}px ${swayOriginY}px;
+  }
+</style>
+
+<!-- 旗杆 -->
+<g>
+  <g transform="${gm("front", 10.5, 0, 1)}">
+    <image href="${TEXTURES.spruce_log}" width="3" height="80" preserveAspectRatio="none" />
+    <polygon points="0,0 3,0 3,80 0,80" fill="#000" opacity="0.3" />
+  </g>
+  <g transform="${gm("right", 13.5, 0, 0)}">
+    <image href="${TEXTURES.spruce_log}" width="1" height="80" preserveAspectRatio="none" />
+    <polygon points="0,0 1,0 1,80 0,80" fill="#000" opacity="0.6" />
+  </g>
+  <g transform="${gm("top", 10.5, 80, 0)}">
+    <image href="${TEXTURES.spruce_log}" width="3" height="1" preserveAspectRatio="none" />
+    <polygon points="0,0 3,0 3,1 0,1" fill="#000" opacity="0.8" />
+  </g>
+</g>
+
+<!-- 旗帜布料 -->
+<g class="mc-cloth-sway">
+  <g transform="${gm("front", 0, 0, 1.5)}">
+    <polygon points="0,-2 24,-2 24,68 12,58 0,68" fill="${config.base}" />
+
+    <!-- 标题 -->
+    ${titleShadow}
+    ${titleMain}
+
+    <g transform="translate(5, 12)">
+      <image href="${icon}" x="0.5" y="1.5" width="14" height="14" filter="url(#icon-darken)" />
+      <image href="${icon}" x="0" y="0" width="14" height="14" />
+    </g>
+
+    <!-- 数值 -->
+    ${valueShadow}
+    ${valueMain}
+
+    <!-- 等级字母 -->
+    ${tierShadow}
+    ${tierMain}
 
     <polygon points="0,-2 24,-2 24,68 12,58 0,68" fill="url(#cloth-shading)" style="pointer-events: none" />
     <polygon points="0,-2 24,-2 24,68 12,58 0,68" fill="url(#top-shadow)" style="pointer-events: none" />

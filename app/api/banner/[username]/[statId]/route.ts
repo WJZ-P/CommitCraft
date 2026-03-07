@@ -1,4 +1,3 @@
-import { type NextRequest } from "next/server";
 import { fetchContributions } from "@/app/lib/github";
 import {
   VALID_STAT_IDS,
@@ -6,12 +5,12 @@ import {
   ICONS,
   getTier,
   getStatValue,
-  generateBannerSvg,
+  generateBakedBannerSvg,
   type StatId,
 } from "@/app/lib/bannerSvg";
 
 export async function GET(
-  request: NextRequest,
+  request: Request,
   { params }: { params: Promise<{ username: string; statId: string }> },
 ) {
   let { username, statId } = await params;
@@ -27,7 +26,8 @@ export async function GET(
     );
   }
 
-  const { searchParams } = request.nextUrl;
+  const url = new URL(request.url);
+  const { searchParams } = url;
   const token = searchParams.get("token") || process.env.GITHUB_TOKEN || "";
 
   if (!token) {
@@ -50,7 +50,7 @@ export async function GET(
     const icon = ICONS[sid] || ICONS.commits;
     const title = STAT_TITLES[sid];
 
-    const svg = generateBannerSvg({
+    const svg = await generateBakedBannerSvg({
       statId: sid,
       title,
       value: rawValue,

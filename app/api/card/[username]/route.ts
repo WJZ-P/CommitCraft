@@ -1,9 +1,8 @@
-import { type NextRequest } from "next/server";
 import { fetchContributions } from "@/app/lib/github";
-import { generateCardSvg, escapeXml } from "@/app/lib/cardSvg";
+import { generateBakedCardSvg, escapeXml } from "@/app/lib/cardSvg";
 
 export async function GET(
-  request: NextRequest,
+  request: Request,
   { params }: { params: Promise<{ username: string }> },
 ) {
   let { username } = await params;
@@ -12,7 +11,8 @@ export async function GET(
     username = username.slice(0, -4);
   }
 
-  const { searchParams } = request.nextUrl;
+  const url = new URL(request.url);
+  const { searchParams } = url;
   const token = searchParams.get("token") || process.env.GITHUB_TOKEN || "";
 
   if (!token) {
@@ -28,7 +28,7 @@ export async function GET(
     const { calendar, avatarUrl, stats } = await fetchContributions(username, token);
     const joinDate = stats.createdAt ? stats.createdAt.slice(0, 10) : "Unknown";
 
-    const svg = generateCardSvg({
+    const svg = await generateBakedCardSvg({
       username,
       displayName: stats.name || username,
       avatarUrl,

@@ -1,17 +1,17 @@
-import {type NextRequest} from "next/server";
 import {fetchContributions} from "@/app/lib/github";
 
 export async function GET(
-    request: NextRequest,
+    request: Request,
     {params}: { params: Promise<{ username: string }> }
 ) {
+    const url = new URL(request.url);
     console.log("[API] ====== 收到请求 ======");
-    console.log("[API] URL:", request.nextUrl.toString());
+    console.log("[API] URL:", url.toString());
 
     const {username} = await params;
     console.log("[API] 解析到 username:", username);
 
-    const {searchParams} = request.nextUrl;
+    const {searchParams} = url;
 
     // Token 优先从 query 参数取，其次从环境变量取
     const token = searchParams.get("token") || process.env.GITHUB_TOKEN || "";
