@@ -332,7 +332,7 @@ export default function Home() {
             >
                 <div className="absolute inset-0 mc-footer-overlay"/>
                 <p className="relative z-10 text-[#a0a0a0] text-sm hover:text-white transition-colors mc-text-shadow">
-                    Crafted with ❤️ by WJZ | Not an official Minecraft product
+                    Crafted with ❤️ by WJZ_P | Not an official Minecraft product
                 </p>
             </footer>
         </div>
