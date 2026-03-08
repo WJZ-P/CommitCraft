@@ -9,25 +9,6 @@ import { handleImageOptimization } from "vinext/server/image-optimization";
 import handler from "vinext/server/app-router-entry";
 
 
-// =====================================================================
-// 🚀 终极防崩补丁：骗过 React 19/RSC 的 devtools，修复 createTask 报错
-// =====================================================================
-try {
-  if (typeof console !== 'undefined') {
-    Object.defineProperty(console, 'createTask', {
-      value: () => ({
-        // 伪造一个 run 方法，拿到回调函数直接执行，假装无事发生
-        run: (cb: any) => cb()
-      }),
-      writable: true,
-      configurable: true
-    });
-  }
-} catch (e) {
-  // 忽略补丁失败的情况
-}
-// =====================================================================
-
 interface Env {
   ASSETS: Fetcher;
   IMAGES: {
