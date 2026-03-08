@@ -40,7 +40,10 @@ export default {
 
     const url = new URL(request.url);
     console.log("[Worker] URL:", url.pathname);
-    console.log("[Worker] GITHUB_TOKEN 可用:", !!process.env.GITHUB_TOKEN);
+    console.log("[Worker] env keys:", Object.keys(env));
+    console.log("[Worker] env 字符串变量:", Object.entries(env).filter(([, v]) => typeof v === "string").map(([k]) => k));
+    console.log("[Worker] GITHUB_TOKEN in env:", "GITHUB_TOKEN" in env, "| 值类型:", typeof (env as any).GITHUB_TOKEN);
+    console.log("[Worker] process.env.GITHUB_TOKEN 可用:", !!process.env.GITHUB_TOKEN);
 
     // Image optimization via Cloudflare Images binding
     if (url.pathname === "/_vinext/image") {
