@@ -6,7 +6,10 @@
     "dev": "vinext dev",
     "build": "vinext build",
     "start": "vinext start",
-    "deploy": "vinext deploy"
+    "deploy": "vinext deploy",
+    "next:dev": "next dev",
+    "next:build": "next build",
+    "next:start": "next start"
   },
   "dependencies": {
     "minecraft-data": "^3.105.0",
