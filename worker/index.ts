@@ -17,17 +17,17 @@ interface Env {
       };
     };
   };
-  // Secrets / environment variables
+  GITHUB_TOKEN?: string;
   [key: string]: unknown;
 }
 
-/**
- * 将 Worker env 中的字符串类型变量注入到 process.env，
- * 使 Next.js 风格的 process.env.XXX 读取方式在 Cloudflare Workers 中生效。
- */
+// Cloudflare Worker secrets 是不可枚举的，必须显式按名字读取
+const SECRET_KEYS = ["GITHUB_TOKEN"] as const;
+
 function injectEnvToProcess(env: Env) {
-  for (const [key, value] of Object.entries(env)) {
-    if (typeof value === "string" && !process.env[key]) {
+  for (const key of SECRET_KEYS) {
+    const value = env[key];
+    if (typeof value === "string" && value) {
       process.env[key] = value;
     }
   }
@@ -35,15 +35,11 @@ function injectEnvToProcess(env: Env) {
 
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
-    // 将 Worker secrets 注入 process.env
     injectEnvToProcess(env);
 
     const url = new URL(request.url);
     console.log("[Worker] URL:", url.pathname);
-    console.log("[Worker] env keys:", Object.keys(env));
-    console.log("[Worker] env 字符串变量:", Object.entries(env).filter(([, v]) => typeof v === "string").map(([k]) => k));
-    console.log("[Worker] GITHUB_TOKEN in env:", "GITHUB_TOKEN" in env, "| 值类型:", typeof (env as any).GITHUB_TOKEN);
-    console.log("[Worker] process.env.GITHUB_TOKEN 可用:", !!process.env.GITHUB_TOKEN);
+    console.log("[Worker] GITHUB_TOKEN 可用:", !!process.env.GITHUB_TOKEN);
 
     // Image optimization via Cloudflare Images binding
     if (url.pathname === "/_vinext/image") {
