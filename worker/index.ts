@@ -39,7 +39,7 @@ export default {
 
     const url = new URL(request.url);
     console.log("[Worker] URL:", url.pathname);
-    console.log("[Worker] GITHUB_TOKEN 可用:", !!process.env.GITHUB_TOKEN);
+    console.log("[Worker] GITHUB_TOKEN 可用:", !!process.env["GITHUB_TOKEN"]);
 
     // Image optimization via Cloudflare Images binding
     if (url.pathname === "/_vinext/image") {

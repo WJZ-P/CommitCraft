@@ -13,7 +13,7 @@ export async function GET(
 
   const url = new URL(request.url);
   const { searchParams } = url;
-  const token = searchParams.get("token") || process.env.GITHUB_TOKEN || "";
+  const token = searchParams.get("token") || process.env["GITHUB_TOKEN"] || "";
 
   if (!token) {
     return new Response(

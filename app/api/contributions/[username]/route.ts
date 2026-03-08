@@ -14,8 +14,8 @@ export async function GET(
     const {searchParams} = url;
 
     // Token 优先从 query 参数取，其次从环境变量取
-    const token = searchParams.get("token") || process.env.GITHUB_TOKEN || "";
-    console.log("[API] Token 来源:", searchParams.get("token") ? "query param" : process.env.GITHUB_TOKEN ? "env GITHUB_TOKEN" : "无");
+    const token = searchParams.get("token") || process.env["GITHUB_TOKEN"] || "";
+    console.log("[API] Token 来源:", searchParams.get("token") ? "query param" : process.env["GITHUB_TOKEN"] ? "env GITHUB_TOKEN" : "无");
     console.log("[API] Token 长度:", token.length, "| 前8位:", token.slice(0, 8) + "...");
 
     if (!token) {

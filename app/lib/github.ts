@@ -5,7 +5,7 @@
 import { ProxyAgent, setGlobalDispatcher } from "undici";
 
 // ===== 全局代理注入 =====
-const proxyUrl = process.env.HTTPS_PROXY || process.env.HTTP_PROXY;
+const proxyUrl = process.env["HTTPS_PROXY"] || process.env["HTTP_PROXY"];
 
 if (proxyUrl) {
   console.log(`[System] 🛡️ 侦测到代理配置，强制拦截全局 fetch，指向: ${proxyUrl}`);
