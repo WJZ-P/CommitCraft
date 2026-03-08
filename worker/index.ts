@@ -21,26 +21,18 @@ interface Env {
   [key: string]: unknown;
 }
 
-// Cloudflare Worker secrets 是不可枚举的，必须显式按名字读取
-const SECRET_KEYS = ["GITHUB_TOKEN"] as const;
-
-function injectEnvToProcess(env: Env) {
-  for (const key of SECRET_KEYS) {
-    const value = env[key];
-    if (typeof value === "string" && value) {
-      process.env[key] = value;
-    }
-  }
-}
+// 一次性注入：Cloudflare secrets 不可枚举，需显式按名字读取
+let envInjected = false;
 
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
-    injectEnvToProcess(env);
+    if (!envInjected) {
+      if (env.GITHUB_TOKEN) process.env["GITHUB_TOKEN"] = env.GITHUB_TOKEN;
+      envInjected = true;
+    }
 
     const url = new URL(request.url);
-    console.log("[Worker] URL:", url.pathname);
-    console.log("[Worker] GITHUB_TOKEN 可用:", !!process.env["GITHUB_TOKEN"]);
-
+    
     // Image optimization via Cloudflare Images binding
     if (url.pathname === "/_vinext/image") {
       return handleImageOptimization(request, {

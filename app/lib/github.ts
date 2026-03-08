@@ -170,6 +170,7 @@ export async function fetchContributions(
     headers: { 
       Authorization: `Bearer ${token}`,
       "Content-Type": "application/json",
+      "User-Agent": "CommitCraft/1.0",
     },
     body: JSON.stringify({
       query: CONTRIBUTIONS_QUERY,
