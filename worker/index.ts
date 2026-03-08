@@ -17,11 +17,30 @@ interface Env {
       };
     };
   };
+  // Secrets / environment variables
+  [key: string]: unknown;
+}
+
+/**
+ * 将 Worker env 中的字符串类型变量注入到 process.env，
+ * 使 Next.js 风格的 process.env.XXX 读取方式在 Cloudflare Workers 中生效。
+ */
+function injectEnvToProcess(env: Env) {
+  for (const [key, value] of Object.entries(env)) {
+    if (typeof value === "string" && !process.env[key]) {
+      process.env[key] = value;
+    }
+  }
 }
 
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
+    // 将 Worker secrets 注入 process.env
+    injectEnvToProcess(env);
+
     const url = new URL(request.url);
+    console.log("[Worker] URL:", url.pathname);
+    console.log("[Worker] GITHUB_TOKEN 可用:", !!process.env.GITHUB_TOKEN);
 
     // Image optimization via Cloudflare Images binding
     if (url.pathname === "/_vinext/image") {
