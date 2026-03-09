@@ -4,7 +4,7 @@
  * 服务端烘焙版 (generateBakedRepoSvg) 使用 <path>，适合 README 嵌入
  */
 
-import { ensureFontsLoaded, bakeTextElement, bakeTextWithTspans, getTextWidth } from "./fontBaker";
+import { ensureFontsLoaded, bakeTextElement, bakeTextWithTspans, bakeMixedTextElement, getTextWidth } from "./fontBaker";
 
 function escapeXml(s: string): string {
   return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
@@ -34,6 +34,7 @@ export interface RepoSvgParams {
 }
 
 function formatSize(kb: number): string {
+  if (kb >= 1048576) return (kb / 1048576).toFixed(1) + " GB";
   if (kb >= 1024) return (kb / 1024).toFixed(1) + " MB";
   return kb + " KB";
 }
@@ -121,14 +122,30 @@ export function generateRepoSvg(params: RepoSvgParams): string {
   // 标题截断后用于 tspan 版本
   const truncated = truncateTitle(owner, repo, 28);
   const isTruncated = truncated !== `${owner} / ${repo}`;
-  const [line1, line2] = wrapDescriptionByWidth(escapeXml(description), 15, 440);
+  const [line1, line2] = wrapDescriptionByWidth(escapeXml(description), 16, 440);
   const badgeLabel = isPrivate ? "Private" : "Public";
 
   // tspan 标题：如果截断了就只用单色，否则 owner / repo 分色
   const titleTspans = isTruncated
     ? `<tspan fill="#3f3f3f">${escapeXml(truncated)}</tspan>`
     : `<tspan fill="#555555">${safeOwner} / </tspan><tspan fill="#3f3f3f">${safeRepo}</tspan>`;
-  const titleShadowText = escapeXml(truncated);
+
+  const sizeText = formatSize(sizeKb);
+  const langTextWidth = estimateTextWidth(language, 16);
+  const sizeTextWidth = estimateTextWidth(sizeText, 16);
+
+  // 左锚: Language 圆点(10) + 间隔(4) + 文字
+  const leftEnd = 26 + 10 + 4 + langTextWidth + 8;
+  // 右锚: 凹槽右边界 464 - 边距6 = 458; 文字宽 + 图标20 + 间隔4
+  const sizeGroupWidth = 20 + 4 + sizeTextWidth;
+  const sizeGroupX = 458 - sizeGroupWidth;
+  const rightStart = sizeGroupX - 8;
+  // 中间 Stars/Forks/Issues 均分
+  const midSpace = rightStart - leftEnd;
+  const midStep = midSpace / 3;
+  const starsGroupX = Math.round(leftEnd + midStep * 0.5 - 10);
+  const forksGroupX = Math.round(leftEnd + midStep * 1.5 - 10);
+  const issuesGroupX = Math.round(leftEnd + midStep * 2.5 - 10);
 
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 160" width="480" height="160" style="image-rendering: pixelated">
 <defs>
@@ -153,6 +170,12 @@ export function generateRepoSvg(params: RepoSvgParams): string {
   <filter id="shadow-dark" x="-20%" y="-20%" width="140%" height="140%">
     <feDropShadow dx="2" dy="2" stdDeviation="0" flood-color="#000000" flood-opacity="0.8" />
   </filter>
+  <filter id="shadow-text" x="-20%" y="-20%" width="140%" height="140%">
+    <feDropShadow dx="1" dy="1" stdDeviation="0" flood-color="#000000" flood-opacity="0.5" />
+  </filter>
+  <filter id="shadow-title" x="-20%" y="-20%" width="140%" height="140%">
+    <feDropShadow dx="1" dy="1" stdDeviation="0" flood-color="#ffffff" flood-opacity="0.4" />
+  </filter>
 </defs>
 
 ${guiShell(480, 160)}
@@ -160,8 +183,7 @@ ${guiShell(480, 160)}
 <!-- 顶部：仓库名称与徽章 -->
 <g class="anim-fade" style="animation-delay: 0.1s">
   <image href="${ICONS.book}" x="16" y="16" width="20" height="20" filter="url(#shadow-dark)" />
-  <text x="46" y="32" class="mc-font" font-size="20" fill="#ffffff" font-weight="bold">${titleShadowText}</text>
-  <text x="44" y="30" class="mc-font" font-size="20" font-weight="bold">
+  <text x="44" y="30" class="mc-font" font-size="20" font-weight="bold" filter="url(#shadow-title)">
     ${titleTspans}
   </text>
   ${badge(badgeLabel, 400, 14, 60, 22)}
@@ -170,40 +192,38 @@ ${guiShell(480, 160)}
 
 <!-- 中部：仓库描述 -->
 <g class="anim-fade" style="animation-delay: 0.2s">
-  <text x="20" y="62" class="mc-font" font-size="15" font-weight="bold" fill="#ffffff">${line1}</text>
-  <text x="18" y="60" class="mc-font" font-size="15" font-weight="bold" fill="#3f3f3f">${line1}</text>
-  ${line2 ? `<text x="20" y="80" class="mc-font" font-size="15" font-weight="bold" fill="#ffffff">${line2}</text>
-  <text x="18" y="78" class="mc-font" font-size="15" font-weight="bold" fill="#3f3f3f">${line2}</text>` : ""}
+  <text x="18" y="60" class="mc-font" font-size="16" font-weight="bold" fill="#3f3f3f">${line1}</text>
+  ${line2 ? `<text x="18" y="79" class="mc-font" font-size="16" font-weight="bold" fill="#3f3f3f">${line2}</text>` : ""}
 </g>
 
 <!-- 底部：数据槽 -->
 <g class="anim-fade" style="animation-delay: 0.3s">
   ${sunkenSlot(16, 108, 448, 36)}
 
-  <!-- Language -->
+  <!-- Language (左锚定) -->
   <g transform="translate(26, 119)">
     <circle cx="5" cy="7" r="4" fill="${languageColor}" stroke="#000" stroke-width="1.5" />
     <text x="14" y="12" class="mc-font" font-size="16" fill="#AAAAAA" filter="url(#shadow-dark)">${escapeXml(language)}</text>
   </g>
   <!-- Stars -->
-  <g transform="translate(140, 119)">
+  <g transform="translate(${starsGroupX}, 119)">
     <image href="${ICONS.star}" x="0" y="0" width="16" height="16" filter="url(#shadow-dark)" />
     <text x="20" y="12" class="mc-font" font-size="16" fill="#55FFFF" filter="url(#shadow-dark)">${stars.toLocaleString()}</text>
   </g>
   <!-- Forks -->
-  <g transform="translate(220, 119)">
+  <g transform="translate(${forksGroupX}, 119)">
     <image href="${ICONS.trident}" x="0" y="0" width="16" height="16" filter="url(#shadow-dark)" />
     <text x="20" y="12" class="mc-font" font-size="16" fill="#55FF55" filter="url(#shadow-dark)">${forks.toLocaleString()}</text>
   </g>
   <!-- Issues -->
-  <g transform="translate(295, 119)">
+  <g transform="translate(${issuesGroupX}, 119)">
     <image href="${ICONS.spider_eye}" x="0" y="0" width="16" height="16" filter="url(#shadow-dark)" />
     <text x="20" y="12" class="mc-font" font-size="16" fill="#FF5555" filter="url(#shadow-dark)">${issues.toLocaleString()}</text>
   </g>
-  <!-- Size -->
-  <g transform="translate(370, 119)">
+  <!-- Size (右锚定) -->
+  <g transform="translate(${sizeGroupX}, 119)">
     <image href="${ICONS.map}" x="0" y="0" width="16" height="16" filter="url(#shadow-dark)" />
-    <text x="20" y="12" class="mc-font" font-size="16" fill="#FFAA00" filter="url(#shadow-dark)">${formatSize(sizeKb)}</text>
+    <text x="24" y="12" class="mc-font" font-size="16" fill="#FFAA00" filter="url(#shadow-dark)">${sizeText}</text>
   </g>
 </g>
 </svg>`;
@@ -221,31 +241,20 @@ export async function generateBakedRepoSvg(params: RepoSvgParams): Promise<strin
   const safeOwner = escapeXml(owner);
   const safeRepo = escapeXml(repo);
   const safeTruncated = escapeXml(truncated);
-  const [line1Raw, line2Raw] = wrapDescriptionByWidth(description, 15, 440, getTextWidth);
+  const [line1Raw, line2Raw] = wrapDescriptionByWidth(description, 16, 440, getTextWidth);
   const line1 = escapeXml(line1Raw);
   const line2 = escapeXml(line2Raw);
   const badgeLabel = isPrivate ? "Private" : "Public";
 
-  // 标题文字阴影层
-  const titleShadow = isTruncated
-    ? bakeTextElement({ text: safeTruncated, x: 46, y: 32, fontSize: 20, fill: "#ffffff", fontWeight: "bold" })
-    : bakeTextWithTspans({
-        segments: [
-          { text: `${safeOwner} / `, fill: "#ffffff" },
-          { text: safeRepo, fill: "#ffffff" },
-        ],
-        x: 46, y: 32, fontSize: 20, fontWeight: "bold",
-      });
-
-  // 标题前景层
+  // 标题（单层 + 白色微阴影 filter）
   const titleFg = isTruncated
-    ? bakeTextElement({ text: safeTruncated, x: 44, y: 30, fontSize: 20, fill: "#3f3f3f", fontWeight: "bold" })
+    ? bakeTextElement({ text: safeTruncated, x: 44, y: 30, fontSize: 20, fill: "#3f3f3f", fontWeight: "bold", filter: "url(#shadow-title)" })
     : bakeTextWithTspans({
         segments: [
           { text: `${safeOwner} / `, fill: "#555555" },
           { text: safeRepo, fill: "#3f3f3f" },
         ],
-        x: 44, y: 30, fontSize: 20, fontWeight: "bold",
+        x: 44, y: 30, fontSize: 20, fontWeight: "bold", filter: "url(#shadow-title)",
       });
 
   // 徽章文字
@@ -254,31 +263,39 @@ export async function generateBakedRepoSvg(params: RepoSvgParams): Promise<strin
     fill: "#ffffff", textAnchor: "middle", filter: "url(#shadow-dark)",
   });
 
-  // 描述行
-  const desc1Shadow = bakeTextElement({ text: line1, x: 20, y: 62, fontSize: 15, fill: "#ffffff", fontWeight: "bold" });
-  const desc1Fg = bakeTextElement({ text: line1, x: 18, y: 60, fontSize: 15, fill: "#3f3f3f", fontWeight: "bold" });
-  const desc2Shadow = line2 ? bakeTextElement({ text: line2, x: 20, y: 80, fontSize: 15, fill: "#ffffff", fontWeight: "bold" }) : "";
-  const desc2Fg = line2 ? bakeTextElement({ text: line2, x: 18, y: 78, fontSize: 15, fill: "#3f3f3f", fontWeight: "bold" }) : "";
+  // 描述行（混合烘焙：ASCII 用 path，中文用 <text> + bold）
+  const desc1Fg = bakeMixedTextElement({ text: line1, x: 18, y: 60, fontSize: 16, fill: "#3f3f3f", fontWeight: "bold" });
+  const desc2Fg = line2 ? bakeMixedTextElement({ text: line2, x: 18, y: 79, fontSize: 16, fill: "#3f3f3f", fontWeight: "bold" }) : "";
 
-  // 底部数据（字号 16）
-  const langPath = bakeTextElement({ text: escapeXml(language), x: 40, y: 131, fontSize: 16, fill: "#AAAAAA", filter: "url(#shadow-dark)" });
-  
-  const langWidth = getTextWidth(language, 16);
-  const starsX = 40 + langWidth + 20;
-  
+  // 底部数据（字号 16）— 左锚 Language，右锚 Size，中间 Stars/Forks/Issues 均分
+  const slotLeft = 26;   // 凹槽内左起
+  const slotRight = 458; // 凹槽内右止 (16 + 448 - 6)
+
+  // Language（左锚定：圆点 + 文字）
+  const langPath = bakeTextElement({ text: escapeXml(language), x: slotLeft + 14, y: 131, fontSize: 16, fill: "#AAAAAA", filter: "url(#shadow-dark)" });
+  const langWidth = getTextWidth(escapeXml(language), 16);
+  const leftEnd = slotLeft + 14 + langWidth + 10; // Language 区域右边界
+
+  // Size（右锚定：图标 + 间隔 + 文字，整组靠右）
+  const sizeText = formatSize(sizeKb);
+  const sizeTextWidth = getTextWidth(sizeText, 16);
+  const sizeGroupWidth = 16 + 4 + sizeTextWidth; // icon(16) + gap(4) + text
+  const sizeGroupLeft = slotRight - sizeGroupWidth;
+  const sizeIconX = sizeGroupLeft;
+  const sizeTextX = sizeGroupLeft + 20;
+  const sizePath = bakeTextElement({ text: sizeText, x: sizeTextX, y: 131, fontSize: 16, fill: "#FFAA00", filter: "url(#shadow-dark)" });
+  const rightStart = sizeGroupLeft - 8; // Size 区域左边界
+
+  // 中间区域均分给 Stars / Forks / Issues
+  const midSpace = rightStart - leftEnd;
+  const midStep = midSpace / 3;
+  const starsX = leftEnd + midStep * 0.5 - 10;
+  const forksX = leftEnd + midStep * 1.5 - 10;
+  const issuesX = leftEnd + midStep * 2.5 - 10;
+
   const starsPath = bakeTextElement({ text: stars.toLocaleString(), x: starsX + 20, y: 131, fontSize: 16, fill: "#55FFFF", filter: "url(#shadow-dark)" });
-  const starsValWidth = getTextWidth(stars.toLocaleString(), 16);
-  
-  const forksX = starsX + 20 + starsValWidth + 16;
   const forksPath = bakeTextElement({ text: forks.toLocaleString(), x: forksX + 20, y: 131, fontSize: 16, fill: "#55FF55", filter: "url(#shadow-dark)" });
-  const forksValWidth = getTextWidth(forks.toLocaleString(), 16);
-  
-  const issuesX = forksX + 20 + forksValWidth + 16;
   const issuesPath = bakeTextElement({ text: issues.toLocaleString(), x: issuesX + 20, y: 131, fontSize: 16, fill: "#FF5555", filter: "url(#shadow-dark)" });
-  const issuesValWidth = getTextWidth(issues.toLocaleString(), 16);
-  
-  const sizeX = issuesX + 20 + issuesValWidth + 16;
-  const sizePath = bakeTextElement({ text: formatSize(sizeKb), x: sizeX + 20, y: 131, fontSize: 16, fill: "#FFAA00", filter: "url(#shadow-dark)" });
 
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 160" width="480" height="160" style="image-rendering: pixelated">
 <defs>
@@ -292,6 +309,12 @@ export async function generateBakedRepoSvg(params: RepoSvgParams): Promise<strin
   <filter id="shadow-dark" x="-20%" y="-20%" width="140%" height="140%">
     <feDropShadow dx="2" dy="2" stdDeviation="0" flood-color="#000000" flood-opacity="0.8" />
   </filter>
+  <filter id="shadow-text" x="-20%" y="-20%" width="140%" height="140%">
+    <feDropShadow dx="1" dy="1" stdDeviation="0" flood-color="#000000" flood-opacity="0.5" />
+  </filter>
+  <filter id="shadow-title" x="-20%" y="-20%" width="140%" height="140%">
+    <feDropShadow dx="1" dy="1" stdDeviation="0" flood-color="#ffffff" flood-opacity="0.4" />
+  </filter>
 </defs>
 
 ${guiShell(480, 160)}
@@ -299,7 +322,6 @@ ${guiShell(480, 160)}
 <!-- 顶部：仓库名称与徽章 -->
 <g class="anim-fade" style="animation-delay: 0.1s">
   <image href="${ICONS.book}" x="16" y="16" width="20" height="20" filter="url(#shadow-dark)" />
-  ${titleShadow}
   ${titleFg}
   ${badge(badgeLabel, 400, 14, 60, 22)}
   ${badgePath}
@@ -307,9 +329,7 @@ ${guiShell(480, 160)}
 
 <!-- 中部：仓库描述 -->
 <g class="anim-fade" style="animation-delay: 0.2s">
-  ${desc1Shadow}
   ${desc1Fg}
-  ${desc2Shadow}
   ${desc2Fg}
 </g>
 
@@ -317,24 +337,24 @@ ${guiShell(480, 160)}
 <g class="anim-fade" style="animation-delay: 0.3s">
   ${sunkenSlot(16, 108, 448, 36)}
 
-  <!-- Language -->
-  <circle cx="31" cy="126" r="4" fill="${languageColor}" stroke="#000" stroke-width="1.5" />
+  <!-- Language (左锚定) -->
+  <circle cx="${slotLeft + 5}" cy="126" r="4" fill="${languageColor}" stroke="#000" stroke-width="1.5" />
   ${langPath}
 
-  <!-- Stars -->
+  <!-- Stars (中间均分) -->
   <image href="${ICONS.star}" x="${starsX}" y="${119}" width="16" height="16" filter="url(#shadow-dark)" />
   ${starsPath}
 
-  <!-- Forks -->
+  <!-- Forks (中间均分) -->
   <image href="${ICONS.trident}" x="${forksX}" y="${119}" width="16" height="16" filter="url(#shadow-dark)" />
   ${forksPath}
 
-  <!-- Issues -->
+  <!-- Issues (中间均分) -->
   <image href="${ICONS.spider_eye}" x="${issuesX}" y="${119}" width="16" height="16" filter="url(#shadow-dark)" />
   ${issuesPath}
 
-  <!-- Size -->
-  <image href="${ICONS.map}" x="${sizeX}" y="${119}" width="16" height="16" filter="url(#shadow-dark)" />
+  <!-- Size (右锚定) -->
+  <image href="${ICONS.map}" x="${sizeIconX}" y="${119}" width="16" height="16" filter="url(#shadow-dark)" />
   ${sizePath}
 </g>
 </svg>`;

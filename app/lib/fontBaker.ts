@@ -156,3 +156,63 @@ export function getTextWidth(text: string, fontSize: number, fontWeight?: string
   if (!font) return text.length * fontSize * 0.6; // fallback 估算
   return font.getAdvanceWidth(text, fontSize);
 }
+
+// ===== 混合烘焙：ASCII 用 path，非 ASCII 用 <text> =====
+
+/** 判断字符是否为 ASCII 可打印字符（MC 字体支持范围） */
+function isAscii(ch: string): boolean {
+  return ch.charCodeAt(0) <= 0x7f;
+}
+
+interface MixedSegment {
+  text: string;
+  ascii: boolean;
+}
+
+/** 将文本按 ASCII / 非 ASCII 分段 */
+function splitMixed(text: string): MixedSegment[] {
+  const segs: MixedSegment[] = [];
+  for (const ch of text) {
+    const a = isAscii(ch);
+    if (segs.length > 0 && segs[segs.length - 1].ascii === a) {
+      segs[segs.length - 1].text += ch;
+    } else {
+      segs.push({ text: ch, ascii: a });
+    }
+  }
+  return segs;
+}
+
+/**
+ * 混合烘焙文本：ASCII 部分转 <path>（使用 MC 字体），非 ASCII 部分保留 <text>（使用系统字体）。
+ * 这样中文等非 ASCII 字符可以正确显示并支持 font-weight。
+ */
+export function bakeMixedTextElement(opts: TextToPathOptions): string {
+  const variant = selectVariant(opts.fontWeight, opts.fontStyle);
+  const font = fontCache.get(variant) || fontCache.get("bold");
+  if (!font) throw new Error(`Font variant "${variant}" not loaded. Call ensureFontsLoaded() first.`);
+
+  const { text, x, y, fontSize, fill = "#000", filter, fontWeight } = opts;
+  const segs = splitMixed(text);
+  const parts: string[] = [];
+  let curX = x;
+
+  for (const seg of segs) {
+    if (seg.ascii) {
+      // ASCII: 用 path 烘焙
+      const d = textToPathData(font, seg.text, curX, y, fontSize);
+      parts.push(`<path d="${d}" fill="${fill}" />`);
+      curX += font.getAdvanceWidth(seg.text, fontSize);
+    } else {
+      // 非 ASCII: 用 <text> 保留，浏览器 fallback 渲染
+      const boldAttr = fontWeight === "bold" || fontWeight === "700" ? ` font-weight="bold"` : "";
+      parts.push(`<text x="${curX}" y="${y}" font-family="sans-serif" font-size="${fontSize}" fill="${fill}"${boldAttr}>${seg.text}</text>`);
+      // 非 ASCII 宽度估算：每个字符约等于 fontSize
+      curX += [...seg.text].length * fontSize;
+    }
+  }
+
+  const inner = parts.join("");
+  if (filter) return `<g filter="${filter}">${inner}</g>`;
+  return parts.length === 1 ? inner : `<g>${inner}</g>`;
+}
