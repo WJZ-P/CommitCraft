@@ -4,7 +4,7 @@
  * 服务端烘焙版 (generateBakedRepoSvg) 使用 <path>，适合 README 嵌入
  */
 
-import { ensureFontsLoaded, bakeTextElement, bakeTextWithTspans, bakeMixedTextElement, getTextWidth } from "./fontBaker";
+import { ensureFontsLoaded, bakeTextElement, bakeMixedTextElement, getTextWidth } from "./fontBaker";
 
 function escapeXml(s: string): string {
   return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
@@ -246,19 +246,15 @@ export async function generateBakedRepoSvg(params: RepoSvgParams): Promise<strin
   const line2 = escapeXml(line2Raw);
   const badgeLabel = isPrivate ? "Private" : "Public";
 
-  // 标题（单层 + 白色微阴影 filter）
+  // 标题全面换用混合烘焙，防止碰到中文仓库名直接消失
+  const ownerWidth = getTextWidth(`${safeOwner} / `, 20, "bold");
   const titleFg = isTruncated
-    ? bakeTextElement({ text: safeTruncated, x: 44, y: 30, fontSize: 20, fill: "#3f3f3f", fontWeight: "bold", filter: "url(#shadow-title)" })
-    : bakeTextWithTspans({
-        segments: [
-          { text: `${safeOwner} / `, fill: "#555555" },
-          { text: safeRepo, fill: "#3f3f3f" },
-        ],
-        x: 44, y: 30, fontSize: 20, fontWeight: "bold", filter: "url(#shadow-title)",
-      });
+    ? bakeMixedTextElement({ text: safeTruncated, x: 44, y: 30, fontSize: 20, fill: "#3f3f3f", fontWeight: "bold", filter: "url(#shadow-title)" })
+    : bakeMixedTextElement({ text: `${safeOwner} / `, x: 44, y: 30, fontSize: 20, fill: "#555555", fontWeight: "bold", filter: "url(#shadow-title)" }) +
+      bakeMixedTextElement({ text: safeRepo, x: 44 + ownerWidth, y: 30, fontSize: 20, fill: "#3f3f3f", fontWeight: "bold", filter: "url(#shadow-title)" });
 
-  // 徽章文字
-  const badgePath = bakeTextElement({
+  // 徽章文字换用混合烘焙
+  const badgePath = bakeMixedTextElement({
     text: badgeLabel, x: 430, y: 30, fontSize: 14,
     fill: "#ffffff", textAnchor: "middle", filter: "url(#shadow-dark)",
   });
@@ -271,8 +267,8 @@ export async function generateBakedRepoSvg(params: RepoSvgParams): Promise<strin
   const slotLeft = 26;   // 凹槽内左起
   const slotRight = 458; // 凹槽内右止 (16 + 448 - 6)
 
-  // Language（左锚定：圆点 + 文字）
-  const langPath = bakeTextElement({ text: escapeXml(language), x: slotLeft + 14, y: 131, fontSize: 16, fill: "#AAAAAA", filter: "url(#shadow-dark)" });
+  // Language（左锚定：圆点 + 文字）— 换用混合烘焙，Language 也可能是中文
+  const langPath = bakeMixedTextElement({ text: escapeXml(language), x: slotLeft + 14, y: 131, fontSize: 16, fill: "#AAAAAA", filter: "url(#shadow-dark)" });
   const langWidth = getTextWidth(escapeXml(language), 16);
   const leftEnd = slotLeft + 14 + langWidth + 10; // Language 区域右边界
 

@@ -231,6 +231,52 @@ export default function BannerHall({ stats, totalContributions, username }: Bann
     const cloneContainer = displayRef.current.cloneNode(true) as HTMLDivElement;
     const svgs = Array.from(cloneContainer.querySelectorAll("svg"));
 
+    const isAscii = (ch: string) => ch.charCodeAt(0) <= 0x7f;
+    const cjkFonts = "'Microsoft YaHei', 'PingFang SC', 'Noto Sans SC', sans-serif";
+
+    const bakeMixed = (
+      text: string, startX: number, yPos: number,
+      fontSize: number, fillColor: string, opacityVal: string, fontWeightAttr?: string,
+    ): { elements: SVGElement[]; endX: number } => {
+      const elements: SVGElement[] = [];
+      let curX = startX;
+      const segs: { t: string; ascii: boolean }[] = [];
+      for (const ch of text) {
+        const a = isAscii(ch);
+        if (segs.length > 0 && segs[segs.length - 1].ascii === a) {
+          segs[segs.length - 1].t += ch;
+        } else {
+          segs.push({ t: ch, ascii: a });
+        }
+      }
+      for (const seg of segs) {
+        if (seg.ascii) {
+          const p = font.getPath(seg.t, curX, yPos, fontSize);
+          const pathEl = document.createElementNS("http://www.w3.org/2000/svg", "path");
+          pathEl.setAttribute("d", p.toPathData(5));
+          pathEl.setAttribute("fill", fillColor);
+          if (opacityVal !== "1") pathEl.setAttribute("opacity", opacityVal);
+          elements.push(pathEl);
+          curX += font.getAdvanceWidth(seg.t, fontSize);
+        } else {
+          const textEl = document.createElementNS("http://www.w3.org/2000/svg", "text");
+          textEl.setAttribute("x", String(curX));
+          textEl.setAttribute("y", String(yPos));
+          textEl.setAttribute("font-family", cjkFonts);
+          textEl.setAttribute("font-size", String(fontSize));
+          textEl.setAttribute("fill", fillColor);
+          if (opacityVal !== "1") textEl.setAttribute("opacity", opacityVal);
+          if (fontWeightAttr === "bold" || fontWeightAttr === "700") {
+            textEl.setAttribute("font-weight", "bold");
+          }
+          textEl.textContent = seg.t;
+          elements.push(textEl);
+          curX += [...seg.t].length * fontSize;
+        }
+      }
+      return { elements, endX: curX };
+    };
+
     svgs.forEach((svg) => {
       const textEls = Array.from(svg.querySelectorAll("text"));
       textEls.forEach((textEl) => {
@@ -241,11 +287,15 @@ export default function BannerHall({ stats, totalContributions, username }: Bann
         const baseFill = textEl.getAttribute("fill") || "#000";
         const opacity = textEl.getAttribute("opacity") || "1";
         const textAnchor = textEl.getAttribute("text-anchor") || textEl.getAttribute("textAnchor") || "start";
+        const fw = textEl.getAttribute("font-weight") || "";
 
-        const totalWidth = font.getAdvanceWidth(fullText, fontSize);
+        let totalW = 0;
+        for (const ch of fullText) {
+          totalW += isAscii(ch) ? font.getAdvanceWidth(ch, fontSize) : fontSize;
+        }
         let currentX = x;
-        if (textAnchor === "middle") currentX -= totalWidth / 2;
-        else if (textAnchor === "end") currentX -= totalWidth;
+        if (textAnchor === "middle") currentX -= totalW / 2;
+        else if (textAnchor === "end") currentX -= totalW;
 
         const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
 
@@ -253,25 +303,17 @@ export default function BannerHall({ stats, totalContributions, username }: Bann
           if (child.nodeType === Node.TEXT_NODE) {
             const txt = child.textContent || "";
             if (!txt) return;
-            const pathData = font.getPath(txt, currentX, y, fontSize).toPathData(5);
-            const pathEl = document.createElementNS("http://www.w3.org/2000/svg", "path");
-            pathEl.setAttribute("d", pathData);
-            pathEl.setAttribute("fill", baseFill);
-            if (opacity !== "1") pathEl.setAttribute("opacity", opacity);
-            g.appendChild(pathEl);
-            currentX += font.getAdvanceWidth(txt, fontSize);
+            const { elements, endX } = bakeMixed(txt, currentX, y, fontSize, baseFill, opacity, fw);
+            elements.forEach(el => g.appendChild(el));
+            currentX = endX;
           } else if (child.nodeType === Node.ELEMENT_NODE && (child as Element).tagName.toLowerCase() === "tspan") {
             const tspan = child as Element;
             const txt = tspan.textContent || "";
             if (!txt) return;
             const tFill = tspan.getAttribute("fill") || baseFill;
-            const pathData = font.getPath(txt, currentX, y, fontSize).toPathData(5);
-            const pathEl = document.createElementNS("http://www.w3.org/2000/svg", "path");
-            pathEl.setAttribute("d", pathData);
-            pathEl.setAttribute("fill", tFill);
-            if (opacity !== "1") pathEl.setAttribute("opacity", opacity);
-            g.appendChild(pathEl);
-            currentX += font.getAdvanceWidth(txt, fontSize);
+            const { elements, endX } = bakeMixed(txt, currentX, y, fontSize, tFill, opacity, fw);
+            elements.forEach(el => g.appendChild(el));
+            currentX = endX;
           }
         });
 

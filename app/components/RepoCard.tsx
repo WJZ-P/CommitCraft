@@ -35,13 +35,61 @@ export default function RepoCard({ repoData }: RepoCardProps) {
     const svgEl = container.querySelector("svg");
     if (!svgEl) return;
 
-    // 烘焙所有 <text> 为 <path>
+    // ===== 混合烘焙：ASCII 用 path，非 ASCII 保留 <text> + 系统字体 =====
+    const isAscii = (ch: string) => ch.charCodeAt(0) <= 0x7f;
+    const cjkFonts = "'Microsoft YaHei', 'PingFang SC', 'Noto Sans SC', sans-serif";
+
+    /** 将一段文本混合烘焙：ASCII→path, 非ASCII→<text> */
+    const bakeMixed = (
+      text: string, startX: number, yPos: number,
+      fontSize: number, fillColor: string, fontWeightAttr?: string,
+    ): { elements: SVGElement[]; endX: number } => {
+      const elements: SVGElement[] = [];
+      let curX = startX;
+      // 按 ASCII / 非 ASCII 分段
+      const segs: { t: string; ascii: boolean }[] = [];
+      for (const ch of text) {
+        const a = isAscii(ch);
+        if (segs.length > 0 && segs[segs.length - 1].ascii === a) {
+          segs[segs.length - 1].t += ch;
+        } else {
+          segs.push({ t: ch, ascii: a });
+        }
+      }
+      for (const seg of segs) {
+        if (seg.ascii) {
+          const p = font.getPath(seg.t, curX, yPos, fontSize);
+          const pathEl = document.createElementNS("http://www.w3.org/2000/svg", "path");
+          pathEl.setAttribute("d", p.toPathData(5));
+          pathEl.setAttribute("fill", fillColor);
+          elements.push(pathEl);
+          curX += font.getAdvanceWidth(seg.t, fontSize);
+        } else {
+          const textEl = document.createElementNS("http://www.w3.org/2000/svg", "text");
+          textEl.setAttribute("x", String(curX));
+          textEl.setAttribute("y", String(yPos));
+          textEl.setAttribute("font-family", cjkFonts);
+          textEl.setAttribute("font-size", String(fontSize));
+          textEl.setAttribute("fill", fillColor);
+          if (fontWeightAttr === "bold" || fontWeightAttr === "700") {
+            textEl.setAttribute("font-weight", "bold");
+          }
+          textEl.textContent = seg.t;
+          elements.push(textEl);
+          curX += [...seg.t].length * fontSize;
+        }
+      }
+      return { elements, endX: curX };
+    };
+
+    // 烘焙所有 <text> 为混合 path + text
     const texts = Array.from(svgEl.querySelectorAll("text"));
     for (const t of texts) {
       const fontSize = parseFloat(t.getAttribute("font-size") || "16");
       const fill = t.getAttribute("fill") || "#000";
       const filter = t.getAttribute("filter") || "";
       const anchor = t.getAttribute("text-anchor") as "start" | "middle" | "end" || "start";
+      const fw = t.getAttribute("font-weight") || "";
 
       // 处理 tspan 子节点
       const tspans = t.querySelectorAll("tspan");
@@ -56,12 +104,9 @@ export default function RepoCard({ repoData }: RepoCardProps) {
         for (const ts of Array.from(tspans)) {
           const text = ts.textContent || "";
           const tsFill = ts.getAttribute("fill") || fill;
-          const path = font.getPath(text, curX, y, fontSize);
-          const pathEl = document.createElementNS("http://www.w3.org/2000/svg", "path");
-          pathEl.setAttribute("d", path.toPathData(5));
-          pathEl.setAttribute("fill", tsFill);
-          g.appendChild(pathEl);
-          curX += font.getAdvanceWidth(text, fontSize);
+          const { elements, endX } = bakeMixed(text, curX, y, fontSize, tsFill, fw);
+          elements.forEach(el => g.appendChild(el));
+          curX = endX;
         }
         t.replaceWith(g);
       } else {
@@ -69,21 +114,24 @@ export default function RepoCard({ repoData }: RepoCardProps) {
         const x = parseFloat(t.getAttribute("x") || "0");
         const y = parseFloat(t.getAttribute("y") || "0");
 
+        // 计算混合文本总宽度用于 anchor 偏移
+        let totalW = 0;
+        for (const ch of text) {
+          totalW += isAscii(ch) ? font.getAdvanceWidth(ch, fontSize) : fontSize;
+        }
         let drawX = x;
-        if (anchor === "middle") drawX -= font.getAdvanceWidth(text, fontSize) / 2;
-        else if (anchor === "end") drawX -= font.getAdvanceWidth(text, fontSize);
+        if (anchor === "middle") drawX -= totalW / 2;
+        else if (anchor === "end") drawX -= totalW;
 
-        const path = font.getPath(text, drawX, y, fontSize);
-        const pathEl = document.createElementNS("http://www.w3.org/2000/svg", "path");
-        pathEl.setAttribute("d", path.toPathData(5));
-        pathEl.setAttribute("fill", fill);
-        if (filter) {
+        const { elements } = bakeMixed(text, drawX, y, fontSize, fill, fw);
+
+        if (filter || elements.length > 1) {
           const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
-          g.setAttribute("filter", filter);
-          g.appendChild(pathEl);
+          if (filter) g.setAttribute("filter", filter);
+          elements.forEach(el => g.appendChild(el));
           t.replaceWith(g);
-        } else {
-          t.replaceWith(pathEl);
+        } else if (elements.length === 1) {
+          t.replaceWith(elements[0]);
         }
       }
     }

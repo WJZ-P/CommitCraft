@@ -154,7 +154,16 @@ export function getTextWidth(text: string, fontSize: number, fontWeight?: string
   const variant = selectVariant(fontWeight, fontStyle);
   const font = fontCache.get(variant) || fontCache.get("bold");
   if (!font) return text.length * fontSize * 0.6; // fallback 估算
-  return font.getAdvanceWidth(text, fontSize);
+
+  let width = 0;
+  for (const ch of text) {
+    if (isAscii(ch)) {
+      width += font.getAdvanceWidth(ch, fontSize);
+    } else {
+      width += fontSize; // 中文是方块字，宽度直接等于字号
+    }
+  }
+  return width;
 }
 
 // ===== 混合烘焙：ASCII 用 path，非 ASCII 用 <text> =====
@@ -192,10 +201,16 @@ export function bakeMixedTextElement(opts: TextToPathOptions): string {
   const font = fontCache.get(variant) || fontCache.get("bold");
   if (!font) throw new Error(`Font variant "${variant}" not loaded. Call ensureFontsLoaded() first.`);
 
-  const { text, x, y, fontSize, fill = "#000", filter, fontWeight } = opts;
+  const { text, x, y, fontSize, fill = "#000", filter, fontWeight, textAnchor = "start" } = opts;
+
+  // 支持 textAnchor 偏移计算
+  const totalWidth = getTextWidth(text, fontSize, fontWeight, opts.fontStyle);
+  let curX = x;
+  if (textAnchor === "middle") curX -= totalWidth / 2;
+  else if (textAnchor === "end") curX -= totalWidth;
+
   const segs = splitMixed(text);
   const parts: string[] = [];
-  let curX = x;
 
   for (const seg of segs) {
     if (seg.ascii) {
@@ -204,10 +219,10 @@ export function bakeMixedTextElement(opts: TextToPathOptions): string {
       parts.push(`<path d="${d}" fill="${fill}" />`);
       curX += font.getAdvanceWidth(seg.text, fontSize);
     } else {
-      // 非 ASCII: 用 <text> 保留，浏览器 fallback 渲染
+      // 非 ASCII: 强制内联本地原生中文字体栈，防止脱离浏览器后 CSS 丢失导致隐形
       const boldAttr = fontWeight === "bold" || fontWeight === "700" ? ` font-weight="bold"` : "";
-      parts.push(`<text x="${curX}" y="${y}" font-family="sans-serif" font-size="${fontSize}" fill="${fill}"${boldAttr}>${seg.text}</text>`);
-      // 非 ASCII 宽度估算：每个字符约等于 fontSize
+      const cjkFonts = `'Microsoft YaHei', 'PingFang SC', 'Noto Sans SC', sans-serif`;
+      parts.push(`<text x="${curX}" y="${y}" font-family="${cjkFonts}" font-size="${fontSize}" fill="${fill}"${boldAttr}>${seg.text}</text>`);
       curX += [...seg.text].length * fontSize;
     }
   }
