@@ -5,7 +5,26 @@ import WeatherCanvas from "./components/WeatherCanvas";
 import IsometricMap from "./components/IsometricMap";
 import BannerHall from "./components/BannerHall";
 import ProfileCardView from "./components/ProfileCard";
+import RepoCard from "./components/RepoCard";
 import type {ContributionCalendar, UserStats} from "@/app/lib/github";
+import type {RepoSvgParams} from "@/app/lib/repoSvg";
+
+// 判断输入类型：repo（owner/repo 或 GitHub URL）还是 user（纯用户名）
+function parseInput(input: string): { type: "repo"; owner: string; repo: string } | { type: "user"; username: string } | null {
+    const trimmed = input.trim();
+    if (!trimmed) return null;
+
+    // 支持完整 URL: https://github.com/owner/repo
+    const urlMatch = trimmed.match(/github\.com\/([^/]+)\/([^/\s?#]+)/);
+    if (urlMatch) return { type: "repo", owner: urlMatch[1], repo: urlMatch[2].replace(/\.git$/, "") };
+
+    // 支持 owner/repo 格式
+    const slashMatch = trimmed.match(/^([^/\s]+)\/([^/\s]+)$/);
+    if (slashMatch) return { type: "repo", owner: slashMatch[1], repo: slashMatch[2] };
+
+    // 否则视为用户名
+    return { type: "user", username: trimmed };
+}
 
 // 原版 MC 材质 CDN 链接
 const TEXTURES = {
@@ -26,12 +45,18 @@ const TEXTURES = {
 const ORE_SPAWN_CHANCE = 0.05
 
 export default function Home() {
-    const [username, setUsername] = useState("");
+    const [input, setInput] = useState("");
     const [displayUsername, setDisplayUsername] = useState("");
     const [loading, setLoading] = useState(false);
+    // 用户模式数据
     const [calendarData, setCalendarData] = useState<ContributionCalendar | null>(null);
     const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
     const [userStats, setUserStats] = useState<UserStats | null>(null);
+    // 仓库模式数据
+    const [repoData, setRepoData] = useState<RepoSvgParams | null>(null);
+    // 当前结果类型
+    const [resultMode, setResultMode] = useState<"user" | "repo" | null>(null);
+
     const [error, setError] = useState<string | null>(null);
     const [ores, setOres] = useState<{ id: number; x: number; y: number; type: string }[]>([]);
     const [activeView, setActiveView] = useState<"map" | "banner" | "card">("map");
@@ -82,26 +107,44 @@ export default function Home() {
     }, []);
 
     async function handleGenerate() {
-        if (!username.trim()) return;
+        const parsed = parseInput(input);
+        if (!parsed) return;
+
         setLoading(true);
         setError(null);
         setCalendarData(null);
         setAvatarUrl(null);
         setUserStats(null);
+        setRepoData(null);
+        setResultMode(null);
 
         try {
-            const res = await fetch(`/api/contributions/${encodeURIComponent(username.trim())}`);
-            const data = await res.json();
+            if (parsed.type === "user") {
+                const res = await fetch(`/api/contributions/${encodeURIComponent(parsed.username)}`);
+                const data = await res.json();
 
-            if (!res.ok) {
-                setError(data.error || "Failed to fetch contributions");
-                return;
+                if (!res.ok) {
+                    setError(data.error || "Failed to fetch contributions");
+                    return;
+                }
+
+                setCalendarData(data as ContributionCalendar);
+                setAvatarUrl(data.avatarUrl || null);
+                setUserStats(data.stats || null);
+                setDisplayUsername(parsed.username);
+                setResultMode("user");
+            } else {
+                const res = await fetch(`/api/repoinfo/${encodeURIComponent(parsed.owner)}/${encodeURIComponent(parsed.repo)}`);
+                const data = await res.json();
+
+                if (!res.ok) {
+                    setError(data.error || "Failed to fetch repository info");
+                    return;
+                }
+
+                setRepoData(data as RepoSvgParams);
+                setResultMode("repo");
             }
-
-            setCalendarData(data as ContributionCalendar);
-            setAvatarUrl(data.avatarUrl || null);
-            setUserStats(data.stats || null);
-            setDisplayUsername(username.trim());
         } catch {
             setError("Network error. Please try again.");
         } finally {
@@ -209,7 +252,7 @@ export default function Home() {
                     <div className="mc-gui-inner">
 
                         <label className="block text-[#3f3f3f] font-bold text-lg mb-4 mc-text-shadow-white">
-                            Enter GitHub Username:
+                            Enter GitHub Username or Repository:
                         </label>
 
                         <div className="flex flex-col md:flex-row gap-4">
@@ -217,9 +260,9 @@ export default function Home() {
                             <div className="mc-input-sunken flex-1">
                                 <input
                                     type="text"
-                                    placeholder="e.g. octocat"
-                                    value={username}
-                                    onChange={(e) => setUsername(e.target.value)}
+                                    placeholder="e.g. octocat  or  facebook/react  or  https://github.com/..."
+                                    value={input}
+                                    onChange={(e) => setInput(e.target.value)}
                                     onKeyDown={(e) => e.key === "Enter" && handleGenerate()}
                                     spellCheck={false}
                                 />
@@ -228,15 +271,19 @@ export default function Home() {
                             {/* CRAFT 按钮 */}
                             <button
                                 onClick={handleGenerate}
-                                disabled={loading || !username.trim()}
+                                disabled={loading || !input.trim()}
                                 className="mc-btn h-14 px-8 text-xl"
                             >
                                 <span>{loading ? "MINING..." : "CRAFT"}</span>
                             </button>
                         </div>
 
-                        {/* ===== 视图切换栏 ===== */}
-                        {calendarData && !loading && !error && (
+                        <p className="text-[#888] text-xs mt-2 mc-text-shadow-light">
+                            Username → Player Stats &amp; Maps &nbsp;|&nbsp; owner/repo or URL → Repository Card
+                        </p>
+
+                        {/* ===== 视图切换栏（仅用户模式） ===== */}
+                        {resultMode === "user" && calendarData && !loading && !error && (
                             <div className="mc-view-switcher mt-6 mb-2 flex items-center justify-center select-none">
                                 <button
                                     className="mc-btn-secondary text-sm px-4 py-2"
@@ -262,18 +309,16 @@ export default function Home() {
                             </div>
                         )}
 
-                        {/* ===== 状态展示区（仅在无地图数据时显示） ===== */}
-                        {(!calendarData || loading || error) && (
+                        {/* ===== 空状态 / 加载中 / 错误 ===== */}
+                        {(!resultMode || loading || error) && (
                             <div className="mc-display mt-8 relative">
-                                {/* 空状态 */}
-                                {!loading && !error && !calendarData && (
+                                {!loading && !error && !resultMode && (
                                     <div className="text-[#888] text-center mc-text-shadow-light">
                                         <p className="mb-2">Awaiting target...</p>
-                                        <p className="text-sm">The 3D SVG blueprint will appear here.</p>
+                                        <p className="text-sm">Enter a username for player stats, or owner/repo for a repository card.</p>
                                     </div>
                                 )}
 
-                                {/* 加载中 */}
                                 {loading && (
                                     <div className="flex flex-col items-center">
                                         <div className="flex gap-2 mb-4">
@@ -288,12 +333,11 @@ export default function Home() {
                                             ))}
                                         </div>
                                         <p className="text-[#5ec462] animate-pulse mc-text-shadow">
-                                            Forging Isometric World...
+                                            {parseInput(input)?.type === "repo" ? "Querying Repository Data..." : "Forging Isometric World..."}
                                         </p>
                                     </div>
                                 )}
 
-                                {/* 错误 */}
                                 {error && (
                                     <div className="text-[#ff5555] text-center mc-text-shadow-error">
                                         <p className="text-xl mb-1">⚠ ERROR</p>
@@ -303,19 +347,24 @@ export default function Home() {
                             </div>
                         )}
 
-                        {/* ===== 等距 SVG 地图 ===== */}
-                        {calendarData && !loading && activeView === "map" && (
+                        {/* ===== 用户模式：等距 SVG 地图 ===== */}
+                        {resultMode === "user" && calendarData && !loading && activeView === "map" && (
                             <IsometricMap calendar={calendarData} username={displayUsername} avatarUrl={avatarUrl} stats={userStats} />
                         )}
 
-                        {/* ===== 旗帜战绩大厅 ===== */}
-                        {calendarData && !loading && activeView === "banner" && userStats && (
+                        {/* ===== 用户模式：旗帜战绩大厅 ===== */}
+                        {resultMode === "user" && calendarData && !loading && activeView === "banner" && userStats && (
                             <BannerHall stats={userStats} totalContributions={calendarData.totalContributions} username={displayUsername} />
                         )}
 
-                        {/* ===== 玩家护照卡片 ===== */}
-                        {calendarData && !loading && activeView === "card" && userStats && avatarUrl && (
+                        {/* ===== 用户模式：玩家护照卡片 ===== */}
+                        {resultMode === "user" && calendarData && !loading && activeView === "card" && userStats && avatarUrl && (
                             <ProfileCardView stats={userStats} totalContributions={calendarData.totalContributions} username={displayUsername} avatarUrl={avatarUrl} />
+                        )}
+
+                        {/* ===== 仓库模式：Repo Card ===== */}
+                        {resultMode === "repo" && repoData && !loading && !error && (
+                            <RepoCard repoData={repoData} />
                         )}
                     </div>
                 </div>

@@ -201,7 +201,7 @@ export async function fetchContributions(
   const user = data.user;
   const totalStars = user.repositories.nodes.reduce((sum, repo) => sum + repo.stargazerCount, 0);
 
-    return {
+  return {
     calendar: user.contributionsCollection.contributionCalendar,
     avatarUrl: user.avatarUrl,
     stats: {
@@ -219,5 +219,102 @@ export async function fetchContributions(
       company: user.company,
       createdAt: user.createdAt,
     },
+  };
+}
+
+// ===== 仓库信息 =====
+
+export interface RepoInfo {
+  owner: string;
+  repo: string;
+  description: string;
+  language: string;
+  languageColor: string;
+  stars: number;
+  forks: number;
+  issues: number;
+  sizeKb: number;
+  isPrivate: boolean;
+}
+
+interface GitHubRepoResponse {
+  repository: {
+    owner: { login: string };
+    name: string;
+    description: string | null;
+    isPrivate: boolean;
+    stargazerCount: number;
+    forkCount: number;
+    issues: { totalCount: number };
+    diskUsage: number | null;
+    primaryLanguage: { name: string; color: string } | null;
+  } | null;
+}
+
+const REPO_QUERY = `
+  query($owner: String!, $name: String!) {
+    repository(owner: $owner, name: $name) {
+      owner { login }
+      name
+      description
+      isPrivate
+      stargazerCount
+      forkCount
+      issues(states: OPEN) { totalCount }
+      diskUsage
+      primaryLanguage { name color }
+    }
+  }
+`;
+
+export async function fetchRepoInfo(
+  owner: string,
+  name: string,
+  token: string,
+): Promise<RepoInfo> {
+  const response = await fetch("https://api.github.com/graphql", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+      "User-Agent": "CommitCraft/1.0",
+    },
+    body: JSON.stringify({
+      query: REPO_QUERY,
+      variables: { owner, name },
+    }),
+  });
+
+  if (!response.ok) {
+    const text = await response.text();
+    console.log("[GitHub] ❌ Repo API 非 200:", text);
+    throw new Error(`GitHub API error (${response.status}): ${text}`);
+  }
+
+  const json = await response.json();
+  if (json.errors) {
+    console.log("[GitHub] ❌ Repo GraphQL errors:", JSON.stringify(json.errors));
+    throw new Error(
+      `GitHub GraphQL errors: ${json.errors.map((e: { message: string }) => e.message).join(", ")}`
+    );
+  }
+
+  const data = json.data as GitHubRepoResponse;
+  if (!data.repository) {
+    throw new Error(`Repository "${owner}/${name}" not found`);
+  }
+
+  const r = data.repository;
+  return {
+    owner: r.owner.login,
+    repo: r.name,
+    description: r.description || "No description provided.",
+    language: r.primaryLanguage?.name || "Unknown",
+    languageColor: r.primaryLanguage?.color || "#888888",
+    stars: r.stargazerCount,
+    forks: r.forkCount,
+    issues: r.issues.totalCount,
+    sizeKb: r.diskUsage || 0,
+    isPrivate: r.isPrivate,
   };
 }
