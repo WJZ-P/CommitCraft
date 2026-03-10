@@ -44,7 +44,64 @@ const TEXTURES = {
 
 const ORE_SPAWN_CHANCE = 0.05
 
+const ABOUT_INPUTS = [
+    {
+        label: "GitHub 用户名",
+        example: "octocat",
+        detail: "生成 Contribution Map、Banner Hall 和 Player Passport 三种用户视图。",
+    },
+    {
+        label: "仓库短格式",
+        example: "vercel/next.js",
+        detail: "直接生成仓库 Repo Card，适合展示项目概览。",
+    },
+    {
+        label: "仓库完整链接",
+        example: "https://github.com/vercel/next.js",
+        detail: "自动解析 owner/repo，适合直接粘贴 GitHub 页面地址。",
+    },
+]
+
+const ABOUT_RESULTS = [
+    {
+        title: "Contribution Map",
+        detail: "把年度贡献热力图转成 Minecraft 风格的等距地形地图。",
+    },
+    {
+        title: "Banner Hall",
+        detail: "根据 GitHub 统计生成战绩旗帜，并支持旋转视角查看。",
+    },
+    {
+        title: "Player Passport",
+        detail: "生成玩家护照卡，可自定义一句个性签名。",
+    },
+    {
+        title: "Repo Card",
+        detail: "展示仓库名称、描述、语言与热度信息，支持下载 SVG。",
+    },
+]
+
+const ABOUT_ENDPOINTS = [
+    {
+        label: "贡献地图",
+        path: "/api/map/{username}.svg",
+    },
+    {
+        label: "玩家护照",
+        path: "/api/card/{username}.svg",
+    },
+    {
+        label: "旗帜大厅",
+        path: "/api/banner/{username}/{statId}.svg",
+    },
+    {
+        label: "仓库卡片",
+        path: "/api/repo/{owner}/{repo}.svg",
+    },
+]
+
 export default function Home() {
+
     const [input, setInput] = useState("");
     const [displayUsername, setDisplayUsername] = useState("");
     const [loading, setLoading] = useState(false);
@@ -63,7 +120,9 @@ export default function Home() {
     const VIEW_LABELS: Record<string, string> = { map: "Contribution Map", banner: "Banner Hall", card: "Player Passport" };
     const VIEW_KEYS: ("map" | "banner" | "card")[] = ["map", "banner", "card"];
     const [weather, setWeather] = useState<"clear" | "rain" | "snow">("snow");
+    const [isAboutOpen, setIsAboutOpen] = useState(false);
     const mouseRef = useRef({x: 0, y: 0});
+
     //  指向石头背景的ref，避免把鼠标位置挂载在全局HTML上，优化性能。
     const bgRef = useRef<HTMLDivElement>(null);
 
@@ -84,7 +143,27 @@ export default function Home() {
         return () => window.removeEventListener("mousemove", handleMouseMove);
     }, [handleMouseMove]);
 
+    useEffect(() => {
+        if (!isAboutOpen) return;
+
+        const previousOverflow = document.body.style.overflow;
+        const handleKeyDown = (event: KeyboardEvent) => {
+            if (event.key === "Escape") {
+                setIsAboutOpen(false);
+            }
+        };
+
+        document.body.style.overflow = "hidden";
+        window.addEventListener("keydown", handleKeyDown);
+
+        return () => {
+            document.body.style.overflow = previousOverflow;
+            window.removeEventListener("keydown", handleKeyDown);
+        };
+    }, [isAboutOpen]);
+
     // 挂载时生成随机矿石分布
+
     useEffect(() => {
         const generatedOres: typeof ores = [];
         const types = [
@@ -188,7 +267,7 @@ export default function Home() {
 
             {/* ===== 顶部导航栏 ===== */}
             <nav
-                className="relative z-[20] px-6 py-4 border-black mc-navbar mc-texture flex items-center justify-between"
+                className="relative z-[20] flex flex-col gap-4 px-6 py-4 border-black mc-navbar mc-texture sm:flex-row sm:items-center sm:justify-between"
                 style={{backgroundImage: `url('${TEXTURES.dirt}')`}}
             >
                 <div className="absolute inset-0 mc-navbar-overlay"/>
@@ -204,7 +283,17 @@ export default function Home() {
                     </h1>
                 </div>
 
-                <div className="relative z-10 flex gap-3 items-center">
+                <div className="relative z-10 flex flex-wrap items-center gap-3 sm:justify-end">
+                    <button
+                        type="button"
+                        onClick={() => setIsAboutOpen(true)}
+                        aria-haspopup="dialog"
+                        aria-expanded={isAboutOpen}
+                        className="mc-btn-secondary mc-cjk-text text-xs"
+                    >
+                        项目说明
+                    </button>
+
                     <button
                         onClick={() => setWeather((w) => (w === "clear" ? "rain" : w === "rain" ? "snow" : "clear"))}
                         className="mc-btn-secondary text-xs flex items-center gap-2"
@@ -222,6 +311,7 @@ export default function Home() {
                     </a>
                 </div>
             </nav>
+
 
             {/* 顶部草皮边缘 */}
             <div
@@ -370,7 +460,118 @@ export default function Home() {
                 </div>
             </main>
 
+            {isAboutOpen && (
+                <div
+                    className="fixed inset-0 z-[60] flex items-center justify-center bg-black/72 px-4 py-6 mc-modal-backdrop"
+                    onClick={() => setIsAboutOpen(false)}
+                    role="presentation"
+                >
+                    <div
+                        role="dialog"
+                        aria-modal="true"
+                        aria-labelledby="about-modal-title"
+                        className="mc-gui mc-modal-shell w-full max-w-4xl"
+                        onClick={(event) => event.stopPropagation()}
+                    >
+                        <div className="mc-gui-inner !p-0 flex max-h-[85vh] flex-col overflow-hidden">
+                            <div className="flex items-start justify-between gap-4 border-b-4 border-black bg-[#8b8b8b] px-5 py-4">
+                                <div className="min-w-0">
+                                    <p className="text-xs text-[#55ff55] mc-text-shadow">PROJECT INFO</p>
+                                    <h3 id="about-modal-title" className="mt-1 text-2xl text-white mc-text-shadow-heavy">
+                                        CommitCraft
+                                    </h3>
+                                    <p className="mc-cjk-text mt-2 text-sm font-semibold text-[#202020]">
+                                        把 GitHub 公开数据锻造成 Minecraft 风格的 SVG 展示物。
+                                    </p>
+                                </div>
+
+                                <button
+                                    type="button"
+                                    aria-label="关闭项目说明"
+                                    onClick={() => setIsAboutOpen(false)}
+                                    className="mc-btn-secondary text-xs shrink-0"
+                                >
+                                    CLOSE
+                                </button>
+                            </div>
+
+                            <div className="mc-about-copy overflow-y-auto px-5 py-5 text-[#1f1f1f] sm:px-6 sm:py-6">
+                                <section className="mc-about-section p-4">
+                                    <h4 className="text-lg font-bold">这是一个什么项目？</h4>
+                                    <p className="mt-3 text-sm leading-7">
+                                        CommitCraft 会把 GitHub 用户贡献、仓库信息和统计数据，转换成可预览、可下载、可嵌入的 Minecraft 像素风 SVG。它适合放进 README、个人主页、作品集，或者直接当成分享图使用。
+                                    </p>
+                                </section>
+
+                                <div className="mt-4 grid gap-4 md:grid-cols-2">
+                                    <section className="mc-about-section p-4">
+                                        <h4 className="text-lg font-bold">支持哪些输入？</h4>
+                                        <ul className="mt-3 space-y-3 text-sm">
+                                            {ABOUT_INPUTS.map((item) => (
+                                                <li key={item.label} className="border-t-2 border-black/15 pt-3 first:border-t-0 first:pt-0">
+                                                    <p className="font-bold text-[#15380f]">{item.label}</p>
+                                                    <p className="mc-about-code mt-1 text-xs text-[#3a3a3a]">{item.example}</p>
+                                                    <p className="mt-1 leading-6">{item.detail}</p>
+                                                </li>
+                                            ))}
+                                        </ul>
+                                    </section>
+
+                                    <section className="mc-about-section p-4">
+                                        <h4 className="text-lg font-bold">可以生成什么？</h4>
+                                        <ul className="mt-3 space-y-3 text-sm">
+                                            {ABOUT_RESULTS.map((item) => (
+                                                <li key={item.title} className="border-t-2 border-black/15 pt-3 first:border-t-0 first:pt-0">
+                                                    <p className="font-bold text-[#15380f]">{item.title}</p>
+                                                    <p className="mt-1 leading-6">{item.detail}</p>
+                                                </li>
+                                            ))}
+                                        </ul>
+                                    </section>
+                                </div>
+
+                                <section className="mc-about-section mt-4 p-4">
+                                    <h4 className="text-lg font-bold">完整使用方式</h4>
+                                    <ol className="mt-3 space-y-3 text-sm leading-7">
+                                        <li><span className="font-bold">1.</span> 在输入框中填入 GitHub 用户名、仓库短格式，或完整仓库链接。</li>
+                                        <li><span className="font-bold">2.</span> 点击 <span className="mc-about-code">CRAFT</span>，等待页面生成对应内容。</li>
+                                        <li><span className="font-bold">3.</span> 如果输入的是用户名，可以在 <span className="mc-about-code">Contribution Map</span>、<span className="mc-about-code">Banner Hall</span>、<span className="mc-about-code">Player Passport</span> 之间切换。</li>
+                                        <li><span className="font-bold">4.</span> 每个视图都支持 <span className="mc-about-code">DOWNLOAD .SVG</span>；同时页面下方提供可复制的 endpoint，便于嵌入 README 或网页。</li>
+                                        <li><span className="font-bold">5.</span> 玩家护照支持自定义一句 quote；旗帜大厅支持拖动角度；仓库卡片支持直接导出仓库说明 SVG。</li>
+                                    </ol>
+                                </section>
+
+                                <section className="mc-about-section mt-4 p-4">
+                                    <h4 className="text-lg font-bold">API / 嵌入用法</h4>
+                                    <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                                        {ABOUT_ENDPOINTS.map((item) => (
+                                            <div key={item.path} className="border-2 border-black bg-black/8 px-3 py-3">
+                                                <p className="font-bold text-sm">{item.label}</p>
+                                                <p className="mc-about-code mt-2 text-xs break-all">{item.path}</p>
+                                            </div>
+                                        ))}
+                                    </div>
+                                    <p className="mt-3 text-sm leading-6">
+                                        其中旗帜大厅的 <span className="mc-about-code">statId</span> 会在页面中按每面旗帜分别提供复制入口，不需要手动记忆。
+                                    </p>
+                                </section>
+
+                                <section className="mc-about-section mt-4 p-4">
+                                    <h4 className="text-lg font-bold">补充说明</h4>
+                                    <ul className="mt-3 space-y-2 text-sm leading-7">
+                                        <li>- 导出结果以 SVG 为主，方便二次编辑、嵌入网页和保持清晰缩放。</li>
+                                        <li>- 用户模式与仓库模式都直接面向公开 GitHub 数据源。</li>
+                                        <li>- 仓库卡片下载已经支持中英文混合内容导出，不会再把中文描述丢掉。</li>
+                                    </ul>
+                                </section>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {/* ===== 底部页脚 ===== */}
+
             <div
                 className="relative z-[20] h-4 w-full mc-texture"
                 style={{backgroundImage: `url('${TEXTURES.grassTop}')`}}
@@ -387,3 +588,5 @@ export default function Home() {
         </div>
     );
 }
+
+          
