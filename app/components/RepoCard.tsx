@@ -20,7 +20,7 @@ export default function RepoCard({ repoData }: RepoCardProps) {
   const handleDownload = useCallback(async () => {
     const opentype = (await import("opentype.js")).default;
 
-    // 加载字体（带缓存）
+    // 加载 MC 字体（带缓存）
     const fontUrl = "https://fonts.cdnfonts.com/s/25041/3_MinecraftBold1.woff";
     if (!fontCacheRef.current[fontUrl]) {
       const res = await fetch(fontUrl);
@@ -29,17 +29,25 @@ export default function RepoCard({ repoData }: RepoCardProps) {
     }
     const font = fontCacheRef.current[fontUrl];
 
+    // 加载 Zpix 中文像素字体（带缓存）
+    const zpixUrl = "/fonts/zpix.ttf";
+    if (!fontCacheRef.current[zpixUrl]) {
+      const res = await fetch(zpixUrl);
+      const buf = await res.arrayBuffer();
+      fontCacheRef.current[zpixUrl] = opentype.parse(buf);
+    }
+    const zpixFont = fontCacheRef.current[zpixUrl];
+
     // 克隆 SVG DOM
     const container = document.createElement("div");
     container.innerHTML = svgHtml;
     const svgEl = container.querySelector("svg");
     if (!svgEl) return;
 
-    // ===== 混合烘焙：ASCII 用 path，非 ASCII 保留 <text> + 系统字体 =====
+    // ===== 混合烘焙：ASCII 用 MC path，非 ASCII 用 Zpix path =====
     const isAscii = (ch: string) => ch.charCodeAt(0) <= 0x7f;
-    const cjkFonts = "'Microsoft YaHei', 'PingFang SC', 'Noto Sans SC', sans-serif";
 
-    /** 将一段文本混合烘焙：ASCII→path, 非ASCII→<text> */
+    /** 将一段文本混合烘焙：全部转为 path */
     const bakeMixed = (
       text: string, startX: number, yPos: number,
       fontSize: number, fillColor: string, fontWeightAttr?: string,
@@ -57,27 +65,13 @@ export default function RepoCard({ repoData }: RepoCardProps) {
         }
       }
       for (const seg of segs) {
-        if (seg.ascii) {
-          const p = font.getPath(seg.t, curX, yPos, fontSize);
-          const pathEl = document.createElementNS("http://www.w3.org/2000/svg", "path");
-          pathEl.setAttribute("d", p.toPathData(5));
-          pathEl.setAttribute("fill", fillColor);
-          elements.push(pathEl);
-          curX += font.getAdvanceWidth(seg.t, fontSize);
-        } else {
-          const textEl = document.createElementNS("http://www.w3.org/2000/svg", "text");
-          textEl.setAttribute("x", String(curX));
-          textEl.setAttribute("y", String(yPos));
-          textEl.setAttribute("font-family", cjkFonts);
-          textEl.setAttribute("font-size", String(fontSize));
-          textEl.setAttribute("fill", fillColor);
-          if (fontWeightAttr === "bold" || fontWeightAttr === "700") {
-            textEl.setAttribute("font-weight", "bold");
-          }
-          textEl.textContent = seg.t;
-          elements.push(textEl);
-          curX += [...seg.t].length * fontSize;
-        }
+        const activeFont = seg.ascii ? font : zpixFont;
+        const p = activeFont.getPath(seg.t, curX, yPos, fontSize);
+        const pathEl = document.createElementNS("http://www.w3.org/2000/svg", "path");
+        pathEl.setAttribute("d", p.toPathData(5));
+        pathEl.setAttribute("fill", fillColor);
+        elements.push(pathEl);
+        curX += activeFont.getAdvanceWidth(seg.t, fontSize);
       }
       return { elements, endX: curX };
     };

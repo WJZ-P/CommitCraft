@@ -13,10 +13,15 @@ const FONT_URLS = {
   boldItalic: "https://fonts.cdnfonts.com/s/25041/4_MinecraftBoldItalic1.woff",
 };
 
+// Zpix 中文像素字体（用于 CJK 字符烘焙）
+// 服务端无法直接访问 /public 静态路径，仍使用 CDN 获取 ttf
+const ZPIX_URL = "https://cdn.jsdelivr.net/gh/SolidZORO/zpix-pixel-font@master/dist/zpix.ttf";
+
 type FontVariant = keyof typeof FONT_URLS;
 
 // 字体缓存（进程级单例）
 const fontCache: Map<FontVariant, opentype.Font> = new Map();
+let zpixFont: opentype.Font | null = null;
 
 /** 加载并缓存指定变体的字体 */
 async function loadFont(variant: FontVariant): Promise<opentype.Font> {
@@ -31,9 +36,20 @@ async function loadFont(variant: FontVariant): Promise<opentype.Font> {
   return font;
 }
 
-/** 预加载常用字体（bold + regular） */
+/** 加载 Zpix 中文像素字体 */
+async function loadZpixFont(): Promise<opentype.Font> {
+  if (zpixFont) return zpixFont;
+
+  const res = await fetch(ZPIX_URL);
+  if (!res.ok) throw new Error(`Failed to fetch Zpix font: ${res.status}`);
+  const buf = await res.arrayBuffer();
+  zpixFont = opentype.parse(buf);
+  return zpixFont;
+}
+
+/** 预加载常用字体（bold + regular + zpix） */
 export async function ensureFontsLoaded(): Promise<void> {
-  await Promise.all([loadFont("bold"), loadFont("regular")]);
+  await Promise.all([loadFont("bold"), loadFont("regular"), loadZpixFont()]);
 }
 
 /** 获取已加载的字体 */
@@ -159,6 +175,8 @@ export function getTextWidth(text: string, fontSize: number, fontWeight?: string
   for (const ch of text) {
     if (isAscii(ch)) {
       width += font.getAdvanceWidth(ch, fontSize);
+    } else if (zpixFont) {
+      width += zpixFont.getAdvanceWidth(ch, fontSize);
     } else {
       width += fontSize; // 中文是方块字，宽度直接等于字号
     }
@@ -193,8 +211,8 @@ function splitMixed(text: string): MixedSegment[] {
 }
 
 /**
- * 混合烘焙文本：ASCII 部分转 <path>（使用 MC 字体），非 ASCII 部分保留 <text>（使用系统字体）。
- * 这样中文等非 ASCII 字符可以正确显示并支持 font-weight。
+ * 混合烘焙文本：ASCII 部分转 <path>（使用 MC 字体），非 ASCII 部分也转 <path>（使用 Zpix 像素字体）。
+ * 这样整个 SVG 完全不依赖外部字体。
  */
 export function bakeMixedTextElement(opts: TextToPathOptions): string {
   const variant = selectVariant(opts.fontWeight, opts.fontStyle);
@@ -214,14 +232,19 @@ export function bakeMixedTextElement(opts: TextToPathOptions): string {
 
   for (const seg of segs) {
     if (seg.ascii) {
-      // ASCII: 用 path 烘焙
+      // ASCII: 用 MC 字体 path 烘焙
       const d = textToPathData(font, seg.text, curX, y, fontSize);
       parts.push(`<path d="${d}" fill="${fill}" />`);
       curX += font.getAdvanceWidth(seg.text, fontSize);
+    } else if (zpixFont) {
+      // 非 ASCII: 用 Zpix 字体 path 烘焙
+      const d = textToPathData(zpixFont, seg.text, curX, y, fontSize);
+      parts.push(`<path d="${d}" fill="${fill}" />`);
+      curX += zpixFont.getAdvanceWidth(seg.text, fontSize);
     } else {
-      // 非 ASCII: 强制内联本地原生中文字体栈，防止脱离浏览器后 CSS 丢失导致隐形
+      // Zpix 未加载时 fallback 到 <text>（不应该发生）
       const boldAttr = fontWeight === "bold" || fontWeight === "700" ? ` font-weight="bold"` : "";
-      const cjkFonts = `'Microsoft YaHei', 'PingFang SC', 'Noto Sans SC', sans-serif`;
+      const cjkFonts = `'Zpix', 'Microsoft YaHei', 'PingFang SC', 'Noto Sans SC', sans-serif`;
       parts.push(`<text x="${curX}" y="${y}" font-family="${cjkFonts}" font-size="${fontSize}" fill="${fill}"${boldAttr}>${seg.text}</text>`);
       curX += [...seg.text].length * fontSize;
     }

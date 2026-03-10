@@ -192,7 +192,7 @@ interface BannerHallProps {
 export default function BannerHall({ stats, totalContributions, username }: BannerHallProps) {
   const [rotation, setRotation] = useState(0);
   const displayRef = useRef<HTMLDivElement>(null);
-  const fontCacheRef = useRef<opentype.Font | null>(null);
+  const fontCacheRef = useRef<Record<string, opentype.Font>>({});
 
   const statItems = useMemo(() => buildStats(stats, totalContributions), [stats, totalContributions]);
   const bannerDelays = useMemo(() => statItems.map(() => ({
@@ -216,23 +216,33 @@ export default function BannerHall({ stats, totalContributions, username }: Bann
     const originalSvgs = displayRef.current.querySelectorAll("svg");
     if (originalSvgs.length === 0) return;
 
-    if (!fontCacheRef.current) {
+    if (!fontCacheRef.current["mc"]) {
       try {
         const buf = await fetch("https://fonts.cdnfonts.com/s/25041/3_MinecraftBold1.woff").then(r => r.arrayBuffer());
-        fontCacheRef.current = opentype.parse(buf);
+        fontCacheRef.current["mc"] = opentype.parse(buf);
       } catch (e) {
         console.error("加载 Minecraft 字体失败:", e);
         alert("Minecraft 字体拉取失败！");
         return;
       }
     }
-    const font = fontCacheRef.current;
+    const font = fontCacheRef.current["mc"];
+
+    // 加载 Zpix 中文像素字体（缓存）
+    if (!fontCacheRef.current["zpix"]) {
+      try {
+        const buf = await fetch("/fonts/zpix.ttf").then(r => r.arrayBuffer());
+        fontCacheRef.current["zpix"] = opentype.parse(buf);
+      } catch (e) {
+        console.error("加载 Zpix 字体失败:", e);
+      }
+    }
+    const zpixFont = fontCacheRef.current["zpix"];
 
     const cloneContainer = displayRef.current.cloneNode(true) as HTMLDivElement;
     const svgs = Array.from(cloneContainer.querySelectorAll("svg"));
 
     const isAscii = (ch: string) => ch.charCodeAt(0) <= 0x7f;
-    const cjkFonts = "'Microsoft YaHei', 'PingFang SC', 'Noto Sans SC', sans-serif";
 
     const bakeMixed = (
       text: string, startX: number, yPos: number,
@@ -250,29 +260,14 @@ export default function BannerHall({ stats, totalContributions, username }: Bann
         }
       }
       for (const seg of segs) {
-        if (seg.ascii) {
-          const p = font.getPath(seg.t, curX, yPos, fontSize);
-          const pathEl = document.createElementNS("http://www.w3.org/2000/svg", "path");
-          pathEl.setAttribute("d", p.toPathData(5));
-          pathEl.setAttribute("fill", fillColor);
-          if (opacityVal !== "1") pathEl.setAttribute("opacity", opacityVal);
-          elements.push(pathEl);
-          curX += font.getAdvanceWidth(seg.t, fontSize);
-        } else {
-          const textEl = document.createElementNS("http://www.w3.org/2000/svg", "text");
-          textEl.setAttribute("x", String(curX));
-          textEl.setAttribute("y", String(yPos));
-          textEl.setAttribute("font-family", cjkFonts);
-          textEl.setAttribute("font-size", String(fontSize));
-          textEl.setAttribute("fill", fillColor);
-          if (opacityVal !== "1") textEl.setAttribute("opacity", opacityVal);
-          if (fontWeightAttr === "bold" || fontWeightAttr === "700") {
-            textEl.setAttribute("font-weight", "bold");
-          }
-          textEl.textContent = seg.t;
-          elements.push(textEl);
-          curX += [...seg.t].length * fontSize;
-        }
+        const activeFont = seg.ascii ? font : (zpixFont || font);
+        const p = activeFont.getPath(seg.t, curX, yPos, fontSize);
+        const pathEl = document.createElementNS("http://www.w3.org/2000/svg", "path");
+        pathEl.setAttribute("d", p.toPathData(5));
+        pathEl.setAttribute("fill", fillColor);
+        if (opacityVal !== "1") pathEl.setAttribute("opacity", opacityVal);
+        elements.push(pathEl);
+        curX += activeFont.getAdvanceWidth(seg.t, fontSize);
       }
       return { elements, endX: curX };
     };
