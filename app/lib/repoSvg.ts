@@ -182,12 +182,12 @@ ${guiShell(480, 160)}
 
 <!-- 顶部：仓库名称与徽章 -->
 <g class="anim-fade" style="animation-delay: 0.1s">
-  <image href="${ICONS.book}" x="16" y="16" width="20" height="20" filter="url(#shadow-dark)" />
-  <text x="44" y="30" class="mc-font" font-size="20" font-weight="bold" filter="url(#shadow-title)">
+  <image href="${ICONS.book}" x="14" y="12" width="26" height="26" filter="url(#shadow-dark)" />
+  <text x="48" y="33" class="mc-font" font-size="20" font-weight="bold" filter="url(#shadow-title)">
     ${titleTspans}
   </text>
   ${badge(badgeLabel, 400, 14, 60, 22)}
-  <text x="430" y="30" class="mc-font" font-size="14" fill="#ffffff" text-anchor="middle" filter="url(#shadow-dark)">${badgeLabel}</text>
+  <text x="430" y="29" class="mc-font" font-size="14" fill="#ffffff" text-anchor="middle" filter="url(#shadow-dark)">${badgeLabel}</text>
 </g>
 
 <!-- 中部：仓库描述 -->
@@ -249,13 +249,13 @@ export async function generateBakedRepoSvg(params: RepoSvgParams): Promise<strin
   // 标题全面换用混合烘焙，防止碰到中文仓库名直接消失
   const ownerWidth = getTextWidth(`${safeOwner} / `, 20, "bold");
   const titleFg = isTruncated
-    ? bakeMixedTextElement({ text: safeTruncated, x: 44, y: 30, fontSize: 20, fill: "#3f3f3f", fontWeight: "bold", filter: "url(#shadow-title)" })
-    : bakeMixedTextElement({ text: `${safeOwner} / `, x: 44, y: 30, fontSize: 20, fill: "#555555", fontWeight: "bold", filter: "url(#shadow-title)" }) +
-      bakeMixedTextElement({ text: safeRepo, x: 44 + ownerWidth, y: 30, fontSize: 20, fill: "#3f3f3f", fontWeight: "bold", filter: "url(#shadow-title)" });
+    ? bakeMixedTextElement({ text: safeTruncated, x: 48, y: 33, fontSize: 20, fill: "#3f3f3f", fontWeight: "bold", filter: "url(#shadow-title)" })
+    : bakeMixedTextElement({ text: `${safeOwner} / `, x: 48, y: 33, fontSize: 20, fill: "#555555", fontWeight: "bold", filter: "url(#shadow-title)" }) +
+      bakeMixedTextElement({ text: safeRepo, x: 48 + ownerWidth, y: 33, fontSize: 20, fill: "#3f3f3f", fontWeight: "bold", filter: "url(#shadow-title)" });
 
   // 徽章文字换用混合烘焙
   const badgePath = bakeMixedTextElement({
-    text: badgeLabel, x: 430, y: 30, fontSize: 14,
+    text: badgeLabel, x: 430, y: 29, fontSize: 14,
     fill: "#ffffff", textAnchor: "middle", filter: "url(#shadow-dark)",
   });
 
