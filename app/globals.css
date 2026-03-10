@@ -29,11 +29,20 @@
   src: local('Minecraft'), url('https://fonts.cdnfonts.com/s/25041/4_MinecraftBoldItalic1.woff') format('woff');
 }
 
+/* ===== 中文像素字体 Zpix (https://github.com/SolidZORO/zpix-pixel-font) ===== */
+@font-face {
+  font-family: 'Zpix';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/fonts/zpix.woff2') format('woff2');
+}
+
 /* ===== Tailwind 主题覆盖 ===== */
 @theme inline {
-  --default-font-family: 'Minecraft', monospace;
-  --font-sans: 'Minecraft', monospace;
-  --font-mono: 'Minecraft', monospace;
+  --default-font-family: 'Minecraft', 'Zpix', monospace;
+  --font-sans: 'Minecraft', 'Zpix', monospace;
+  --font-mono: 'Minecraft', 'Zpix', monospace;
 }
 
 /* ===== 基础 ===== */
@@ -41,7 +50,7 @@ body {
   background: #131313;
   color: #e8e8e8;
   image-rendering: pixelated;
-  font-family: 'Minecraft', monospace;
+  font-family: 'Minecraft', 'Zpix', monospace;
 }
 
 /* ===== 像素化材质通用 ===== */
@@ -109,7 +118,7 @@ body {
   border: 4px solid #000;
   color: white;
   font-weight: bold;
-  font-family: 'Minecraft', monospace;
+  font-family: 'Minecraft', 'Zpix', monospace;
   box-shadow:
     inset 4px 4px 0 0 #5eac44,
     inset -4px -4px 0 0 #225313;
@@ -142,7 +151,7 @@ body {
   background: #555;
   border: 2px solid #000;
   color: white;
-  font-family: 'Minecraft', monospace;
+  font-family: 'Minecraft', 'Zpix', monospace;
   box-shadow:
     inset 2px 2px 0 0 #777,
     inset -2px -2px 0 0 #333;
@@ -195,7 +204,7 @@ body {
   font-size: 18px;
   padding: 8px 12px;
   outline: none;
-  font-family: 'Minecraft', monospace;
+  font-family: 'Minecraft', 'Zpix', monospace;
 }
 
 .mc-input-sunken input::placeholder {
@@ -233,7 +242,7 @@ body {
   background: #3c8527;
   border: 2px solid #000;
   color: white;
-  font-family: 'Minecraft', monospace;
+  font-family: 'Minecraft', 'Zpix', monospace;
   box-shadow:
     inset 2px 2px 0 0 #5eac44,
     inset -2px -2px 0 0 #225313;
@@ -289,9 +298,8 @@ body {
 
 /* ===== 中文 / 说明模态窗 ===== */
 .mc-cjk-text,
-.mc-about-copy,
-.mc-about-code {
-  font-family: 'Microsoft YaHei', 'PingFang SC', 'Noto Sans SC', sans-serif;
+.mc-about-copy {
+  font-family: 'Minecraft', 'Zpix', monospace;
 }
 
 .mc-about-code {
@@ -303,7 +311,7 @@ body {
 }
 
 .mc-modal-shell {
-  box-shadow: 18px 18px 0 0 rgba(0,0,0,0.68);
+  box-shadow: none;
 }
 
 .mc-about-section {

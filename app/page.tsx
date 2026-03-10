@@ -1,13 +1,13 @@
 "use client";
 
-import {useState, useEffect, useCallback, useRef} from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import WeatherCanvas from "./components/WeatherCanvas";
 import IsometricMap from "./components/IsometricMap";
 import BannerHall from "./components/BannerHall";
 import ProfileCardView from "./components/ProfileCard";
 import RepoCard from "./components/RepoCard";
-import type {ContributionCalendar, UserStats} from "@/app/lib/github";
-import type {RepoSvgParams} from "@/app/lib/repoSvg";
+import type { ContributionCalendar, UserStats } from "@/app/lib/github";
+import type { RepoSvgParams } from "@/app/lib/repoSvg";
 
 // 判断输入类型：repo（owner/repo 或 GitHub URL）还是 user（纯用户名）
 function parseInput(input: string): { type: "repo"; owner: string; repo: string } | { type: "user"; username: string } | null {
@@ -47,17 +47,17 @@ const ORE_SPAWN_CHANCE = 0.05
 const ABOUT_INPUTS = [
     {
         label: "GitHub 用户名",
-        example: "octocat",
+        example: "例： WJZ_P",
         detail: "生成 Contribution Map、Banner Hall 和 Player Passport 三种用户视图。",
     },
     {
         label: "仓库短格式",
-        example: "vercel/next.js",
+        example: "例： vercel/next.js",
         detail: "直接生成仓库 Repo Card，适合展示项目概览。",
     },
     {
         label: "仓库完整链接",
-        example: "https://github.com/vercel/next.js",
+        example: "例： https://github.com/vercel/next.js",
         detail: "自动解析 owner/repo，适合直接粘贴 GitHub 页面地址。",
     },
 ]
@@ -121,7 +121,7 @@ export default function Home() {
     const VIEW_KEYS: ("map" | "banner" | "card")[] = ["map", "banner", "card"];
     const [weather, setWeather] = useState<"clear" | "rain" | "snow">("snow");
     const [isAboutOpen, setIsAboutOpen] = useState(false);
-    const mouseRef = useRef({x: 0, y: 0});
+    const mouseRef = useRef({ x: 0, y: 0 });
 
     //  指向石头背景的ref，避免把鼠标位置挂载在全局HTML上，优化性能。
     const bgRef = useRef<HTMLDivElement>(null);
@@ -135,7 +135,7 @@ export default function Home() {
             bgRef.current.style.setProperty("--mouse-x", x.toString());
             bgRef.current.style.setProperty("--mouse-y", y.toString());
         }
-        mouseRef.current = {x, y};
+        mouseRef.current = { x, y };
     }, []);
 
     useEffect(() => {
@@ -238,7 +238,7 @@ export default function Home() {
             <div
                 ref={bgRef}
                 className="fixed inset-0 z-[0] mc-bg-stone mc-texture"
-                style={{backgroundImage: `url('${TEXTURES.stone}')`}}
+                style={{ backgroundImage: `url('${TEXTURES.stone}')` }}
             >
                 {ores.map((ore) => (
                     <div
@@ -257,20 +257,20 @@ export default function Home() {
             </div>
 
             {/* ===== 背景层 2：暗调遮罩 ===== */}
-            <div className="fixed inset-0 z-[1] bg-black/15 pointer-events-none"/>
+            <div className="fixed inset-0 z-[1] bg-black/15 pointer-events-none" />
 
             {/* ===== 背景层 3：中心聚焦打光 (Vignette) ===== */}
-            <div className="fixed inset-0 z-[2] mc-vignette"/>
+            <div className="fixed inset-0 z-[2] mc-vignette" />
 
             {/* ===== 背景层 4：Canvas 粒子天气系统 ===== */}
-            <WeatherCanvas weather={weather} mouseRef={mouseRef}/>
+            <WeatherCanvas weather={weather} mouseRef={mouseRef} />
 
             {/* ===== 顶部导航栏 ===== */}
             <nav
                 className="relative z-[20] flex flex-col gap-4 px-6 py-4 border-black mc-navbar mc-texture sm:flex-row sm:items-center sm:justify-between"
-                style={{backgroundImage: `url('${TEXTURES.dirt}')`}}
+                style={{ backgroundImage: `url('${TEXTURES.dirt}')` }}
             >
-                <div className="absolute inset-0 mc-navbar-overlay"/>
+                <div className="absolute inset-0 mc-navbar-overlay" />
 
                 <div className="relative z-10 flex items-center gap-4">
                     <img
@@ -289,9 +289,9 @@ export default function Home() {
                         onClick={() => setIsAboutOpen(true)}
                         aria-haspopup="dialog"
                         aria-expanded={isAboutOpen}
-                        className="mc-btn-secondary mc-cjk-text text-xs"
+                        className="mc-btn-secondary text-xs"
                     >
-                        项目说明
+                        ABOUT
                     </button>
 
                     <button
@@ -316,7 +316,7 @@ export default function Home() {
             {/* 顶部草皮边缘 */}
             <div
                 className="relative z-[20] h-4 w-full mc-texture"
-                style={{backgroundImage: `url('${TEXTURES.grassTop}')`}}
+                style={{ backgroundImage: `url('${TEXTURES.grassTop}')` }}
             />
 
             {/* ===== 主体内容区 ===== */}
@@ -329,11 +329,11 @@ export default function Home() {
                         Craft Your Commits
                     </h2>
                     <div className="flex items-center gap-3">
-                        <span className="h-1 w-12 bg-[#5ec462] shadow-[2px_2px_0_0_#000]"/>
+                        <span className="h-1 w-12 bg-[#5ec462] shadow-[2px_2px_0_0_#000]" />
                         <p className="text-[#c6c6c6] text-sm tracking-widest text-center mc-text-shadow">
                             MINING YOUR GITHUB HISTORY
                         </p>
-                        <span className="h-1 w-12 bg-[#5ec462] shadow-[2px_2px_0_0_#000]"/>
+                        <span className="h-1 w-12 bg-[#5ec462] shadow-[2px_2px_0_0_#000]" />
                     </div>
                 </div>
 
@@ -418,7 +418,7 @@ export default function Home() {
                                                     src={TEXTURES.emerald}
                                                     alt="Mining..."
                                                     className="w-8 h-8 mc-pixel-icon animate-bounce"
-                                                    style={{animationDelay: `${i * 0.15}s`, animationFillMode: "both"}}
+                                                    style={{ animationDelay: `${i * 0.15}s`, animationFillMode: "both" }}
                                                 />
                                             ))}
                                         </div>
@@ -459,7 +459,7 @@ export default function Home() {
                     </div>
                 </div>
             </main>
-
+            {/* 下面是模态窗口 */}
             {isAboutOpen && (
                 <div
                     className="fixed inset-0 z-[60] flex items-center justify-center bg-black/72 px-4 py-6 mc-modal-backdrop"
@@ -574,13 +574,13 @@ export default function Home() {
 
             <div
                 className="relative z-[20] h-4 w-full mc-texture"
-                style={{backgroundImage: `url('${TEXTURES.grassTop}')`}}
+                style={{ backgroundImage: `url('${TEXTURES.grassTop}')` }}
             />
             <footer
                 className="relative z-[20] px-6 py-6 border-black text-center mc-texture"
-                style={{backgroundImage: `url('${TEXTURES.dirt}')`}}
+                style={{ backgroundImage: `url('${TEXTURES.dirt}')` }}
             >
-                <div className="absolute inset-0 mc-footer-overlay"/>
+                <div className="absolute inset-0 mc-footer-overlay" />
                 <p className="relative z-10 text-[#a0a0a0] text-sm hover:text-white transition-colors mc-text-shadow">
                     Crafted with ❤️ by WJZ_P | Not an official Minecraft product
                 </p>
@@ -589,4 +589,3 @@ export default function Home() {
     );
 }
 
-          
