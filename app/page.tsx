@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
+import { useTranslations, useLocale } from "next-intl";
 import WeatherCanvas from "./components/WeatherCanvas";
 import IsometricMap from "./components/IsometricMap";
 import BannerHall from "./components/BannerHall";
@@ -101,6 +102,8 @@ const ABOUT_ENDPOINTS = [
 ]
 
 export default function Home() {
+    const t = useTranslations();
+    const locale = useLocale();
 
     const [input, setInput] = useState("");
     const [displayUsername, setDisplayUsername] = useState("");
@@ -122,6 +125,13 @@ export default function Home() {
     const [weather, setWeather] = useState<"clear" | "rain" | "snow">("snow");
     const [isAboutOpen, setIsAboutOpen] = useState(false);
     const mouseRef = useRef({ x: 0, y: 0 });
+
+    // 切换语言：写 Cookie 并刷新页面
+    const toggleLocale = useCallback(() => {
+        const next = locale === "zh" ? "en" : "zh";
+        document.cookie = `locale=${next};path=/;max-age=31536000`;
+        window.location.reload();
+    }, [locale]);
 
     //  指向石头背景的ref，避免把鼠标位置挂载在全局HTML上，优化性能。
     const bgRef = useRef<HTMLDivElement>(null);
@@ -284,6 +294,14 @@ export default function Home() {
                 </div>
 
                 <div className="relative z-10 flex flex-wrap items-center gap-3 sm:justify-end">
+                    <button
+                        type="button"
+                        onClick={toggleLocale}
+                        className="mc-btn-secondary text-xs"
+                    >
+                        {locale === "zh" ? "EN" : "中文"}
+                    </button>
+
                     <button
                         type="button"
                         onClick={() => setIsAboutOpen(true)}

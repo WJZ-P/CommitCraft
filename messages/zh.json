@@ -1,0 +1,90 @@
+{
+  "nav": {
+    "about": "关于",
+    "weather": "天气",
+    "github": "GitHub"
+  },
+  "hero": {
+    "title": "Craft Your Commits",
+    "subtitle": "挖掘你的 GITHUB 提交记录"
+  },
+  "input": {
+    "label": "输入 GitHub 用户名或仓库地址：",
+    "placeholder": "例如 WJZ_P  或  facebook/react  或  https://github.com/...",
+    "hint": "用户名 → 玩家数据 & 地图  |  owner/repo 或链接 → 仓库卡片",
+    "craft": "开始创建",
+    "mining": "挖矿中..."
+  },
+  "empty": {
+    "title": "等待目标...",
+    "subtitle": "输入用户名查看玩家数据，或输入 owner/repo 查看仓库卡片。"
+  },
+  "loading": {
+    "repo": "正在查询仓库数据...",
+    "user": "正在锻造等距世界..."
+  },
+  "error": {
+    "label": "错误",
+    "network": "网络错误，请重试。",
+    "contributions": "获取贡献数据失败",
+    "repo": "获取仓库信息失败"
+  },
+  "views": {
+    "map": "贡献地图",
+    "banner": "旗帜大厅",
+    "card": "玩家护照"
+  },
+  "footer": {
+    "credit": "由 WJZ_P 用 ❤️ 打造 | 非 Minecraft 官方产品"
+  },
+  "about": {
+    "projectInfo": "项目信息",
+    "title": "CommitCraft",
+    "description": "把 GitHub 公开数据锻造成 Minecraft 风格的 SVG 展示物。",
+    "close": "关闭",
+    "whatIsThis": "这是一个什么项目？",
+    "whatIsThisContent": "CommitCraft 会把 GitHub 用户贡献、仓库信息和统计数据，转换成可预览、可下载、可嵌入的 Minecraft 像素风 SVG。它适合放进 README、个人主页、作品集，或者直接当成分享图使用。",
+    "supportedInputs": "支持哪些输入？",
+    "inputUsername": "GitHub 用户名",
+    "inputUsernameExample": "例：WJZ_P",
+    "inputUsernameDetail": "生成 Contribution Map、Banner Hall 和 Player Passport 三种用户视图。",
+    "inputShort": "仓库短格式",
+    "inputShortExample": "例：vercel/next.js",
+    "inputShortDetail": "直接生成仓库 Repo Card，适合展示项目概览。",
+    "inputUrl": "仓库完整链接",
+    "inputUrlExample": "例：https://github.com/vercel/next.js",
+    "inputUrlDetail": "自动解析 owner/repo，适合直接粘贴 GitHub 页面地址。",
+    "whatCanGenerate": "可以生成什么？",
+    "resultMap": "Contribution Map",
+    "resultMapDetail": "把年度贡献热力图转成 Minecraft 风格的等距地形地图。",
+    "resultBanner": "Banner Hall",
+    "resultBannerDetail": "根据 GitHub 统计生成战绩旗帜，并支持旋转视角查看。",
+    "resultPassport": "Player Passport",
+    "resultPassportDetail": "生成玩家护照卡，可自定义一句个性签名。",
+    "resultRepo": "Repo Card",
+    "resultRepoDetail": "展示仓库名称、描述、语言与热度信息，支持下载 SVG。",
+    "howToUse": "完整使用方式",
+    "step1": "在输入框中填入 GitHub 用户名、仓库短格式，或完整仓库链接。",
+    "step2_prefix": "点击 ",
+    "step2_craft": "开始锻造",
+    "step2_suffix": "，等待页面生成对应内容。",
+    "step3_prefix": "如果输入的是用户名，可以在 ",
+    "step3_suffix": " 之间切换。",
+    "step4_prefix": "每个视图都支持 ",
+    "step4_download": "下载 .SVG",
+    "step4_suffix": "；同时页面下方提供可复制的 endpoint，便于嵌入 README 或网页。",
+    "step5": "玩家护照支持自定义一句 quote；旗帜大厅支持拖动角度；仓库卡片支持直接导出仓库说明 SVG。",
+    "apiUsage": "API / 嵌入用法",
+    "apiMap": "贡献地图",
+    "apiPassport": "玩家护照",
+    "apiBanner": "旗帜大厅",
+    "apiRepo": "仓库卡片",
+    "apiStatIdNote_prefix": "其中旗帜大厅的 ",
+    "apiStatIdNote_statId": "statId",
+    "apiStatIdNote_suffix": " 会在页面中按每面旗帜分别提供复制入口，不需要手动记忆。",
+    "notes": "补充说明",
+    "note1": "导出结果以 SVG 为主，方便二次编辑、嵌入网页和保持清晰缩放。",
+    "note2": "用户模式与仓库模式都直接面向公开 GitHub 数据源。",
+    "note3": "仓库卡片下载已经支持中英文混合内容导出，不会再把中文描述丢掉。"
+  }
+}

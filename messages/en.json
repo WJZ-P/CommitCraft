@@ -1,0 +1,90 @@
+{
+  "nav": {
+    "about": "ABOUT",
+    "weather": "WEATHER",
+    "github": "GITHUB"
+  },
+  "hero": {
+    "title": "Craft Your Commits",
+    "subtitle": "MINING YOUR GITHUB HISTORY"
+  },
+  "input": {
+    "label": "Enter GitHub Username or Repository:",
+    "placeholder": "e.g. WJZ_P  or  facebook/react  or  https://github.com/...",
+    "hint": "Username → Player Stats & Maps  |  owner/repo or URL → Repository Card",
+    "craft": "CRAFT",
+    "mining": "MINING..."
+  },
+  "empty": {
+    "title": "Awaiting target...",
+    "subtitle": "Enter a username for player stats, or owner/repo for a repository card."
+  },
+  "loading": {
+    "repo": "Querying Repository Data...",
+    "user": "Forging Isometric World..."
+  },
+  "error": {
+    "label": "ERROR",
+    "network": "Network error. Please try again.",
+    "contributions": "Failed to fetch contributions",
+    "repo": "Failed to fetch repository info"
+  },
+  "views": {
+    "map": "Contribution Map",
+    "banner": "Banner Hall",
+    "card": "Player Passport"
+  },
+  "footer": {
+    "credit": "Crafted with ❤️ by WJZ_P | Not an official Minecraft product"
+  },
+  "about": {
+    "projectInfo": "PROJECT INFO",
+    "title": "CommitCraft",
+    "description": "Forge your GitHub public data into Minecraft-style SVG showcases.",
+    "close": "CLOSE",
+    "whatIsThis": "What is this project?",
+    "whatIsThisContent": "CommitCraft transforms GitHub user contributions, repository info, and statistics into previewable, downloadable, and embeddable Minecraft pixel-art SVGs. Perfect for READMEs, personal pages, portfolios, or sharing directly.",
+    "supportedInputs": "Supported Inputs",
+    "inputUsername": "GitHub Username",
+    "inputUsernameExample": "e.g. WJZ_P",
+    "inputUsernameDetail": "Generates Contribution Map, Banner Hall, and Player Passport views.",
+    "inputShort": "Short Repo Format",
+    "inputShortExample": "e.g. vercel/next.js",
+    "inputShortDetail": "Directly generates a Repo Card, great for project overviews.",
+    "inputUrl": "Full Repo URL",
+    "inputUrlExample": "e.g. https://github.com/vercel/next.js",
+    "inputUrlDetail": "Auto-parses owner/repo, handy for pasting GitHub page URLs.",
+    "whatCanGenerate": "What can it generate?",
+    "resultMap": "Contribution Map",
+    "resultMapDetail": "Transforms the annual contribution heatmap into a Minecraft-style isometric terrain map.",
+    "resultBanner": "Banner Hall",
+    "resultBannerDetail": "Generates achievement banners from GitHub stats with rotatable viewing angles.",
+    "resultPassport": "Player Passport",
+    "resultPassportDetail": "Creates a player passport card with customizable quote.",
+    "resultRepo": "Repo Card",
+    "resultRepoDetail": "Displays repo name, description, language, and popularity info. Supports SVG download.",
+    "howToUse": "How to Use",
+    "step1": "Enter a GitHub username, short repo format, or full repo URL in the input box.",
+    "step2_prefix": "Click ",
+    "step2_craft": "CRAFT",
+    "step2_suffix": " and wait for the page to generate the content.",
+    "step3_prefix": "For usernames, switch between ",
+    "step3_suffix": ".",
+    "step4_prefix": "Each view supports ",
+    "step4_download": "DOWNLOAD .SVG",
+    "step4_suffix": "; copyable endpoints are provided below for embedding in READMEs or web pages.",
+    "step5": "Player Passport supports custom quotes; Banner Hall supports drag rotation; Repo Card supports direct export.",
+    "apiUsage": "API / Embed Usage",
+    "apiMap": "Contribution Map",
+    "apiPassport": "Player Passport",
+    "apiBanner": "Banner Hall",
+    "apiRepo": "Repo Card",
+    "apiStatIdNote_prefix": "The ",
+    "apiStatIdNote_statId": "statId",
+    "apiStatIdNote_suffix": " for Banner Hall is provided as a copy button next to each banner — no need to memorize it.",
+    "notes": "Additional Notes",
+    "note1": "Exports are primarily SVG for easy editing, web embedding, and crisp scaling.",
+    "note2": "Both user mode and repo mode work with public GitHub data sources.",
+    "note3": "Repo Card download now supports mixed CJK/Latin content export without losing Chinese descriptions."
+  }
+}
