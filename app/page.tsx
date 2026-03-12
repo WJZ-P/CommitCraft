@@ -45,61 +45,7 @@ const TEXTURES = {
 
 const ORE_SPAWN_CHANCE = 0.05
 
-const ABOUT_INPUTS = [
-    {
-        label: "GitHub 用户名",
-        example: "例： WJZ_P",
-        detail: "生成 Contribution Map、Banner Hall 和 Player Passport 三种用户视图。",
-    },
-    {
-        label: "仓库短格式",
-        example: "例： vercel/next.js",
-        detail: "直接生成仓库 Repo Card，适合展示项目概览。",
-    },
-    {
-        label: "仓库完整链接",
-        example: "例： https://github.com/vercel/next.js",
-        detail: "自动解析 owner/repo，适合直接粘贴 GitHub 页面地址。",
-    },
-]
 
-const ABOUT_RESULTS = [
-    {
-        title: "Contribution Map",
-        detail: "把年度贡献热力图转成 Minecraft 风格的等距地形地图。",
-    },
-    {
-        title: "Banner Hall",
-        detail: "根据 GitHub 统计生成战绩旗帜，并支持旋转视角查看。",
-    },
-    {
-        title: "Player Passport",
-        detail: "生成玩家护照卡，可自定义一句个性签名。",
-    },
-    {
-        title: "Repo Card",
-        detail: "展示仓库名称、描述、语言与热度信息，支持下载 SVG。",
-    },
-]
-
-const ABOUT_ENDPOINTS = [
-    {
-        label: "贡献地图",
-        path: "/api/map/{username}.svg",
-    },
-    {
-        label: "玩家护照",
-        path: "/api/card/{username}.svg",
-    },
-    {
-        label: "旗帜大厅",
-        path: "/api/banner/{username}/{statId}.svg",
-    },
-    {
-        label: "仓库卡片",
-        path: "/api/repo/{owner}/{repo}.svg",
-    },
-]
 
 export default function Home() {
     const t = useTranslations();
@@ -120,8 +66,26 @@ export default function Home() {
     const [error, setError] = useState<string | null>(null);
     const [ores, setOres] = useState<{ id: number; x: number; y: number; type: string }[]>([]);
     const [activeView, setActiveView] = useState<"map" | "banner" | "card">("map");
-    const VIEW_LABELS: Record<string, string> = { map: "Contribution Map", banner: "Banner Hall", card: "Player Passport" };
+    const VIEW_LABELS: Record<string, string> = { map: t("views.map"), banner: t("views.banner"), card: t("views.card") };
     const VIEW_KEYS: ("map" | "banner" | "card")[] = ["map", "banner", "card"];
+
+    const ABOUT_INPUTS = [
+        { label: t("about.inputUsername"), example: t("about.inputUsernameExample"), detail: t("about.inputUsernameDetail") },
+        { label: t("about.inputShort"), example: t("about.inputShortExample"), detail: t("about.inputShortDetail") },
+        { label: t("about.inputUrl"), example: t("about.inputUrlExample"), detail: t("about.inputUrlDetail") },
+    ];
+    const ABOUT_RESULTS = [
+        { title: t("about.resultMap"), detail: t("about.resultMapDetail") },
+        { title: t("about.resultBanner"), detail: t("about.resultBannerDetail") },
+        { title: t("about.resultPassport"), detail: t("about.resultPassportDetail") },
+        { title: t("about.resultRepo"), detail: t("about.resultRepoDetail") },
+    ];
+    const ABOUT_ENDPOINTS = [
+        { label: t("about.apiMap"), path: "/api/map/{username}.svg" },
+        { label: t("about.apiPassport"), path: "/api/card/{username}.svg" },
+        { label: t("about.apiBanner"), path: "/api/banner/{username}/{statId}.svg" },
+        { label: t("about.apiRepo"), path: "/api/repo/{owner}/{repo}.svg" },
+    ];
     const [weather, setWeather] = useState<"clear" | "rain" | "snow">("snow");
     const [isAboutOpen, setIsAboutOpen] = useState(false);
     const mouseRef = useRef({ x: 0, y: 0 });
@@ -213,7 +177,7 @@ export default function Home() {
                 const data = await res.json();
 
                 if (!res.ok) {
-                    setError(data.error || "Failed to fetch contributions");
+                    setError(data.error || t("error.contributions"));
                     return;
                 }
 
@@ -227,7 +191,7 @@ export default function Home() {
                 const data = await res.json();
 
                 if (!res.ok) {
-                    setError(data.error || "Failed to fetch repository info");
+                    setError(data.error || t("error.repo"));
                     return;
                 }
 
@@ -235,7 +199,7 @@ export default function Home() {
                 setResultMode("repo");
             }
         } catch {
-            setError("Network error. Please try again.");
+            setError(t("error.network"));
         } finally {
             setLoading(false);
         }
@@ -309,14 +273,14 @@ export default function Home() {
                         aria-expanded={isAboutOpen}
                         className="mc-btn-secondary text-xs"
                     >
-                        ABOUT
+                        {t("nav.about")}
                     </button>
 
                     <button
                         onClick={() => setWeather((w) => (w === "clear" ? "rain" : w === "rain" ? "snow" : "clear"))}
                         className="mc-btn-secondary text-xs flex items-center gap-2"
                     >
-                        WEATHER: {weather.toUpperCase()}
+                        {t("nav.weather")}: {weather.toUpperCase()}
                     </button>
 
                     <a
@@ -344,12 +308,12 @@ export default function Home() {
                 {/* Hero 标题 */}
                 <div className="mb-10 flex flex-col items-center animate-[bounce_4s_infinite]">
                     <h2 className="text-4xl md:text-5xl font-bold text-white mb-4 tracking-widest text-center mc-text-shadow-3d">
-                        Craft Your Commits
+                        {t("hero.title")}
                     </h2>
                     <div className="flex items-center gap-3">
                         <span className="h-1 w-12 bg-[#5ec462] shadow-[2px_2px_0_0_#000]" />
                         <p className="text-[#c6c6c6] text-sm tracking-widest text-center mc-text-shadow">
-                            MINING YOUR GITHUB HISTORY
+                            {t("hero.subtitle")}
                         </p>
                         <span className="h-1 w-12 bg-[#5ec462] shadow-[2px_2px_0_0_#000]" />
                     </div>
@@ -360,7 +324,7 @@ export default function Home() {
                     <div className="mc-gui-inner">
 
                         <label className="block text-[#3f3f3f] font-bold text-lg mb-4 mc-text-shadow-white">
-                            Enter GitHub Username or Repository:
+                            {t("input.label")}
                         </label>
 
                         <div className="flex flex-col md:flex-row gap-4">
@@ -368,7 +332,7 @@ export default function Home() {
                             <div className="mc-input-sunken flex-1">
                                 <input
                                     type="text"
-                                    placeholder="e.g. WJZ_P  or  facebook/react  or  https://github.com/..."
+                                    placeholder={t("input.placeholder")}
                                     value={input}
                                     onChange={(e) => setInput(e.target.value)}
                                     onKeyDown={(e) => e.key === "Enter" && handleGenerate()}
@@ -382,12 +346,12 @@ export default function Home() {
                                 disabled={loading || !input.trim()}
                                 className="mc-btn h-14 px-8 text-xl"
                             >
-                                <span>{loading ? "MINING..." : "CRAFT"}</span>
+                                <span>{loading ? t("input.mining") : t("input.craft")}</span>
                             </button>
                         </div>
 
                         <p className="text-[#888] text-xs mt-2 mc-text-shadow-light">
-                            Username → Player Stats &amp; Maps &nbsp;|&nbsp; owner/repo or URL → Repository Card
+                            {t("input.hint")}
                         </p>
 
                         {/* ===== 视图切换栏（仅用户模式） ===== */}
@@ -422,8 +386,8 @@ export default function Home() {
                             <div className="mc-display mt-8 relative">
                                 {!loading && !error && !resultMode && (
                                     <div className="text-[#888] text-center mc-text-shadow-light">
-                                        <p className="mb-2">Awaiting target...</p>
-                                        <p className="text-sm">Enter a username for player stats, or owner/repo for a repository card.</p>
+                                        <p className="mb-2">{t("empty.title")}</p>
+                                        <p className="text-sm">{t("empty.subtitle")}</p>
                                     </div>
                                 )}
 
@@ -441,14 +405,14 @@ export default function Home() {
                                             ))}
                                         </div>
                                         <p className="text-[#5ec462] animate-pulse mc-text-shadow">
-                                            {parseInput(input)?.type === "repo" ? "Querying Repository Data..." : "Forging Isometric World..."}
+                                            {parseInput(input)?.type === "repo" ? t("loading.repo") : t("loading.user")}
                                         </p>
                                     </div>
                                 )}
 
                                 {error && (
                                     <div className="text-[#ff5555] text-center mc-text-shadow-error">
-                                        <p className="text-xl mb-1">⚠ ERROR</p>
+                                        <p className="text-xl mb-1">⚠ {t("error.label")}</p>
                                         <p className="text-sm">{error}</p>
                                     </div>
                                 )}
@@ -494,36 +458,36 @@ export default function Home() {
                         <div className="mc-gui-inner !p-0 flex max-h-[85vh] flex-col overflow-hidden">
                             <div className="flex items-start justify-between gap-4 border-b-4 border-black bg-[#8b8b8b] px-5 py-4">
                                 <div className="min-w-0">
-                                    <p className="text-xs text-[#55ff55] mc-text-shadow">PROJECT INFO</p>
+                                    <p className="text-xs text-[#55ff55] mc-text-shadow">{t("about.projectInfo")}</p>
                                     <h3 id="about-modal-title" className="mt-1 text-2xl text-white mc-text-shadow-heavy">
-                                        CommitCraft
+                                        {t("about.title")}
                                     </h3>
                                     <p className="mc-cjk-text mt-2 text-sm font-semibold text-[#202020]">
-                                        把 GitHub 公开数据锻造成 Minecraft 风格的 SVG 展示物。
+                                        {t("about.description")}
                                     </p>
                                 </div>
 
                                 <button
                                     type="button"
-                                    aria-label="关闭项目说明"
+                                    aria-label={t("about.close")}
                                     onClick={() => setIsAboutOpen(false)}
                                     className="mc-btn-secondary text-xs shrink-0"
                                 >
-                                    CLOSE
+                                    {t("about.close")}
                                 </button>
                             </div>
 
                             <div className="mc-about-copy overflow-y-auto px-5 py-5 text-[#1f1f1f] sm:px-6 sm:py-6">
                                 <section className="mc-about-section p-4">
-                                    <h4 className="text-lg font-bold">这是一个什么项目？</h4>
+                                    <h4 className="text-lg font-bold">{t("about.whatIsThis")}</h4>
                                     <p className="mt-3 text-sm leading-7">
-                                        CommitCraft 会把 GitHub 用户贡献、仓库信息和统计数据，转换成可预览、可下载、可嵌入的 Minecraft 像素风 SVG。它适合放进 README、个人主页、作品集，或者直接当成分享图使用。
+                                        {t("about.whatIsThisContent")}
                                     </p>
                                 </section>
 
                                 <div className="mt-4 grid gap-4 md:grid-cols-2">
                                     <section className="mc-about-section p-4">
-                                        <h4 className="text-lg font-bold">支持哪些输入？</h4>
+                                        <h4 className="text-lg font-bold">{t("about.supportedInputs")}</h4>
                                         <ul className="mt-3 space-y-3 text-sm">
                                             {ABOUT_INPUTS.map((item) => (
                                                 <li key={item.label} className="border-t-2 border-black/15 pt-3 first:border-t-0 first:pt-0">
@@ -536,7 +500,7 @@ export default function Home() {
                                     </section>
 
                                     <section className="mc-about-section p-4">
-                                        <h4 className="text-lg font-bold">可以生成什么？</h4>
+                                        <h4 className="text-lg font-bold">{t("about.whatCanGenerate")}</h4>
                                         <ul className="mt-3 space-y-3 text-sm">
                                             {ABOUT_RESULTS.map((item) => (
                                                 <li key={item.title} className="border-t-2 border-black/15 pt-3 first:border-t-0 first:pt-0">
@@ -549,18 +513,18 @@ export default function Home() {
                                 </div>
 
                                 <section className="mc-about-section mt-4 p-4">
-                                    <h4 className="text-lg font-bold">完整使用方式</h4>
+                                    <h4 className="text-lg font-bold">{t("about.howToUse")}</h4>
                                     <ol className="mt-3 space-y-3 text-sm leading-7">
-                                        <li><span className="font-bold">1.</span> 在输入框中填入 GitHub 用户名、仓库短格式，或完整仓库链接。</li>
-                                        <li><span className="font-bold">2.</span> 点击 <span className="mc-about-code">CRAFT</span>，等待页面生成对应内容。</li>
-                                        <li><span className="font-bold">3.</span> 如果输入的是用户名，可以在 <span className="mc-about-code">Contribution Map</span>、<span className="mc-about-code">Banner Hall</span>、<span className="mc-about-code">Player Passport</span> 之间切换。</li>
-                                        <li><span className="font-bold">4.</span> 每个视图都支持 <span className="mc-about-code">DOWNLOAD .SVG</span>；同时页面下方提供可复制的 endpoint，便于嵌入 README 或网页。</li>
-                                        <li><span className="font-bold">5.</span> 玩家护照支持自定义一句 quote；旗帜大厅支持拖动角度；仓库卡片支持直接导出仓库说明 SVG。</li>
+                                        <li><span className="font-bold">1.</span> {t("about.step1")}</li>
+                                        <li><span className="font-bold">2.</span> {t("about.step2_prefix")}<span className="mc-about-code">{t("about.step2_craft")}</span>{t("about.step2_suffix")}</li>
+                                        <li><span className="font-bold">3.</span> {t("about.step3_prefix")}<span className="mc-about-code">{t("views.map")}</span>、<span className="mc-about-code">{t("views.banner")}</span>、<span className="mc-about-code">{t("views.card")}</span>{t("about.step3_suffix")}</li>
+                                        <li><span className="font-bold">4.</span> {t("about.step4_prefix")}<span className="mc-about-code">{t("about.step4_download")}</span>{t("about.step4_suffix")}</li>
+                                        <li><span className="font-bold">5.</span> {t("about.step5")}</li>
                                     </ol>
                                 </section>
 
                                 <section className="mc-about-section mt-4 p-4">
-                                    <h4 className="text-lg font-bold">API / 嵌入用法</h4>
+                                    <h4 className="text-lg font-bold">{t("about.apiUsage")}</h4>
                                     <div className="mt-3 grid gap-3 sm:grid-cols-2">
                                         {ABOUT_ENDPOINTS.map((item) => (
                                             <div key={item.path} className="border-2 border-black bg-black/8 px-3 py-3">
@@ -570,16 +534,16 @@ export default function Home() {
                                         ))}
                                     </div>
                                     <p className="mt-3 text-sm leading-6">
-                                        其中旗帜大厅的 <span className="mc-about-code">statId</span> 会在页面中按每面旗帜分别提供复制入口，不需要手动记忆。
+                                        {t("about.apiStatIdNote_prefix")}<span className="mc-about-code">{t("about.apiStatIdNote_statId")}</span>{t("about.apiStatIdNote_suffix")}
                                     </p>
                                 </section>
 
                                 <section className="mc-about-section mt-4 p-4">
-                                    <h4 className="text-lg font-bold">补充说明</h4>
+                                    <h4 className="text-lg font-bold">{t("about.notes")}</h4>
                                     <ul className="mt-3 space-y-2 text-sm leading-7">
-                                        <li>- 导出结果以 SVG 为主，方便二次编辑、嵌入网页和保持清晰缩放。</li>
-                                        <li>- 用户模式与仓库模式都直接面向公开 GitHub 数据源。</li>
-                                        <li>- 仓库卡片下载已经支持中英文混合内容导出，不会再把中文描述丢掉。</li>
+                                        <li>- {t("about.note1")}</li>
+                                        <li>- {t("about.note2")}</li>
+                                        <li>- {t("about.note3")}</li>
                                     </ul>
                                 </section>
                             </div>
@@ -600,7 +564,7 @@ export default function Home() {
             >
                 <div className="absolute inset-0 mc-footer-overlay" />
                 <p className="relative z-10 text-[#a0a0a0] text-sm hover:text-white transition-colors mc-text-shadow">
-                    Crafted with ❤️ by WJZ_P | Not an official Minecraft product
+                    {t("footer.credit")}
                 </p>
             </footer>
         </div>

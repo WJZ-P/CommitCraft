@@ -10,7 +10,7 @@
   },
   "input": {
     "label": "输入 GitHub 用户名或仓库地址：",
-    "placeholder": "例如 WJZ_P  或  facebook/react  或  https://github.com/...",
+    "placeholder": "例如 WJZ_P  或  wjz-p/CommitCraft  或  https://github.com/...",
     "hint": "用户名 → 玩家数据 & 地图  |  owner/repo 或链接 → 仓库卡片",
     "craft": "开始创建",
     "mining": "挖矿中..."

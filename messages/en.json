@@ -10,7 +10,7 @@
   },
   "input": {
     "label": "Enter GitHub Username or Repository:",
-    "placeholder": "e.g. WJZ_P  or  facebook/react  or  https://github.com/...",
+    "placeholder": "e.g. WJZ_P  or  wjz-p/CommitCraft  or  https://github.com/...",
     "hint": "Username → Player Stats & Maps  |  owner/repo or URL → Repository Card",
     "craft": "CRAFT",
     "mining": "MINING..."
