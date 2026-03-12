@@ -10,7 +10,7 @@
   },
   "input": {
     "label": "Enter GitHub Username or Repository:",
-    "placeholder": "e.g. WJZ_P  or  wjz-p/CommitCraft  or  https://github.com/...",
+    "placeholder": "e.g. wjz-p  or  wjz-p/CommitCraft  or  https://github.com/...",
     "hint": "Username → Player Stats & Maps  |  owner/repo or URL → Repository Card",
     "craft": "CRAFT",
     "mining": "MINING..."
@@ -86,5 +86,26 @@
     "note1": "Exports are primarily SVG for easy editing, web embedding, and crisp scaling.",
     "note2": "Both user mode and repo mode work with public GitHub data sources.",
     "note3": "Repo Card download now supports mixed CJK/Latin content export without losing Chinese descriptions."
+  },
+  "components": {
+    "downloadSvg": "DOWNLOAD .SVG",
+    "download": "DOWNLOAD",
+    "replay": "REPLAY",
+    "reset": "RESET",
+    "copy": "COPY",
+    "copied": "✔ COPIED",
+    "endpointLabel": "{label} Endpoint:",
+    "endpointDefault": "API Endpoint URL:",
+    "contributions": "contributions",
+    "viewAngle": "VIEW ANGLE:",
+    "bannerHint": "Drag slider to rotate banners \u2022 Ranks based on your GitHub stats",
+    "mapHint": "Hover to inspect \u2022 Height & ores scale with commits",
+    "quoteLabel": "QUOTE:",
+    "quotePlaceholder": "Enter your quote...",
+    "quoteDefault": "Exploring the infinite code blocks.",
+    "unknown": "Unknown",
+    "passportHint": "Customize your quote \u2022 Download or embed your Player Passport",
+    "repoCardLabel": "Repo Card",
+    "fontError": "Failed to fetch Minecraft font!"
   }
 }

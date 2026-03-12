@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useMemo, useCallback, useRef } from "react";
+import { useTranslations } from "next-intl";
 import opentype from "opentype.js";
 import type { UserStats } from "@/app/lib/github";
 import {
@@ -190,6 +191,7 @@ interface BannerHallProps {
 }
 
 export default function BannerHall({ stats, totalContributions, username }: BannerHallProps) {
+  const t = useTranslations("components");
   const [rotation, setRotation] = useState(0);
   const displayRef = useRef<HTMLDivElement>(null);
   const fontCacheRef = useRef<Record<string, opentype.Font>>({});
@@ -222,7 +224,7 @@ export default function BannerHall({ stats, totalContributions, username }: Bann
         fontCacheRef.current["mc"] = opentype.parse(buf);
       } catch (e) {
         console.error("加载 Minecraft 字体失败:", e);
-        alert("Minecraft 字体拉取失败！");
+        alert(t("fontError"));
         return;
       }
     }
@@ -406,7 +408,7 @@ export default function BannerHall({ stats, totalContributions, username }: Bann
       <div className="mc-player-bar mb-3">
         <div className="flex items-center gap-4">
           <span className="text-[#55ff55] text-sm mc-text-shadow whitespace-nowrap">
-            VIEW ANGLE: <span className="inline-block w-[3.5ch] text-right">{rotation}</span>°
+            {t("viewAngle")} <span className="inline-block w-[3.5ch] text-right">{rotation}</span>°
           </span>
           <McSlider min={-90} max={90} value={rotation} onChange={setRotation} />
         </div>
@@ -415,13 +417,13 @@ export default function BannerHall({ stats, totalContributions, username }: Bann
             onClick={() => setRotation(0)}
             className="mc-btn-secondary text-sm"
           >
-            RESET
+            {t("reset")}
           </button>
           <button
             onClick={handleDownload}
             className="mc-btn-secondary text-sm"
           >
-            DOWNLOAD .SVG
+            {t("downloadSvg")}
           </button>
         </div>
       </div>
@@ -454,7 +456,7 @@ export default function BannerHall({ stats, totalContributions, username }: Bann
       )}
 
       <p className="text-[#888] text-xs mt-2 text-center mc-text-shadow-light">
-        Drag slider to rotate banners &bull; Ranks based on your GitHub stats
+        {t("bannerHint")}
       </p>
     </div>
   );

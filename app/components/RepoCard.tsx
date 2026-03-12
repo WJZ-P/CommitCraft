@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useMemo, useState, useRef, useCallback } from "react";
+import { useTranslations } from "next-intl";
 import { generateRepoSvg, type RepoSvgParams } from "@/app/lib/repoSvg";
 import EndpointCopyBox from "./EndpointCopyBox";
 
@@ -9,6 +10,7 @@ interface RepoCardProps {
 }
 
 export default function RepoCard({ repoData }: RepoCardProps) {
+  const t = useTranslations("components");
   const [animKey, setAnimKey] = useState(0);
   const fontCacheRef = useRef<Record<string, opentype.Font>>({});
 
@@ -160,19 +162,19 @@ export default function RepoCard({ repoData }: RepoCardProps) {
           className="mc-btn-secondary text-xs px-4 py-2"
           onClick={() => setAnimKey((k) => k + 1)}
         >
-          REPLAY
+          {t("replay")}
         </button>
         <button
           className="mc-btn-secondary text-xs px-4 py-2"
           onClick={handleDownload}
         >
-          DOWNLOAD
+          {t("download")}
         </button>
       </div>
 
       {/* API 端点 */}
       <div className="mt-4 w-full">
-        <EndpointCopyBox url={endpointUrl} label="Repo Card" />
+        <EndpointCopyBox url={endpointUrl} label={t("repoCardLabel")} />
       </div>
     </div>
   );

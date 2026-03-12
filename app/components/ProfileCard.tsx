@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useCallback, useMemo } from "react";
+import { useTranslations } from "next-intl";
 import opentype from "opentype.js";
 import type { UserStats } from "@/app/lib/github";
 import { generateCardSvg } from "@/app/lib/cardSvg";
@@ -17,12 +18,13 @@ interface ProfileCardViewProps {
 }
 
 export default function ProfileCardView({ username, avatarUrl, stats, totalContributions }: ProfileCardViewProps) {
-  const [quote, setQuote] = useState("Exploring the infinite code blocks.");
+  const t = useTranslations("components");
+  const [quote, setQuote] = useState(t("quoteDefault"));
   const [animKey, setAnimKey] = useState(0);
   const svgContainerRef = useRef<HTMLDivElement>(null);
   const fontCacheRef = useRef<Record<string, opentype.Font>>({});
 
-  const joinDate = stats.createdAt ? stats.createdAt.slice(0, 10) : "Unknown";
+  const joinDate = stats.createdAt ? stats.createdAt.slice(0, 10) : t("unknown");
 
   const svgHtml = useMemo(() => generateCardSvg({
     username,
@@ -48,7 +50,7 @@ export default function ProfileCardView({ username, avatarUrl, stats, totalContr
         fontCacheRef.current[mcUrl] = opentype.parse(buf);
       } catch (e) {
         console.error("加载 Minecraft 字体失败:", e);
-        alert("Minecraft 字体拉取失败！");
+        alert(t("fontError"));
         return;
       }
     }
@@ -160,14 +162,14 @@ export default function ProfileCardView({ username, avatarUrl, stats, totalContr
       {/* 控制栏 */}
       <div className="mc-player-bar mb-3">
         <div className="flex items-center gap-4 flex-1 min-w-0">
-          <span className="text-[#55ff55] text-sm mc-text-shadow whitespace-nowrap">QUOTE:</span>
+          <span className="text-[#55ff55] text-sm mc-text-shadow whitespace-nowrap">{t("quoteLabel")}</span>
           <input
             type="text"
             value={quote}
             maxLength={45}
             onChange={(e) => setQuote(e.target.value)}
             className="flex-1 min-w-0 bg-black/60 text-[#55FFFF] font-mono text-sm px-3 py-1.5 outline-none border-2 border-[#373737]"
-            placeholder="Enter your quote..."
+            placeholder={t("quotePlaceholder")}
           />
         </div>
         <div className="flex items-center gap-2">
@@ -175,10 +177,10 @@ export default function ProfileCardView({ username, avatarUrl, stats, totalContr
             onClick={() => setAnimKey((k) => k + 1)}
             className="mc-btn-secondary text-sm"
           >
-            REPLAY
+            {t("replay")}
           </button>
           <button onClick={handleDownload} className="mc-btn-secondary text-sm">
-            DOWNLOAD .SVG
+            {t("downloadSvg")}
           </button>
         </div>
       </div>
@@ -203,7 +205,7 @@ export default function ProfileCardView({ username, avatarUrl, stats, totalContr
       )}
 
       <p className="text-[#888] text-xs mt-2 text-center mc-text-shadow-light">
-        Customize your quote &bull; Download or embed your Player Passport
+        {t("passportHint")}
       </p>
     </div>
   );

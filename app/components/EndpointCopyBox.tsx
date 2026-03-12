@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useCallback } from "react";
+import { useTranslations } from "next-intl";
 
 function useCopyToClipboard(url: string) {
   const [copied, setCopied] = useState(false);
@@ -24,6 +25,7 @@ function useCopyToClipboard(url: string) {
 }
 
 export default function EndpointCopyBox({ url, label }: { url: string; label?: string }) {
+  const t = useTranslations("components");
   const { copied, handleCopy } = useCopyToClipboard(url);
 
   return (
@@ -33,7 +35,7 @@ export default function EndpointCopyBox({ url, label }: { url: string; label?: s
           className="text-[#3f3f3f] font-bold text-lg tracking-wide"
           style={{ textShadow: "1px 1px 0px #fff" }}
         >
-          {label ? `${label} Endpoint:` : "API Endpoint URL:"}
+          {label ? t("endpointLabel", { label }) : t("endpointDefault")}
         </label>
       </div>
 
@@ -68,7 +70,7 @@ export default function EndpointCopyBox({ url, label }: { url: string; label?: s
             `}
             style={{ textShadow: "2px 2px 0px #3f3f3f" }}
           >
-            {copied ? "✔ COPIED" : "COPY"}
+            {copied ? t("copied") : t("copy")}
           </span>
         </div>
       </button>
