@@ -368,7 +368,7 @@ export default function Home() {
                             <div className="mc-input-sunken flex-1">
                                 <input
                                     type="text"
-                                    placeholder="e.g. octocat  or  facebook/react  or  https://github.com/..."
+                                    placeholder="e.g. WJZ_P  or  facebook/react  or  https://github.com/..."
                                     value={input}
                                     onChange={(e) => setInput(e.target.value)}
                                     onKeyDown={(e) => e.key === "Enter" && handleGenerate()}
