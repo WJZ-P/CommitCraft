@@ -112,7 +112,7 @@ export function generateCardSvg(params: CardSvgParams): string {
 
 <!-- JOINED -->
 <g class="anim-fade" style="animation-delay: 0.3s">
-  <image href="${ICONS.clock}" x="178" y="33" width="28" height="28" filter="url(#shadow-dark)" />
+  <image href="${ICONS.clock}" x="178" y="29" width="28" height="28" filter="url(#shadow-dark)" />
   <text x="215" y="53" class="mc-font" font-size="20" fill="#555555" font-weight="bold">JOINED: <tspan fill="#111111">${escapeXml(joinDate)}</tspan></text>
   <rect x="180" y="65" width="290" height="2" fill="#888888" opacity="0.5" />
   <rect x="180" y="67" width="290" height="2" fill="#ffffff" opacity="0.8" />
@@ -120,7 +120,7 @@ export function generateCardSvg(params: CardSvgParams): string {
 
 <!-- STARS -->
 <g class="anim-fade" style="animation-delay: 0.4s">
-  <image href="${ICONS.star}" x="178" y="83" width="28" height="28" filter="url(#shadow-dark)" />
+  <image href="${ICONS.star}" x="178" y="79" width="28" height="28" filter="url(#shadow-dark)" />
   <text x="215" y="103" class="mc-font" font-size="20" fill="#555555" font-weight="bold">STARS: <tspan fill="#111111">${stars.toLocaleString()}</tspan></text>
   <rect x="180" y="115" width="290" height="2" fill="#888888" opacity="0.5" />
   <rect x="180" y="117" width="290" height="2" fill="#ffffff" opacity="0.8" />
@@ -128,7 +128,7 @@ export function generateCardSvg(params: CardSvgParams): string {
 
 <!-- COMMITS -->
 <g class="anim-fade" style="animation-delay: 0.5s">
-  <image href="${ICONS.pickaxe}" x="178" y="133" width="28" height="28" filter="url(#shadow-dark)" />
+  <image href="${ICONS.pickaxe}" x="178" y="129" width="28" height="28" filter="url(#shadow-dark)" />
   <text x="215" y="153" class="mc-font" font-size="20" fill="#555555" font-weight="bold">COMMITS: <tspan fill="#111111">${commits.toLocaleString()}</tspan></text>
   <rect x="180" y="165" width="290" height="2" fill="#888888" opacity="0.5" />
   <rect x="180" y="167" width="290" height="2" fill="#ffffff" opacity="0.8" />
@@ -136,7 +136,7 @@ export function generateCardSvg(params: CardSvgParams): string {
 
 <!-- FOLLOWERS -->
 <g class="anim-fade" style="animation-delay: 0.6s">
-  <image href="${ICONS.emerald}" x="178" y="183" width="28" height="28" filter="url(#shadow-dark)" />
+  <image href="${ICONS.emerald}" x="178" y="179" width="28" height="28" filter="url(#shadow-dark)" />
   <text x="215" y="203" class="mc-font" font-size="20" fill="#555555" font-weight="bold">FOLLOWERS: <tspan fill="#111111">${followers.toLocaleString()}</tspan></text>
 </g>
 
@@ -267,7 +267,7 @@ export async function generateBakedCardSvg(params: CardSvgParams): Promise<strin
 
 <!-- JOINED -->
 <g class="anim-fade" style="animation-delay: 0.3s">
-  <image href="${ICONS.clock}" x="178" y="33" width="28" height="28" filter="url(#shadow-dark)" />
+  <image href="${ICONS.clock}" x="178" y="29" width="28" height="28" filter="url(#shadow-dark)" />
   ${joinedPath}
   <rect x="180" y="65" width="290" height="2" fill="#888888" opacity="0.5" />
   <rect x="180" y="67" width="290" height="2" fill="#ffffff" opacity="0.8" />
@@ -275,7 +275,7 @@ export async function generateBakedCardSvg(params: CardSvgParams): Promise<strin
 
 <!-- STARS -->
 <g class="anim-fade" style="animation-delay: 0.4s">
-  <image href="${ICONS.star}" x="178" y="83" width="28" height="28" filter="url(#shadow-dark)" />
+  <image href="${ICONS.star}" x="178" y="79" width="28" height="28" filter="url(#shadow-dark)" />
   ${starsPath}
   <rect x="180" y="115" width="290" height="2" fill="#888888" opacity="0.5" />
   <rect x="180" y="117" width="290" height="2" fill="#ffffff" opacity="0.8" />
@@ -283,7 +283,7 @@ export async function generateBakedCardSvg(params: CardSvgParams): Promise<strin
 
 <!-- COMMITS -->
 <g class="anim-fade" style="animation-delay: 0.5s">
-  <image href="${ICONS.pickaxe}" x="178" y="133" width="28" height="28" filter="url(#shadow-dark)" />
+  <image href="${ICONS.pickaxe}" x="178" y="129" width="28" height="28" filter="url(#shadow-dark)" />
   ${commitsPath}
   <rect x="180" y="165" width="290" height="2" fill="#888888" opacity="0.5" />
   <rect x="180" y="167" width="290" height="2" fill="#ffffff" opacity="0.8" />
@@ -291,7 +291,7 @@ export async function generateBakedCardSvg(params: CardSvgParams): Promise<strin
 
 <!-- FOLLOWERS -->
 <g class="anim-fade" style="animation-delay: 0.6s">
-  <image href="${ICONS.emerald}" x="178" y="183" width="28" height="28" filter="url(#shadow-dark)" />
+  <image href="${ICONS.emerald}" x="178" y="179" width="28" height="28" filter="url(#shadow-dark)" />
   ${followersPath}
 </g>
 
