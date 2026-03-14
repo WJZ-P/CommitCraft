@@ -199,7 +199,8 @@ export default function ProfileCardView({ username, avatarUrl, stats, totalContr
       {username && (
         <div className="mt-3">
           <EndpointCopyBox
-            url={`${typeof window !== "undefined" ? window.location.origin : ""}/api/card/${encodeURIComponent(username)}.svg`}
+            key={quote}
+            url={`${typeof window !== "undefined" ? window.location.origin : ""}/api/card/${encodeURIComponent(username)}.svg${quote && quote !== t("quoteDefault") ? `?quote=${encodeURIComponent(quote)}` : ""}`}
           />
         </div>
       )}

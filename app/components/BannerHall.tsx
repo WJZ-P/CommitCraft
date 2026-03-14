@@ -445,13 +445,17 @@ export default function BannerHall({ stats, totalContributions, username }: Bann
       {/* URL 端点栏 */}
       {username && (
         <div className="mt-3 space-y-2">
-          {statItems.map((stat) => (
-            <EndpointCopyBox
-              key={stat.id}
-              url={`${typeof window !== "undefined" ? window.location.origin : ""}/api/banner/${encodeURIComponent(username)}/${stat.id}.svg`}
-              label={stat.title}
-            />
-          ))}
+          {statItems.map((stat) => {
+            const base = `${typeof window !== "undefined" ? window.location.origin : ""}/api/banner/${encodeURIComponent(username)}/${stat.id}.svg`;
+            const url = rotation !== 0 ? `${base}?rotation=${rotation}` : base;
+            return (
+              <EndpointCopyBox
+                key={`${stat.id}-${rotation}`}
+                url={url}
+                label={stat.title}
+              />
+            );
+          })}
         </div>
       )}
 

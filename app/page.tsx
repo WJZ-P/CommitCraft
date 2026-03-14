@@ -41,6 +41,7 @@ const TEXTURES = {
     redstone_ore: "https://cdn.jsdelivr.net/gh/InventivetalentDev/minecraft-assets@1.20.4/assets/minecraft/textures/block/redstone_ore.png",
     emerald_ore: "https://cdn.jsdelivr.net/gh/InventivetalentDev/minecraft-assets@1.20.4/assets/minecraft/textures/block/emerald_ore.png",
     lapis_ore: "https://cdn.jsdelivr.net/gh/InventivetalentDev/minecraft-assets@1.20.4/assets/minecraft/textures/block/lapis_ore.png",
+    sand: "https://cdn.jsdelivr.net/gh/InventivetalentDev/minecraft-assets@1.20.4/assets/minecraft/textures/block/sand.png",
 };
 
 const ORE_SPAWN_CHANCE = 0.05
@@ -241,23 +242,50 @@ export default function Home() {
 
             {/* ===== 顶部导航栏 ===== */}
             <nav
-                className="relative z-[20] flex flex-col gap-4 px-6 py-4 border-black mc-navbar mc-texture sm:flex-row sm:items-center sm:justify-between"
-                style={{ backgroundImage: `url('${TEXTURES.dirt}')` }}
+                className="relative z-[20] h-20 bg-[#282a2e] border-b-4 border-[#111111] mc-navbar"
             >
-                <div className="absolute inset-0 mc-navbar-overlay" />
+                {/* 物理光影层：顶部高光 + 底部深色阴影 → 钢铁面板立体感 */}
+                <div className="absolute inset-0 pointer-events-none shadow-[inset_0_4px_0_0_rgba(255,255,255,0.1),inset_0_-4px_0_0_rgba(0,0,0,0.4)]" />
 
-                <div className="relative z-10 flex items-center gap-4">
-                    <img
-                        src={TEXTURES.emerald}
-                        alt="CommitCraft"
-                        className="w-10 h-10 mc-pixel-icon hover:scale-110 transition-transform cursor-pointer"
-                    />
-                    <h1 className="text-2xl font-bold text-white tracking-wider mc-text-shadow-heavy">
-                        CommitCraft
-                    </h1>
-                </div>
+                {/* 泥土材质噪点：极低透明度营造工业颗粒感 */}
+                <div
+                    className="absolute inset-0 pointer-events-none opacity-[0.12]"
+                    style={{
+                        backgroundImage: `url('${TEXTURES.dirt}')`,
+                        backgroundSize: '32px 32px',
+                        imageRendering: 'pixelated',
+                        mixBlendMode: 'luminosity',
+                    }}
+                />
 
-                <div className="relative z-10 flex flex-wrap items-center gap-3 sm:justify-end">
+                {/* 铆钉装饰 (四角) */}
+                <div className="absolute top-2 left-2 w-2 h-2 bg-[#1a1b1e] border-b border-r border-[#444]" />
+                <div className="absolute bottom-2 left-2 w-2 h-2 bg-[#1a1b1e] border-b border-r border-[#444]" />
+                <div className="absolute top-2 right-2 w-2 h-2 bg-[#1a1b1e] border-b border-r border-[#444]" />
+                <div className="absolute bottom-2 right-2 w-2 h-2 bg-[#1a1b1e] border-b border-r border-[#444]" />
+
+                {/* 内部内容容器 */}
+                <div className="relative z-10 w-full h-full mx-auto px-6 flex items-center justify-between">
+
+                    <a href="https://github.com/WJZ-P/CommitCraft" target="_blank" rel="noopener noreferrer" className="flex items-center gap-4 cursor-pointer group no-underline">
+                        <div className="relative">
+                            <div className="absolute inset-0 bg-[#55FF55] blur-md opacity-0 group-hover:opacity-40 transition-opacity" />
+                            <img
+                                src={TEXTURES.emerald}
+                                alt="CommitCraft"
+                                className="w-8 h-8 md:w-10 md:h-10 relative z-10"
+                                style={{ imageRendering: 'pixelated', filter: 'drop-shadow(2px 4px 0px rgba(0,0,0,0.5))' }}
+                            />
+                        </div>
+                        <h1
+                            className="text-3xl md:text-4xl text-white font-bold tracking-widest transition-transform group-hover:scale-105"
+                            style={{ textShadow: '3px 3px 0px #000, 0px 0px 8px rgba(85,255,85,0.2)' }}
+                        >
+                            CommitCraft
+                        </h1>
+                    </a>
+
+                    <div className="flex items-center gap-3 md:gap-4">
                     <button
                         type="button"
                         onClick={toggleLocale}
@@ -292,14 +320,9 @@ export default function Home() {
                         GitHub
                     </a>
                 </div>
+                </div>
             </nav>
 
-
-            {/* 顶部草皮边缘 */}
-            <div
-                className="relative z-[20] h-4 w-full mc-texture"
-                style={{ backgroundImage: `url('${TEXTURES.grassTop}')` }}
-            />
 
             {/* ===== 主体内容区 ===== */}
             <main
@@ -458,7 +481,7 @@ export default function Home() {
                         <div className="mc-gui-inner !p-0 flex max-h-[85vh] flex-col overflow-hidden">
                             <div className="flex items-start justify-between gap-4 border-b-4 border-black bg-[#8b8b8b] px-5 py-4">
                                 <div className="min-w-0">
-                                    <p className="text-xs text-[#55ff55] mc-text-shadow">{t("about.projectInfo")}</p>
+                                    <p className="text-md font-bold text-[#444]" style={{ textShadow: '1px 1px 0 #fff' }}>{t("about.projectInfo")}</p>
                                     <h3 id="about-modal-title" className="mt-1 text-2xl text-white mc-text-shadow-heavy">
                                         {t("about.title")}
                                     </h3>
@@ -554,18 +577,35 @@ export default function Home() {
 
             {/* ===== 底部页脚 ===== */}
 
-            <div
-                className="relative z-[20] h-4 w-full mc-texture"
-                style={{ backgroundImage: `url('${TEXTURES.grassTop}')` }}
-            />
             <footer
-                className="relative z-[20] px-6 py-6 border-black text-center mc-texture"
-                style={{ backgroundImage: `url('${TEXTURES.dirt}')` }}
+                className="relative z-[20] h-16 bg-[#282a2e] border-t-4 border-[#111111]"
             >
-                <div className="absolute inset-0 mc-footer-overlay" />
-                <p className="relative z-10 text-[#a0a0a0] text-sm hover:text-white transition-colors mc-text-shadow">
-                    {t("footer.credit")}
-                </p>
+                {/* 物理光影层：顶部高光 + 底部深色阴影 */}
+                <div className="absolute inset-0 pointer-events-none shadow-[inset_0_4px_0_0_rgba(255,255,255,0.1),inset_0_-4px_0_0_rgba(0,0,0,0.4)]" />
+
+                {/* 沙子材质噪点 */}
+                <div
+                    className="absolute inset-0 pointer-events-none opacity-[0.12]"
+                    style={{
+                        backgroundImage: `url('${TEXTURES.sand}')`,
+                        backgroundSize: '32px 32px',
+                        imageRendering: 'pixelated',
+                        mixBlendMode: 'luminosity',
+                    }}
+                />
+
+                {/* 铆钉装饰 (四角) */}
+                <div className="absolute top-2 left-2 w-2 h-2 bg-[#1a1b1e] border-b border-r border-[#444]" />
+                <div className="absolute bottom-2 left-2 w-2 h-2 bg-[#1a1b1e] border-b border-r border-[#444]" />
+                <div className="absolute top-2 right-2 w-2 h-2 bg-[#1a1b1e] border-b border-r border-[#444]" />
+                <div className="absolute bottom-2 right-2 w-2 h-2 bg-[#1a1b1e] border-b border-r border-[#444]" />
+
+                {/* 内容 */}
+                <div className="relative z-10 w-full h-full mx-auto px-3 flex items-center justify-center">
+                    <p className="text-[#a0a0a0] text-sm hover:text-white transition-colors mc-text-shadow">
+                        {t("footer.credit")}
+                    </p>
+                </div>
             </footer>
         </div>
     );
