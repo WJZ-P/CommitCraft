@@ -350,7 +350,7 @@ export default function Home() {
                             </button>
                         </div>
 
-                        <p className="text-[#888] text-xs mt-2 mc-text-shadow-light">
+                        <p className="text-[#444] text-md mt-2" style={{ textShadow: "1px 1px 0 #fff" }}>
                             {t("input.hint")}
                         </p>
 
