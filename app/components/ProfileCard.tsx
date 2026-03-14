@@ -205,7 +205,7 @@ export default function ProfileCardView({ username, avatarUrl, stats, totalContr
         </div>
       )}
 
-      <p className="text-[#888] text-xs mt-2 text-center mc-text-shadow-light">
+      <p className="text-[#444] text-xs mt-2 text-center" style={{ textShadow: '1px 1px 0 #fff' }}>
         {t("passportHint")}
       </p>
     </div>

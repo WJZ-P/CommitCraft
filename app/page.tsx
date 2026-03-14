@@ -289,7 +289,7 @@ export default function Home() {
                     <button
                         type="button"
                         onClick={toggleLocale}
-                        className="mc-btn-secondary text-xs"
+                        className="mc-btn-secondary text-sm"
                     >
                         {locale === "zh" ? "EN" : "中文"}
                     </button>
@@ -299,14 +299,14 @@ export default function Home() {
                         onClick={() => setIsAboutOpen(true)}
                         aria-haspopup="dialog"
                         aria-expanded={isAboutOpen}
-                        className="mc-btn-secondary text-xs"
+                        className="mc-btn-secondary text-sm"
                     >
                         {t("nav.about")}
                     </button>
 
                     <button
                         onClick={() => setWeather((w) => (w === "clear" ? "rain" : w === "rain" ? "snow" : "clear"))}
-                        className="mc-btn-secondary text-xs flex items-center gap-2"
+                        className="mc-btn-secondary text-sm flex items-center gap-2"
                     >
                         {t("nav.weather")}: {weather.toUpperCase()}
                     </button>
@@ -315,7 +315,7 @@ export default function Home() {
                         href="https://github.com/WJZ-P/CommitCraft"
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="mc-nav-link text-xs flex items-center gap-2"
+                        className="mc-nav-link text-sm flex items-center gap-2"
                     >
                         GitHub
                     </a>
