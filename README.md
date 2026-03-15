@@ -67,6 +67,39 @@
 
 所有输出均为 **SVG 格式** —— 清晰缩放、易于嵌入网页和 README。
 
+### 🗺️ 贡献地图
+
+<p align="center">
+  <a href="https://commit-craft.wjz-p.workers.dev/">
+    <img src="https://commit-craft.wjz-p.workers.dev/api/map/wjz-p.svg" alt="Contribution Map" width="90%">
+  </a>
+</p>
+
+### 🪪 玩家护照
+
+<p align="center">
+  <a href="https://commit-craft.wjz-p.workers.dev/">
+    <img src="https://commit-craft.wjz-p.workers.dev/api/card/wjz-p.svg?quote=Craft+your+commits!" alt="Player Passport" width="90%">
+  </a>
+</p>
+
+### 🏳️ 旗帜大厅
+
+<p align="center">
+  <img src="https://commit-craft.wjz-p.workers.dev/api/banner/wjz-p/commits.svg" alt="Commits Banner" width="22%">
+  <img src="https://commit-craft.wjz-p.workers.dev/api/banner/wjz-p/stars.svg" alt="Stars Banner" width="22%">
+  <img src="https://commit-craft.wjz-p.workers.dev/api/banner/wjz-p/prs.svg" alt="PRs Banner" width="22%">
+  <img src="https://commit-craft.wjz-p.workers.dev/api/banner/wjz-p/repos.svg" alt="Repos Banner" width="22%">
+</p>
+
+### 📦 仓库卡片
+
+<p align="center">
+  <a href="https://github.com/WJZ-P/CommitCraft">
+    <img src="https://commit-craft.wjz-p.workers.dev/api/repo/WJZ-P/CommitCraft.svg" alt="Repo Card" width="90%">
+  </a>
+</p>
+
 ## 📖 背景
 
 本项目最初基于 **Next.js** 框架开发，原计划部署到 Vercel。后来考虑到 **Cloudflare Workers** 的免费额度更加慷慨（每日 10 万次请求免费），决定将项目迁移至 [vinext](https://github.com/nicomatsakis/vinext)（Vite + Next.js on Cloudflare）框架，以便无缝部署到 Cloudflare Workers 上，在保持 Next.js 开发体验的同时享受 CF 的免费托管政策。
