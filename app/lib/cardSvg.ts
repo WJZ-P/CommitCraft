@@ -3,6 +3,7 @@
  */
 
 import { ensureFontsLoaded, bakeTextElement, bakeTextWithTspans } from "./fontBaker";
+import { toDataUri, preloadAssets, avatarToDataUri } from "./assetCache";
 
 const ICONS = {
   clock: "https://cdn.jsdelivr.net/gh/InventivetalentDev/minecraft-assets@1.20.4/assets/minecraft/textures/item/clock_00.png",
@@ -10,6 +11,11 @@ const ICONS = {
   pickaxe: "https://cdn.jsdelivr.net/gh/InventivetalentDev/minecraft-assets@1.20.4/assets/minecraft/textures/item/diamond_pickaxe.png",
   emerald: "https://cdn.jsdelivr.net/gh/InventivetalentDev/minecraft-assets@1.20.4/assets/minecraft/textures/item/emerald.png",
 };
+
+/** 预加载 Card 模块所有静态图片资源到内存缓存 */
+export async function ensureCardAssetsLoaded(): Promise<void> {
+  await preloadAssets(Object.values(ICONS));
+}
 
 function escapeXml(s: string): string {
   return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
@@ -155,17 +161,25 @@ export function generateCardSvg(params: CardSvgParams): string {
 
 /**
  * 服务端烘焙版：所有 <text> 转为 <path>，不依赖远程字体。
+ * 所有 <image> 使用内嵌 base64 data URI，不依赖外部 CDN。
  * 用于 API 路由返回的 SVG（嵌入 GitHub README 等场景）。
  */
 export async function generateBakedCardSvg(params: CardSvgParams): Promise<string> {
   await ensureFontsLoaded();
+  await ensureCardAssetsLoaded();
 
   const { username, displayName, avatarUrl, joinDate, stars, commits, followers, quote } = params;
+
+  // 将外部资源转为 data URI
+  const avatarDataUri = escapeXml(await avatarToDataUri(avatarUrl));
+  const clockDataUri = await toDataUri(ICONS.clock);
+  const starDataUri = await toDataUri(ICONS.star);
+  const pickaxeDataUri = await toDataUri(ICONS.pickaxe);
+  const emeraldDataUri = await toDataUri(ICONS.emerald);
 
   const nameToShow = displayName || username;
   const safeName = escapeXml(nameToShow);
   const safeQuote = escapeXml(quote);
-  const safeAvatarUrl = escapeXml(avatarUrl);
 
   // 名字区域可用宽度约 128px（头像宽度），预留两侧各 8px padding = 112px
   const maxNameWidth = 112;
@@ -257,7 +271,7 @@ export async function generateBakedCardSvg(params: CardSvgParams): Promise<strin
   <rect x="24" y="40" width="128" height="128" fill="#e0e0e0" />
   <polygon points="24,40 152,40 150,42 26,42 26,166 24,168" fill="#a0a0a0" opacity="0.8" />
   <polygon points="152,168 152,40 150,42 150,166 26,166 24,168" fill="#ffffff" opacity="0.8" />
-  <image href="${safeAvatarUrl}" x="28" y="44" width="120" height="120" preserveAspectRatio="xMidYMid slice" clip-path="url(#avatar-clip)" style="image-rendering: pixelated" />
+  <image href="${avatarDataUri}" x="28" y="44" width="120" height="120" preserveAspectRatio="xMidYMid slice" clip-path="url(#avatar-clip)" style="image-rendering: pixelated" />
 </g>
 
 <!-- 昵称 -->
@@ -267,7 +281,7 @@ export async function generateBakedCardSvg(params: CardSvgParams): Promise<strin
 
 <!-- JOINED -->
 <g class="anim-fade" style="animation-delay: 0.3s">
-  <image href="${ICONS.clock}" x="178" y="29" width="28" height="28" filter="url(#shadow-dark)" />
+  <image href="${clockDataUri}" x="178" y="29" width="28" height="28" filter="url(#shadow-dark)" />
   ${joinedPath}
   <rect x="180" y="65" width="290" height="2" fill="#888888" opacity="0.5" />
   <rect x="180" y="67" width="290" height="2" fill="#ffffff" opacity="0.8" />
@@ -275,7 +289,7 @@ export async function generateBakedCardSvg(params: CardSvgParams): Promise<strin
 
 <!-- STARS -->
 <g class="anim-fade" style="animation-delay: 0.4s">
-  <image href="${ICONS.star}" x="178" y="79" width="28" height="28" filter="url(#shadow-dark)" />
+  <image href="${starDataUri}" x="178" y="79" width="28" height="28" filter="url(#shadow-dark)" />
   ${starsPath}
   <rect x="180" y="115" width="290" height="2" fill="#888888" opacity="0.5" />
   <rect x="180" y="117" width="290" height="2" fill="#ffffff" opacity="0.8" />
@@ -283,7 +297,7 @@ export async function generateBakedCardSvg(params: CardSvgParams): Promise<strin
 
 <!-- COMMITS -->
 <g class="anim-fade" style="animation-delay: 0.5s">
-  <image href="${ICONS.pickaxe}" x="178" y="129" width="28" height="28" filter="url(#shadow-dark)" />
+  <image href="${pickaxeDataUri}" x="178" y="129" width="28" height="28" filter="url(#shadow-dark)" />
   ${commitsPath}
   <rect x="180" y="165" width="290" height="2" fill="#888888" opacity="0.5" />
   <rect x="180" y="167" width="290" height="2" fill="#ffffff" opacity="0.8" />
@@ -291,7 +305,7 @@ export async function generateBakedCardSvg(params: CardSvgParams): Promise<strin
 
 <!-- FOLLOWERS -->
 <g class="anim-fade" style="animation-delay: 0.6s">
-  <image href="${ICONS.emerald}" x="178" y="179" width="28" height="28" filter="url(#shadow-dark)" />
+  <image href="${emeraldDataUri}" x="178" y="179" width="28" height="28" filter="url(#shadow-dark)" />
   ${followersPath}
 </g>
 

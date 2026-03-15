@@ -4,6 +4,7 @@
 
 import type { UserStats } from "@/app/lib/github";
 import { ensureFontsLoaded, bakeTextElement } from "./fontBaker";
+import { toDataUri, preloadAssets } from "./assetCache";
 
 // ===== MC 材质 =====
 const ASSETS_BASE =
@@ -42,6 +43,19 @@ export const ICONS: Record<string, string> = {
   repos:     `${ITEM_BASE}/book.png`,
   merged:    `${ITEM_BASE}/gold_ingot.png`,
 };
+
+/** 获取 Banner 模块所有外部图片资源 URL */
+export function getAllBannerAssetUrls(): string[] {
+  return [
+    ...Object.values(TEXTURES),
+    ...Object.values(ICONS),
+  ];
+}
+
+/** 预加载所有 Banner 图片资源到内存缓存 */
+export async function ensureBannerAssetsLoaded(): Promise<void> {
+  await preloadAssets(getAllBannerAssetUrls());
+}
 
 // ===== 根据数值计算等级 =====
 function buildThresholds(sPlus: number, s: number, sMinus: number, a: number, b: number, c: number): number[] {
@@ -312,11 +326,17 @@ export function generateBannerSvg(params: BannerSvgParams): string {
 
 /**
  * 服务端烘焙版：所有 <text> 转为 <path>，不依赖远程字体。
+ * 所有 <image> 使用内嵌 base64 data URI，不依赖外部 CDN。
  */
 export async function generateBakedBannerSvg(params: BannerSvgParams): Promise<string> {
   await ensureFontsLoaded();
+  await ensureBannerAssetsLoaded();
 
   const { title, value, tier, icon, rotation } = params;
+
+  // 将外部 URL 转为 data URI
+  const iconDataUri = await toDataUri(icon);
+  const spruceLogDataUri = await toDataUri(TEXTURES.spruce_log);
 
   const config = TIER_CONFIG[tier];
   const tierFontSize = tier.length > 1 ? 7.5 : 10;
@@ -394,15 +414,15 @@ export async function generateBakedBannerSvg(params: BannerSvgParams): Promise<s
 <!-- 旗杆 -->
 <g>
   <g transform="${gm("front", 10.5, 0, 1)}">
-    <image href="${TEXTURES.spruce_log}" width="3" height="80" preserveAspectRatio="none" />
+    <image href="${spruceLogDataUri}" width="3" height="80" preserveAspectRatio="none" />
     <polygon points="0,0 3,0 3,80 0,80" fill="#000" opacity="0.3" />
   </g>
   <g transform="${gm("right", 13.5, 0, 0)}">
-    <image href="${TEXTURES.spruce_log}" width="1" height="80" preserveAspectRatio="none" />
+    <image href="${spruceLogDataUri}" width="1" height="80" preserveAspectRatio="none" />
     <polygon points="0,0 1,0 1,80 0,80" fill="#000" opacity="0.6" />
   </g>
   <g transform="${gm("top", 10.5, 80, 0)}">
-    <image href="${TEXTURES.spruce_log}" width="3" height="1" preserveAspectRatio="none" />
+    <image href="${spruceLogDataUri}" width="3" height="1" preserveAspectRatio="none" />
     <polygon points="0,0 3,0 3,1 0,1" fill="#000" opacity="0.8" />
   </g>
 </g>
@@ -417,8 +437,8 @@ export async function generateBakedBannerSvg(params: BannerSvgParams): Promise<s
     ${titleMain}
 
     <g transform="translate(5, 12)">
-      <image href="${icon}" x="0.5" y="1.5" width="14" height="14" filter="url(#icon-darken)" />
-      <image href="${icon}" x="0" y="0" width="14" height="14" />
+      <image href="${iconDataUri}" x="0.5" y="1.5" width="14" height="14" filter="url(#icon-darken)" />
+      <image href="${iconDataUri}" x="0" y="0" width="14" height="14" />
     </g>
 
     <!-- 数值 -->
@@ -446,15 +466,15 @@ export async function generateBakedBannerSvg(params: BannerSvgParams): Promise<s
 <!-- 顶部横梁 -->
 <g>
   <g transform="${gm("front", -2, -3, 3)}">
-    <image href="${TEXTURES.spruce_log}" width="28" height="3" preserveAspectRatio="none" />
+    <image href="${spruceLogDataUri}" width="28" height="3" preserveAspectRatio="none" />
     <polygon points="0,0 28,0 28,3 0,3" fill="#000" opacity="0.1" />
   </g>
   <g transform="${gm("top", -2, -3, 1)}">
-    <image href="${TEXTURES.spruce_log}" width="28" height="2" preserveAspectRatio="none" />
+    <image href="${spruceLogDataUri}" width="28" height="2" preserveAspectRatio="none" />
     <polygon points="0,0 28,0 28,2 0,2" fill="#fff" opacity="0.1" />
   </g>
   <g transform="${gm("right", 26, -3, 1)}">
-    <image href="${TEXTURES.spruce_log}" width="2" height="3" preserveAspectRatio="none" />
+    <image href="${spruceLogDataUri}" width="2" height="3" preserveAspectRatio="none" />
     <polygon points="0,0 2,0 2,3 0,3" fill="#000" opacity="0.5" />
   </g>
 </g>

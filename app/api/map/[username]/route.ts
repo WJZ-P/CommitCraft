@@ -1,5 +1,5 @@
 import { fetchContributions } from "@/app/lib/github";
-import { generateMapSvg } from "@/app/lib/mapSvg";
+import { generateMapSvg, preloadMapAssets } from "@/app/lib/mapSvg";
 
 export async function GET(
   request: Request,
@@ -27,7 +27,8 @@ export async function GET(
 
   try {
     const { calendar } = await fetchContributions(username, token, from, to);
-    const svg = generateMapSvg({ weeks: calendar.weeks, interactive: false });
+    const assetMap = await preloadMapAssets();
+    const svg = generateMapSvg({ weeks: calendar.weeks, interactive: false, assetMap });
 
     return new Response(svg, {
       headers: {

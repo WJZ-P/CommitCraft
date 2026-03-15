@@ -5,6 +5,7 @@
  */
 
 import { ensureFontsLoaded, bakeTextElement, bakeMixedTextElement, getTextWidth } from "./fontBaker";
+import { toDataUri, preloadAssets } from "./assetCache";
 
 function escapeXml(s: string): string {
   return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
@@ -19,6 +20,11 @@ const ICONS = {
   spider_eye: "https://cdn.jsdelivr.net/gh/InventivetalentDev/minecraft-assets@1.20.4/assets/minecraft/textures/item/spider_eye.png",
   map: "https://cdn.jsdelivr.net/gh/InventivetalentDev/minecraft-assets@1.20.4/assets/minecraft/textures/item/filled_map.png",
 };
+
+/** 预加载 Repo Card 模块所有静态图片资源到内存缓存 */
+export async function ensureRepoAssetsLoaded(): Promise<void> {
+  await preloadAssets(Object.values(ICONS));
+}
 
 export interface RepoSvgParams {
   owner: string;
@@ -234,8 +240,17 @@ ${guiShell(480, 160)}
 // =============================================================
 export async function generateBakedRepoSvg(params: RepoSvgParams): Promise<string> {
   await ensureFontsLoaded();
+  await ensureRepoAssetsLoaded();
 
   const { owner, repo, description, language, languageColor, stars, forks, issues, sizeKb, isPrivate } = params;
+
+  // 将外部资源转为 data URI
+  const bookDataUri = await toDataUri(ICONS.book);
+  const starDataUri = await toDataUri(ICONS.star);
+  const tridentDataUri = await toDataUri(ICONS.trident);
+  const spiderEyeDataUri = await toDataUri(ICONS.spider_eye);
+  const mapDataUri = await toDataUri(ICONS.map);
+
   const truncated = truncateTitle(owner, repo, 28);
   const isTruncated = truncated !== `${owner} / ${repo}`;
   const safeOwner = escapeXml(owner);
@@ -317,7 +332,7 @@ ${guiShell(480, 160)}
 
 <!-- 顶部：仓库名称与徽章 -->
 <g class="anim-fade" style="animation-delay: 0.1s">
-  <image href="${ICONS.book}" x="16" y="16" width="20" height="20" filter="url(#shadow-dark)" />
+  <image href="${bookDataUri}" x="16" y="16" width="20" height="20" filter="url(#shadow-dark)" />
   ${titleFg}
   ${badge(badgeLabel, 400, 14, 60, 22)}
   ${badgePath}
@@ -338,19 +353,19 @@ ${guiShell(480, 160)}
   ${langPath}
 
   <!-- Stars (中间均分) -->
-  <image href="${ICONS.star}" x="${starsX}" y="${119}" width="16" height="16" filter="url(#shadow-dark)" />
+  <image href="${starDataUri}" x="${starsX}" y="${119}" width="16" height="16" filter="url(#shadow-dark)" />
   ${starsPath}
 
   <!-- Forks (中间均分) -->
-  <image href="${ICONS.trident}" x="${forksX}" y="${119}" width="16" height="16" filter="url(#shadow-dark)" />
+  <image href="${tridentDataUri}" x="${forksX}" y="${119}" width="16" height="16" filter="url(#shadow-dark)" />
   ${forksPath}
 
   <!-- Issues (中间均分) -->
-  <image href="${ICONS.spider_eye}" x="${issuesX}" y="${119}" width="16" height="16" filter="url(#shadow-dark)" />
+  <image href="${spiderEyeDataUri}" x="${issuesX}" y="${119}" width="16" height="16" filter="url(#shadow-dark)" />
   ${issuesPath}
 
   <!-- Size (右锚定) -->
-  <image href="${ICONS.map}" x="${sizeIconX}" y="${119}" width="16" height="16" filter="url(#shadow-dark)" />
+  <image href="${mapDataUri}" x="${sizeIconX}" y="${119}" width="16" height="16" filter="url(#shadow-dark)" />
   ${sizePath}
 </g>
 </svg>`;

@@ -2,6 +2,8 @@
  * IsometricMap SVG 生成器 — 前端/后端共用的纯函数
  */
 
+import { toDataUri, preloadAssets } from "./assetCache";
+
 // ===== 等距投影配置 =====
 export const TILE_W = 14;
 export const TILE_H = 7;
@@ -47,6 +49,25 @@ export function countToOreLevel(count: number): number {
   if (count <= 9) return count;
   if (count < 20) return 10;
   return 11;
+}
+
+/** 获取 Map 模块所有外部图片 URL */
+export function getAllMapAssetUrls(): string[] {
+  return [
+    ...Object.values(TEXTURES),
+    ...Object.values(LEVEL_ORE).map((o) => o.icon),
+  ];
+}
+
+/** 预加载所有 Map 图片资源并返回 URL→dataURI 映射 */
+export async function preloadMapAssets(): Promise<Map<string, string>> {
+  const urls = getAllMapAssetUrls();
+  await preloadAssets(urls);
+  const mapping = new Map<string, string>();
+  for (const url of urls) {
+    mapping.set(url, await toDataUri(url));
+  }
+  return mapping;
 }
 
 export function countToHeight(count: number): number {
@@ -110,7 +131,10 @@ export function getBlockType(height: number, z: number, count: number): keyof ty
 }
 
 // ===== SVG defs 生成 =====
-function buildDefs(): string {
+function buildDefs(assetMap?: Map<string, string>): string {
+  /** 获取 URL，如果有 assetMap 映射则返回 data URI，否则返回原始 URL */
+  const resolve = (url: string) => assetMap?.get(url) ?? url;
+
   return `
     <filter id="tint-water-surface">
       <feColorMatrix type="matrix" values="
@@ -135,6 +159,7 @@ function buildDefs(): string {
     </filter>
   ${Object.entries(TEXTURES)
     .map(([key, url]) => {
+      const resolvedUrl = resolve(url);
       const getFilter = () => {
         if (key === "grassTop") return 'filter="url(#tint-grass)"';
         return "";
@@ -142,33 +167,33 @@ function buildDefs(): string {
       if (key === "water") {
         return `
       <pattern id="pat-waterSurface-top" width="16" height="16" patternUnits="userSpaceOnUse" patternTransform="matrix(0.875, 0.4375, -0.875, 0.4375, 0, -14)">
-        <image href="${url}" width="16" height="16" preserveAspectRatio="none" style="image-rendering: pixelated;" filter="url(#tint-water-surface)" />
+        <image href="${resolvedUrl}" width="16" height="16" preserveAspectRatio="none" style="image-rendering: pixelated;" filter="url(#tint-water-surface)" />
       </pattern>
       <pattern id="pat-waterSurface-left" width="16" height="16" patternUnits="userSpaceOnUse" patternTransform="matrix(0.875, 0.4375, 0, 1, -14, -7)">
-        <image href="${url}" width="16" height="16" preserveAspectRatio="none" style="image-rendering: pixelated;" filter="url(#tint-water-surface)" />
+        <image href="${resolvedUrl}" width="16" height="16" preserveAspectRatio="none" style="image-rendering: pixelated;" filter="url(#tint-water-surface)" />
       </pattern>
       <pattern id="pat-waterSurface-right" width="16" height="16" patternUnits="userSpaceOnUse" patternTransform="matrix(0.875, -0.4375, 0, 1, 0, 0)">
-        <image href="${url}" width="16" height="16" preserveAspectRatio="none" style="image-rendering: pixelated;" filter="url(#tint-water-surface)" />
+        <image href="${resolvedUrl}" width="16" height="16" preserveAspectRatio="none" style="image-rendering: pixelated;" filter="url(#tint-water-surface)" />
       </pattern>
       <pattern id="pat-waterDeep-top" width="16" height="16" patternUnits="userSpaceOnUse" patternTransform="matrix(0.875, 0.4375, -0.875, 0.4375, 0, -14)">
-        <image href="${url}" width="16" height="16" preserveAspectRatio="none" style="image-rendering: pixelated;" filter="url(#tint-water-deep)" />
+        <image href="${resolvedUrl}" width="16" height="16" preserveAspectRatio="none" style="image-rendering: pixelated;" filter="url(#tint-water-deep)" />
       </pattern>
       <pattern id="pat-waterDeep-left" width="16" height="16" patternUnits="userSpaceOnUse" patternTransform="matrix(0.875, 0.4375, 0, 1, -14, -7)">
-        <image href="${url}" width="16" height="16" preserveAspectRatio="none" style="image-rendering: pixelated;" filter="url(#tint-water-deep)" />
+        <image href="${resolvedUrl}" width="16" height="16" preserveAspectRatio="none" style="image-rendering: pixelated;" filter="url(#tint-water-deep)" />
       </pattern>
       <pattern id="pat-waterDeep-right" width="16" height="16" patternUnits="userSpaceOnUse" patternTransform="matrix(0.875, -0.4375, 0, 1, 0, 0)">
-        <image href="${url}" width="16" height="16" preserveAspectRatio="none" style="image-rendering: pixelated;" filter="url(#tint-water-deep)" />
+        <image href="${resolvedUrl}" width="16" height="16" preserveAspectRatio="none" style="image-rendering: pixelated;" filter="url(#tint-water-deep)" />
       </pattern>`;
       }
       return `
       <pattern id="pat-${key}-top" width="16" height="16" patternUnits="userSpaceOnUse" patternTransform="matrix(0.875, 0.4375, -0.875, 0.4375, 0, -14)">
-        <image href="${url}" width="16" height="16" preserveAspectRatio="none" style="image-rendering: pixelated;" ${getFilter()} />
+        <image href="${resolvedUrl}" width="16" height="16" preserveAspectRatio="none" style="image-rendering: pixelated;" ${getFilter()} />
       </pattern>
       <pattern id="pat-${key}-left" width="16" height="16" patternUnits="userSpaceOnUse" patternTransform="matrix(0.875, 0.4375, 0, 1, -14, -7)">
-        <image href="${url}" width="16" height="16" preserveAspectRatio="none" style="image-rendering: pixelated;" ${getFilter()} />
+        <image href="${resolvedUrl}" width="16" height="16" preserveAspectRatio="none" style="image-rendering: pixelated;" ${getFilter()} />
       </pattern>
       <pattern id="pat-${key}-right" width="16" height="16" patternUnits="userSpaceOnUse" patternTransform="matrix(0.875, -0.4375, 0, 0.875, 0, 0)">
-        <image href="${url}" width="16" height="16" preserveAspectRatio="none" style="image-rendering: pixelated;" ${getFilter()} />
+        <image href="${resolvedUrl}" width="16" height="16" preserveAspectRatio="none" style="image-rendering: pixelated;" ${getFilter()} />
       </pattern>`;
     })
     .join("\n")}`;
@@ -313,10 +338,12 @@ export interface MapSvgParams {
   weeks: { contributionDays: { date: string; contributionCount: number; color: string }[] }[];
   /** 是否包含前端交互样式（hover 高亮等），后端静态 SVG 可以设为 false */
   interactive?: boolean;
+  /** URL → data URI 映射，传入后 SVG 中所有外部图片资源会被替换为内嵌 base64 */
+  assetMap?: Map<string, string>;
 }
 
 export function generateMapSvg(params: MapSvgParams): string {
-  const { weeks, interactive = false } = params;
+  const { weeks, interactive = false, assetMap } = params;
 
   const data: { w: number; d: number; height: number; count: number; date: string }[] = [];
   weeks.forEach((week, w) => {
@@ -328,7 +355,10 @@ export function generateMapSvg(params: MapSvgParams): string {
   if (data.length === 0) return '<svg xmlns="http://www.w3.org/2000/svg" />';
 
   const numWeeks = weeks.length;
-  const defs = buildDefs();
+  const defs = buildDefs(assetMap);
+
+  /** 获取 URL，如果有 assetMap 映射则返回 data URI，否则返回原始 URL */
+  const resolve = (url: string) => assetMap?.get(url) ?? url;
 
   // 排序（画家算法）
   interface CellData { w: number; d: number; height: number; count: number; date: string }
@@ -373,7 +403,7 @@ export function generateMapSvg(params: MapSvgParams): string {
           <text x="${sx}" y="${boxY + 15}" text-anchor="middle" fill="#AAAAAA" font-size="12" font-family="'Courier New', Courier, monospace" font-weight="bold">${line1}</text>
           <text x="${sx}" y="${boxY + 30}" text-anchor="middle" fill="#fff" font-size="13" font-family="'Courier New', Courier, monospace" font-weight="bold">${line2}</text>
           <g class="ore-icon-wrap" style="transform-box: fill-box; transform-origin: center;">
-            <image href="${ore.icon}" x="${iconX}" y="${iconY}" width="${iconSize}" height="${iconSize}" style="image-rendering: pixelated;" />
+            <image href="${resolve(ore.icon)}" x="${iconX}" y="${iconY}" width="${iconSize}" height="${iconSize}" style="image-rendering: pixelated;" />
           </g>
           <text x="${sx}" y="${boxY + 45}" text-anchor="middle" fill="${ore.color}" font-size="12" font-family="'Courier New', Courier, monospace" font-style="italic">${line3}</text>
         </g>`;
