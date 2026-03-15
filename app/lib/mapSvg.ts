@@ -202,9 +202,13 @@ function buildDefs(assetMap?: Map<string, string>): string {
 // ===== 渲染水方块 =====
 function renderWater(sx: number, sy: number, delay: number, animate: boolean): string {
   const h = BLOCK_H;
-  // 水面浮动动画根据 animate 控制，但水面流光（shimmer）始终保留
+  // 浮动 + 流光都根据 animate 控制
   const waterClass = animate ? "animated-water-wave" : "";
   const waterStyle = animate ? ` style="animation-delay: ${delay.toFixed(2)}s"` : "";
+  const shimmerClass = animate ? ' class="water-shimmer"' : "";
+  const shimmerStyle = animate ? ` style="animation-delay: ${delay.toFixed(2)}s"` : "";
+  // 不开动画时给水面顶部一个固定的半透明白色，模拟静态光泽
+  const shimmerOpacity = animate ? "" : ' opacity="0.10"';
   return `
     <g transform="translate(${sx}, ${sy})">
       <g class="${waterClass}"${waterStyle}>
@@ -213,7 +217,7 @@ function renderWater(sx: number, sy: number, delay: number, animate: boolean): s
         <polygon points="0,-14 14,-7 0,0 -14,-7" fill="url(#pat-waterSurface-top)" />
         <polygon points="0,0 0,${h} -14,${h - 7} -14,-7" fill="#000" opacity="0.2" />
         <polygon points="0,0 14,-7 14,${h - 7} 0,${h}" fill="#000" opacity="0.05" />
-        <polygon points="0,-14 14,-7 0,0 -14,-7" fill="#fff" class="water-shimmer" style="animation-delay: ${delay.toFixed(2)}s" />
+        <polygon points="0,-14 14,-7 0,0 -14,-7" fill="#fff"${shimmerClass}${shimmerStyle}${shimmerOpacity} />
       </g>
     </g>`;
 }
@@ -311,8 +315,8 @@ export function getMapStyles(interactive: boolean, animate: boolean): string {
       100% { transform: scale(1) rotate(0deg); }
     }`;
 
-  // 浮动动画仅在 animate=true 时输出
-  const floatCSS = animate ? `
+  // 所有动画（浮动 + 水面流光）仅在 animate=true 时输出
+  const animationCSS = animate ? `
     .animated-wave {
       animation: float 4s ease-in-out infinite;
     }
@@ -326,12 +330,7 @@ export function getMapStyles(interactive: boolean, animate: boolean): string {
     @keyframes water-float {
       0%, 100% { transform: translateY(0); }
       50% { transform: translateY(-3px); }
-    }` : "";
-
-  // 水面流光始终保留
-  return `
-    ${floatCSS}
-    ${interactiveCSS}
+    }
     .water-shimmer {
       opacity: 0.03;
       animation: shimmer 4s ease-in-out infinite;
@@ -341,7 +340,11 @@ export function getMapStyles(interactive: boolean, animate: boolean): string {
       40% { opacity: 0.25; }
       60% { opacity: 0.25; }
       80% { opacity: 0.03; }
-    }`;
+    }` : "";
+
+  return `
+    ${animationCSS}
+    ${interactiveCSS}`;
 }
 
 // ===== 主函数：生成完整的贡献图 SVG =====
