@@ -24,11 +24,12 @@ export async function GET(
 
   const from = searchParams.get("from") || undefined;
   const to = searchParams.get("to") || undefined;
+  const animate = searchParams.get("animate") === "true";
 
   try {
     const { calendar } = await fetchContributions(username, token, from, to);
     const assetMap = await preloadMapAssets();
-    const svg = generateMapSvg({ weeks: calendar.weeks, interactive: false, assetMap });
+    const svg = generateMapSvg({ weeks: calendar.weeks, interactive: false, animate, assetMap });
 
     return new Response(svg, {
       headers: {

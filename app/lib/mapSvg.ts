@@ -200,11 +200,14 @@ function buildDefs(assetMap?: Map<string, string>): string {
 }
 
 // ===== 渲染水方块 =====
-function renderWater(sx: number, sy: number, delay: number): string {
+function renderWater(sx: number, sy: number, delay: number, animate: boolean): string {
   const h = BLOCK_H;
+  // 水面浮动动画根据 animate 控制，但水面流光（shimmer）始终保留
+  const waterClass = animate ? "animated-water-wave" : "";
+  const waterStyle = animate ? ` style="animation-delay: ${delay.toFixed(2)}s"` : "";
   return `
     <g transform="translate(${sx}, ${sy})">
-      <g class="animated-water-wave" style="animation-delay: ${delay.toFixed(2)}s">
+      <g class="${waterClass}"${waterStyle}>
         <polygon points="0,0 0,${h} -14,${h - 7} -14,-7" fill="url(#pat-waterSurface-left)" />
         <polygon points="0,0 14,-7 14,${h - 7} 0,${h}" fill="url(#pat-waterSurface-right)" />
         <polygon points="0,-14 14,-7 0,0 -14,-7" fill="url(#pat-waterSurface-top)" />
@@ -216,16 +219,19 @@ function renderWater(sx: number, sy: number, delay: number): string {
 }
 
 // ===== 渲染陆地方块 =====
-function renderBlock(sx: number, cy: number, blockType: keyof typeof BLOCK_TYPES, delay: number): string {
+function renderBlock(sx: number, cy: number, blockType: keyof typeof BLOCK_TYPES, delay: number, animate: boolean): string {
   const bt = BLOCK_TYPES[blockType];
   const h = BLOCK_H;
   const texTop = `url(#pat-${bt.top}-top)`;
   const texLeft = `url(#pat-${bt.side}-left)`;
   const texRight = `url(#pat-${bt.side}-right)`;
 
+  // 陆地方块的上下浮动动画根据 animate 控制
+  const blockClass = animate ? "animated-wave interactive-block" : "interactive-block";
+  const blockStyle = animate ? ` style="animation-delay: ${delay.toFixed(2)}s"` : "";
   return `
     <g transform="translate(${sx}, ${cy})">
-      <g class="animated-wave interactive-block" style="animation-delay: ${delay.toFixed(2)}s">
+      <g class="${blockClass}"${blockStyle}>
         <polygon points="0,0 0,${h} -14,${h - 7} -14,-7" fill="${texLeft}" />
         <polygon points="0,0 14,-7 14,${h - 7} 0,${h}" fill="${texRight}" />
         <polygon points="0,-14 14,-7 0,0 -14,-7" fill="${texTop}" />
@@ -237,7 +243,7 @@ function renderBlock(sx: number, cy: number, blockType: keyof typeof BLOCK_TYPES
 }
 
 // ===== CSS 样式（前端交互版和后端静态版略有不同） =====
-export function getMapStyles(interactive: boolean): string {
+export function getMapStyles(interactive: boolean, animate: boolean): string {
   const interactiveCSS = interactive ? `
     .interactive-block {
       transition: filter 0.2s;
@@ -305,14 +311,14 @@ export function getMapStyles(interactive: boolean): string {
       100% { transform: scale(1) rotate(0deg); }
     }`;
 
-  return `
+  // 浮动动画仅在 animate=true 时输出
+  const floatCSS = animate ? `
     .animated-wave {
       animation: float 4s ease-in-out infinite;
     }
     .animated-water-wave {
       animation: water-float 6s ease-in-out infinite;
     }
-    ${interactiveCSS}
     @keyframes float {
       0%, 100% { transform: translateY(0); }
       50% { transform: translateY(-8px); }
@@ -320,7 +326,12 @@ export function getMapStyles(interactive: boolean): string {
     @keyframes water-float {
       0%, 100% { transform: translateY(0); }
       50% { transform: translateY(-3px); }
-    }
+    }` : "";
+
+  // 水面流光始终保留
+  return `
+    ${floatCSS}
+    ${interactiveCSS}
     .water-shimmer {
       opacity: 0.03;
       animation: shimmer 4s ease-in-out infinite;
@@ -338,12 +349,14 @@ export interface MapSvgParams {
   weeks: { contributionDays: { date: string; contributionCount: number; color: string }[] }[];
   /** 是否包含前端交互样式（hover 高亮等），后端静态 SVG 可以设为 false */
   interactive?: boolean;
+  /** 是否开启方块上下浮动动画，默认 false（水面流光始终保留） */
+  animate?: boolean;
   /** URL → data URI 映射，传入后 SVG 中所有外部图片资源会被替换为内嵌 base64 */
   assetMap?: Map<string, string>;
 }
 
 export function generateMapSvg(params: MapSvgParams): string {
-  const { weeks, interactive = false, assetMap } = params;
+  const { weeks, interactive = false, animate = false, assetMap } = params;
 
   const data: { w: number; d: number; height: number; count: number; date: string }[] = [];
   weeks.forEach((week, w) => {
@@ -370,12 +383,12 @@ export function generateMapSvg(params: MapSvgParams): string {
     const sy = (w + d) * TILE_H;
     const delay = -((w + d) * 0.15);
 
-    let columnSvg = renderWater(sx, sy + 3, delay);
+    let columnSvg = renderWater(sx, sy + 3, delay, animate);
 
     if (height > 0) {
       for (let z = 0; z < height; z++) {
         const cy = sy - z * BLOCK_H;
-        columnSvg += renderBlock(sx, cy, getBlockType(height, z + 1, count), delay);
+        columnSvg += renderBlock(sx, cy, getBlockType(height, z + 1, count), delay, animate);
       }
     }
 
@@ -433,7 +446,7 @@ export function generateMapSvg(params: MapSvgParams): string {
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${vbX} ${vbY} ${vbW} ${vbH}" ${sizeAttrs}>
 <defs>
   ${defs}
-  <style>${getMapStyles(interactive)}</style>
+  <style>${getMapStyles(interactive, animate)}</style>
 </defs>
 <rect x="${vbX}" y="${vbY}" width="${vbW}" height="${vbH}" fill="none" />
 <g>${allBlocks}</g>
