@@ -29,6 +29,12 @@
 <h1 align="center">Commit Craft</h1>
 
 <p align="center">
+  <a href="./README.md">中文</a>
+  ·
+  <a href="./README.en.md">English</a>
+</p>
+
+<p align="center">
   <a href="https://commit-craft.wjz-p.workers.dev/">查看 Demo</a>
   ·
   <a href="https://github.com/WJZ-P/CommitCraft/issues">报告 Bug</a>
@@ -121,6 +127,9 @@
 ```
 # 贡献地图
 https://commit-craft.wjz-p.workers.dev/api/map/{username}.svg
+
+# 贡献地图（开启动画）
+https://commit-craft.wjz-p.workers.dev/api/map/{username}.svg?animate=true
 
 # 玩家护照（支持自定义签名）
 https://commit-craft.wjz-p.workers.dev/api/card/{username}.svg?quote=Your+Quote+Here
