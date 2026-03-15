@@ -1,51 +1,32 @@
-# Commit Craft —— 基于Github统计信息的MC风格svg生成
+# ⛏️ CommitCraft
 
-<!-- PROJECT SHIELDS -->
+**Forge your GitHub data into Minecraft-style pixel-art SVGs.**
+
+把 GitHub 公开数据锻造成 Minecraft 风格的像素风 SVG 展示物。
 
 <br>
 
 <div align="center">
 
-  <a href="https://github.com/WJZ-P/TFT-Hextech-Helper/graphs/contributors">
-    <img src="https://img.shields.io/github/contributors/WJZ-P/TFT-Hextech-Helper.svg?style=flat-square" alt="Contributors" style="height: 30px">
+  <a href="https://github.com/WJZ-P/CommitCraft/graphs/contributors">
+    <img src="https://img.shields.io/github/contributors/WJZ-P/CommitCraft.svg?style=flat-square" alt="Contributors" style="height: 30px">
   </a>
   &nbsp;
-  <a href="https://github.com/WJZ-P/TFT-Hextech-Helper/network/members">
-    <img src="https://img.shields.io/github/forks/WJZ-P/TFT-Hextech-Helper.svg?style=flat-square" alt="Forks" style="height: 30px">
+  <a href="https://github.com/WJZ-P/CommitCraft/network/members">
+    <img src="https://img.shields.io/github/forks/WJZ-P/CommitCraft.svg?style=flat-square" alt="Forks" style="height: 30px">
   </a>
   &nbsp;
-  <a href="https://github.com/WJZ-P/TFT-Hextech-Helper/stargazers">
-    <img src="https://img.shields.io/github/stars/WJZ-P/TFT-Hextech-Helper.svg?style=flat-square" alt="Stargazers" style="height: 30px">
+  <a href="https://github.com/WJZ-P/CommitCraft/stargazers">
+    <img src="https://img.shields.io/github/stars/WJZ-P/CommitCraft.svg?style=flat-square" alt="Stargazers" style="height: 30px">
   </a>
   &nbsp;
-  <a href="https://img.shields.io/github/issues/WJZ-P/TFT-Hextech-Helper.svg">
-    <img src="https://img.shields.io/github/issues/WJZ-P/TFT-Hextech-Helper.svg?style=flat-square" alt="Issues" style="height: 30px">
-  </a>
-  &nbsp;
-  <a href="https://github.com/WJZ-P/TFT-Hextech-Helper/blob/main/LICENSE">
-    <img src="https://img.shields.io/github/license/WJZ-P/TFT-Hextech-Helper.svg?style=flat-square" alt="MIT License" style="height: 30px">
+  <a href="https://github.com/WJZ-P/CommitCraft/issues">
+    <img src="https://img.shields.io/github/issues/WJZ-P/CommitCraft.svg?style=flat-square" alt="Issues" style="height: 30px">
   </a>
 
 </div>
 
-<br><br>
-
-<!-- PROJECT LOGO -->
-
-<p align="center">
-  <a href="https://github.com/WJZ-P/TFT-Hextech-Helper/">
-    <img src="public/icon.png" alt="Logo" width="150" height="150" style="margin: 0; border-radius: 24px;">
-  </a>
-  <h1 align="center">TFT Hextech Helper</h1>
-  <p align="center">
-    <br>
-    <a href="https://github.com/WJZ-P/TFT-Hextech-Helper">查看Demo</a>
-    ·
-    <a href="https://github.com/WJZ-P/TFT-Hextech-Helper/issues">报告Bug</a>
-    ·
-    <a href="https://github.com/WJZ-P/TFT-Hextech-Helper/issues">提出新特性</a>
-  </p>
-</p>
+<br>
 
 <p align="center">
   <a href="https://www.bilibili.com/video/BV1vx4y1t7rH">
@@ -54,161 +35,113 @@
 </p>
 <h2 align="center">"尽握在手沉重的花束名誉&nbsp;沾着泥土的指尖始终&nbsp;怯于靠近&nbsp;那脸庞遥不可及"</h2>
 
-## 目录
+## ✨ 功能特性 / Features
 
-- [TFT Hextech Helper](#tft-hextech-helper)
-    - [目录](#目录)
-    - [项目简介](#项目简介)
-    - [功能特性](#功能特性)
-    - [使用教程](#使用教程)
-    - [获取更新](#获取更新)
-    - [交流渠道](#交流渠道)
-    - [技术栈](#技术栈)
-    - [版权说明](#版权说明)
-    - [鸣谢](#鸣谢)
-    - [重要声明](#重要声明)
+| 模块 | 说明 |
+|:---:|:---|
+| 🗺️ **Contribution Map** | 将年度贡献热力图转换为 Minecraft 风格等距地形地图，高度和矿石随提交量变化 |
+| 🏳️ **Banner Hall** | 根据 GitHub 统计数据生成战绩旗帜，支持拖动旋转视角 |
+| 🪪 **Player Passport** | 生成玩家护照卡片，支持自定义个性签名 |
+| 📦 **Repo Card** | 展示仓库名称、描述、语言与热度信息，支持中英文混合导出 |
 
-## 项目简介
+所有输出均为 **SVG 格式** —— 清晰缩放、易于嵌入网页和 README。
 
-TFT Hextech Helper 是一款基于 Electron + React + TypeScript 开发的云顶之弈自动下棋助手。它可以帮助你在云顶之弈(包括S16英雄联盟传奇、S4.5瑞兽闹新春、发条鸟的试炼)中自动进行对局，解放你的双手，让你可以边挂机边做其他事情。（当然挂机的时候你就不能玩电脑了，因为软件会使用你的鼠标！）
+## 📖 背景 / Background
 
-<p align="center">
-  <img src="markdown/项目示意图.png" alt="软件截图" width="80%">
-</p>
+本项目最初基于 **Next.js** 框架开发，原计划部署到 Vercel。后来考虑到 **Cloudflare Workers** 的免费额度更加慷慨（每日 10 万次请求免费），决定将项目迁移至 [vinext](https://github.com/nicomatsakis/vinext)（Vite + Next.js on Cloudflare）框架，以便无缝部署到 Cloudflare Workers 上，在保持 Next.js 开发体验的同时享受 CF 的免费托管政策。
 
-## ⚠️ 注意事项
+## 🚀 快速体验 / Quick Start
 
-- **必须以管理员身份运行**，否则无法正常控制游戏
-- **游戏语言必须设置为简体中文**，否则软件无法正确识别棋子
-- **推荐使用默认棋盘皮肤**，已针对默认棋盘优化，能加快棋子识别速度
-- 支持**Windows & MacOS**
-- 暂不支持外服。
+访问[在线站点](https://commit-craft.wjz-p.workers.dev/)，在输入框中填入：
 
-## 功能特性
+- **GitHub 用户名** （如 `wjz-p`）→ 生成 Contribution Map、Banner Hall、Player Passport
+- **仓库短格式** （如 `vercel/next.js`）→ 生成 Repo Card
+- **仓库完整链接** （如 `https://github.com/vercel/next.js`）→ 自动解析并生成 Repo Card
 
-- 🎮 **自动下棋** - 智能识别游戏状态，自动购买英雄、整理阵容
-- 🎯 **阵容推荐** - 内置多套热门阵容配置，一键选择
-- ⌨️ **快捷键控制** - F1 开启/关闭挂机，F2 本局结束后停止
-- 🎨 **现代化界面** - 美观的 UI 设计，超级酷
-- 📊 **实时日志** - 查看详细的运行日志，了解程序状态
+点击 **CRAFT** 即可生成，每个视图支持 **下载 .SVG** 并提供可复制的 API Endpoint 用于嵌入。
 
-## 使用教程
+## 📡 API / 嵌入用法
 
-### 1. 下载并安装
+生成的 SVG 可以通过以下 API 端点直接嵌入到 README 或网页中：
 
-从 [Release](https://github.com/WJZ-P/TFT-Hextech-Helper/releases) 页面下载最新版本：
-- **安装版** (.exe setup) - 不推荐，走正常软件安装流程，会留注册表
-- **便携版** (.zip) - 推荐，解压即用，无需安装
+```
+# 贡献地图
+https://commit-craft.wjz-p.workers.dev/api/map/{username}.svg
 
-**或点击右侧高速下载**：[TFT-Hextech-Helper-1.0.0-win.zip](https://static1.keepcdn.com/user-avatar/2026/01/17/22/6943f6affbbe480001c744e2/ciallo/82672950ad9b996250910d6919e85631_TFT-Hextech-Helper-1.0.0-win.zip)
+# 玩家护照（支持自定义签名）
+https://commit-craft.wjz-p.workers.dev/api/card/{username}.svg?quote=Your+Quote+Here
 
+# 旗帜大厅（支持旋转角度）
+https://commit-craft.wjz-p.workers.dev/api/banner/{username}/{statId}.svg?rotation=30
 
-### 2. 启动软件
+# 仓库卡片
+https://commit-craft.wjz-p.workers.dev/api/repo/{owner}/{repo}.svg
+```
 
-> ⚠️ **重要**：本软件需要**以管理员身份运行**才能正常工作！目前只支持Windows系统运行。
+在 Markdown 中嵌入：
 
-<p align="center">
-  <img src="markdown/软件首页.png" alt="软件截图" width="80%">
-</p>
+```markdown
+![Contribution Map](https://commit-craft.wjz-p.workers.dev/api/map/username.svg)
+![Player Passport](https://commit-craft.wjz-p.workers.dev/api/card/username.svg?quote=Your+Quote+Here)
+![Banner](https://commit-craft.wjz-p.workers.dev/api/banner/username/statId.svg?rotation=30)
+![Repo Card](https://commit-craft.wjz-p.workers.dev/api/repo/owner/repo.svg)
+```
 
-### 3. 连接游戏客户端
+## 🛠️ 技术栈 / Tech Stack
 
-启动英雄联盟客户端，软件会自动检测并连接。如果出现打开了客户端却显示未连接的情况，请检查是否使用管理员模式启动软件！
+- **框架**: [Next.js](https://nextjs.org/) (App Router) + [React 19](https://react.dev/)
+- **构建 & 部署**: [vinext](https://github.com/cloudflare/vinext) + [Cloudflare Workers](https://workers.cloudflare.com/)
+- **样式**: [Tailwind CSS 4](https://tailwindcss.com/)
+- **国际化**: [next-intl](https://next-intl.dev/) (中文 / English)
+- **像素字体**: Minecraft Font + [Zpix](https://github.com/SolidZORO/zpix-pixel-font)（中文像素字体）
+- **SVG 生成**: 服务端 SVG 模板 + [opentype.js](https://opentype.js.org/) 字体烘焙
 
-<!-- TODO: 添加连接成功截图 -->
+## 📦 本地开发 / Local Development
 
-### 4. 开始挂机
+```bash
+# 克隆仓库
+git clone https://github.com/WJZ-P/CommitCraft.git
+cd CommitCraft
 
-1. 选择你想要的阵容配置
-2. 点击"开始挂机"按钮或按 **F1** 快捷键
-3. 程序会自动开始匹配并进行对局
+# 安装依赖
+npm install
 
-### 快捷键说明
+# 创建环境变量（需要 GitHub Token）
+echo "GITHUB_TOKEN=your_github_token_here" > .env.local
 
-| 快捷键 | 功能 |
-|:------:|:----:|
-| F1 | 开启/关闭挂机 |
-| F2 | 本局结束后自动停止 |
+# 启动开发服务器
+npm run dev
+```
 
-## 获取更新
+> 💡 需要一个 [GitHub Personal Access Token](https://github.com/settings/tokens)（只需 `public_repo` 权限）来获取贡献数据。
 
-#### [前往 Release 页面](https://github.com/WJZ-P/TFT-Hextech-Helper/releases)
+## ☁️ 部署 / Deploy
 
-## 交流渠道
+项目基于 vinext 构建，原生支持 Cloudflare Workers 部署：
 
-<p align="center">
-  <img src="markdown/交流群.png" alt="软件截图" width="50%">
-</p>
+```bash
+# 构建
+npm run build
 
-## 技术栈
+# 部署到 Cloudflare Workers
+npm run deploy
+```
 
-- **前端框架**: React 18 + TypeScript
-- **桌面框架**: Electron 32
-- **构建工具**: electron-vite
-- **UI 组件**: MUI (Material-UI) + styled-components
-- **图像识别**: OpenCV.js + Tesseract.js
-- **自动化**: nut-js (鼠标键盘控制)
+部署前请在 Cloudflare Dashboard 中设置 `GITHUB_TOKEN` 密钥。
 
-## 版权说明
+## 🌐 国际化 / i18n
 
-本项目采用 **CC BY-NC-ND 4.0** 协议，这意味着：
+支持中文和英文，通过页面右上角按钮切换。语言偏好保存在 Cookie 中。
 
-- ✅ 可以下载、使用、分享（需注明出处）
-- ❌ **禁止**商业使用
-- ❌ **禁止**二次开发/修改后发布
+## 📝 License
 
-详情请参阅 [LICENSE](https://github.com/WJZ-P/TFT-Hextech-Helper/blob/main/LICENSE)
-
-## 鸣谢
-
-- 感谢所有为这个项目提供建议和反馈的朋友们
-
-## 重要声明
-
-### 本项目仅供学习交流使用，**禁止**用于任何商业用途！使用本软件产生的任何后果由用户自行承担。(｡•́︿•̀｡)
-
-## 📝 To Do List
-
-- [x] **基础挂机功能**
-
-- [x] **阵容配置系统**
-
-- [x] **快捷键支持**
-
-- [x] **更多阵容配置**
-
-- [x] **支持自定义阵容**
-
-- [x] **对局显示人机信息**
-
-- [ ] **战绩统计**
-
-## 如果您喜欢本项目，请给我点个⭐吧(๑>◡<๑)！
+Crafted with ❤️ by [WJZ_P](https://github.com/WJZ-P) | Not an official Minecraft product.
 
 ## ⭐ Star 历史
 
-[![Stargazers over time](https://starchart.cc/WJZ-P/TFT-Hextech-Helper.svg?variant=adaptive)](https://starchart.cc/WJZ-P/TFT-Hextech-Helper)
+
+**如果你喜欢这个项目，请给个 ⭐ 吧(๑>◡<๑)！**
+
+[![Stargazers over time](https://starchart.cc/WJZ-P/CommitCraft.svg?variant=adaptive)](https://starchart.cc/WJZ-P/CommitCraft)
 
 ---
-
-<details>
-<summary align="center"><b>另一条时间线</b></summary>
-<br>
-<p align="center">
-  <img src="markdown/艾克与爆爆.jpg" alt="Ekko & Jinx" width="90%">
-</p>
-<p align="center"><i>"但至少在这里，他们在一起。"</i></p>
-</details>
-
-<!-- 时至今日，你依然在我的梦境中挥之不去。 -->
-
-[contributors-shield]: https://img.shields.io/github/contributors/WJZ-P/TFT-Hextech-Helper.svg?style=flat-square
-[contributors-url]: https://github.com/WJZ-P/TFT-Hextech-Helper/graphs/contributors
-[forks-shield]: https://img.shields.io/github/forks/WJZ-P/TFT-Hextech-Helper.svg?style=flat-square
-[forks-url]: https://github.com/WJZ-P/TFT-Hextech-Helper/network/members
-[stars-shield]: https://img.shields.io/github/stars/WJZ-P/TFT-Hextech-Helper.svg?style=flat-square
-[stars-url]: https://github.com/WJZ-P/TFT-Hextech-Helper/stargazers
-[issues-shield]: https://img.shields.io/github/issues/WJZ-P/TFT-Hextech-Helper.svg?style=flat-square
-[issues-url]: https://img.shields.io/github/issues/WJZ-P/TFT-Hextech-Helper.svg
-[license-shield]: https://img.shields.io/github/license/WJZ-P/TFT-Hextech-Helper.svg?style=flat-square
-[license-url]: https://github.com/WJZ-P/TFT-Hextech-Helper/blob/main/LICENSE

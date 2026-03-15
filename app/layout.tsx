@@ -9,8 +9,8 @@ export const metadata: Metadata = {
     "Transform your GitHub profile into Minecraft-style pixel art — isometric contribution maps, banners, passport cards, and repo cards.",
   icons: {
     icon: [
-      { url: "/favicon.ico", sizes: "16x16", type: "image/x-icon" },
       { url: "/icon.svg", type: "image/svg+xml", sizes: "any" },
+      { url: "/favicon.ico", sizes: "16x16", type: "image/x-icon" },
     ],
     apple: "/icon.svg",
   },
