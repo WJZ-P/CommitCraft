@@ -55,7 +55,7 @@ function estimateTextWidth(text: string, fontSize: number): number {
   return w;
 }
 
-/** 按像素宽度换行，最多两行，第二行超出加省略号 */
+/** 按像素宽度换行，最多两行，第二行超出加省略号。英文按单词边界换行 */
 function wrapDescriptionByWidth(
   desc: string,
   fontSize: number,
@@ -64,26 +64,70 @@ function wrapDescriptionByWidth(
 ): [string, string] {
   if (!desc) return ["", ""];
 
-  // 逐字符拆第一行
+  // 整行放得下就直接返回
+  if (widthFn(desc, fontSize) <= maxWidth) return [desc, ""];
+
+  // 按空格拆分成 token（保留连续非空格作为一个 token）
+  // 对于 CJK 字符则逐字符作为独立 token
+  const tokens: string[] = [];
+  let buf = "";
+  for (const ch of desc) {
+    const isCJK = ch.charCodeAt(0) > 0x2e7f;
+    if (isCJK) {
+      if (buf) { tokens.push(buf); buf = ""; }
+      tokens.push(ch);
+    } else if (ch === " ") {
+      if (buf) { tokens.push(buf); buf = ""; }
+      tokens.push(" ");
+    } else {
+      buf += ch;
+    }
+  }
+  if (buf) tokens.push(buf);
+
+  // 逐 token 拼第一行
   let line1 = "";
   let i = 0;
-  for (; i < desc.length; i++) {
-    const next = line1 + desc[i];
+  for (; i < tokens.length; i++) {
+    const next = line1 + tokens[i];
     if (widthFn(next, fontSize) > maxWidth) break;
     line1 = next;
   }
-  if (i >= desc.length) return [line1, ""];
 
-  // 第二行
+  // 如果第一个 token 就超宽了，回退到逐字符截断（极端情况）
+  if (!line1 && i < tokens.length) {
+    for (const ch of tokens[i]) {
+      const next = line1 + ch;
+      if (widthFn(next, fontSize) > maxWidth) break;
+      line1 = next;
+    }
+    i++;
+  }
+
+  // 去掉第一行末尾空格
+  line1 = line1.trimEnd();
+
+  if (i >= tokens.length) return [line1, ""];
+
+  // 跳过第二行开头的空格
+  while (i < tokens.length && tokens[i] === " ") i++;
+
+  // 拼第二行（也按 token）
+  const ellipsisWidth = widthFn("...", fontSize);
   let line2 = "";
-  for (; i < desc.length; i++) {
-    const next = line2 + desc[i];
-    if (widthFn(next, fontSize) > maxWidth - widthFn("...", fontSize)) {
-      line2 += "...";
+  let overflowed = false;
+  for (; i < tokens.length; i++) {
+    const next = line2 + tokens[i];
+    if (widthFn(next, fontSize) > maxWidth - ellipsisWidth) {
+      overflowed = true;
       break;
     }
     line2 = next;
   }
+  if (overflowed) {
+    line2 = line2.trimEnd() + "...";
+  }
+
   return [line1, line2];
 }
 
