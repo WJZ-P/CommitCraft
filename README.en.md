@@ -49,10 +49,10 @@
     <img src="markdown/minecraft-2018-10-01_14.10.43.png" alt="Minecraft">
   </a>
 </p>
-<p align="center" style="font-size: 14px; font-style: italic; color: #888;">"Sometimes the player dreamed that it was a miner, on the surface of a world that was flat, and infinite. The sun was a square of white."</p>
+<p align="center" style="font-size: 14px; font-style: italic; color: #888;">"And the game was over and the player woke up from the dream. And the player began a new dream. And the player dreamed again, dreamed better. And the player was the universe. And the player was love."</p>
 <h3 align="center">"You are the player."</h3>
 <h1 align="center">"Wake up."</h1>
-<p align="right"><sub>—— "End Poem", Minecraft</sub></p>
+<p align="right"><sub>—— "End Poem"</sub></p>
 
 ## 🖥️ Homepage (click to visit)
 
@@ -128,7 +128,7 @@ Generated SVGs can be embedded in READMEs or web pages via the following API end
 # Contribution Map
 https://commit-craft.wjz-p.workers.dev/api/map/{username}.svg
 
-# Contribution Map (with animation)
+# Contribution Map (with animation — NOT recommended in READMEs: GitHub renders SVGs as <img>, which disables GPU compositing; hundreds of animated elements will cause severe lag)
 https://commit-craft.wjz-p.workers.dev/api/map/{username}.svg?animate=true
 
 # Player Passport (with custom quote)

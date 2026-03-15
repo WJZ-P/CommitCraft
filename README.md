@@ -128,7 +128,7 @@
 # 贡献地图
 https://commit-craft.wjz-p.workers.dev/api/map/{username}.svg
 
-# 贡献地图（开启动画）
+# 贡献地图（开启动画，不建议在 README 中使用 —— GitHub 将 SVG 渲染为 <img>，浏览器禁止 GPU 加速，数百个动画元素会导致严重卡顿）
 https://commit-craft.wjz-p.workers.dev/api/map/{username}.svg?animate=true
 
 # 玩家护照（支持自定义签名）
