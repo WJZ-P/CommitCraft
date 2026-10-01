@@ -15,7 +15,8 @@ const FONT_URLS = {
 
 // Zpix 中文像素字体（用于 CJK 字符烘焙）
 // 服务端无法直接访问 /public 静态路径，仍使用 CDN 获取 ttf
-const ZPIX_URL = "https://cdn.jsdelivr.net/gh/SolidZORO/zpix-pixel-font@master/dist/zpix.ttf";
+// 必须锁定 tag：上游 2026-09-24 起将 dist/ 移出仓库（且已无 master 分支），v3.1.11 是最后一个包含 dist/zpix.ttf 的 tag
+const ZPIX_URL = "https://cdn.jsdelivr.net/gh/SolidZORO/zpix-pixel-font@v3.1.11/dist/zpix.ttf";
 
 type FontVariant = keyof typeof FONT_URLS;
 
